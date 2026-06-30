@@ -20,7 +20,10 @@ from app.models import *  # noqa: F401, F403
 config = context.config
 
 # Override sqlalchemy.url from environment
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL_SYNC)
+sync_url = settings.DATABASE_URL_SYNC
+if sync_url.startswith("postgresql+asyncpg://"):
+    sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+config.set_main_option("sqlalchemy.url", sync_url)
 
 # Setup loggers
 if config.config_file_name is not None:

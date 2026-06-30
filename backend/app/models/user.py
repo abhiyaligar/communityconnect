@@ -1,26 +1,34 @@
 """
 CommunityConnect Backend - User Model
-
-SQLAlchemy ORM model for the users table.
 """
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+import uuid
+from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.session import Base
+from app.models.enums import UserRole
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    username = Column(String(100), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(255), nullable=True)
-    is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    phone_number = Column(String(15), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=True, index=True)
+    password_hash = Column(String(255), nullable=True) # Backup for admins, OTP for users
+    role = Column(SQLEnum(UserRole, name="user_role"), nullable=False, default=UserRole.unverified)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    verification_request = relationship("VerificationRequest", back_populates="target_user", uselist=False, cascade="all, delete-orphan")
+    local_admin_regions = relationship("LocalAdminRegion", back_populates="user", cascade="all, delete-orphan")
+    approvals = relationship("VerificationApproval", back_populates="approver_user", cascade="all, delete-orphan")
+    audit_logs = relationship("AuditLog", back_populates="actor", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(id={self.id}, username={self.username}, email={self.email})>"
+        return f"<User(id={self.id}, phone_number={self.phone_number}, role={self.role})>"
