@@ -1,14 +1,16 @@
-import { type ClassValue, clsx } from "clsx"
+import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import axios from "axios"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function handleApiError(err: unknown, defaultMessage = "An error occurred. Please try again."): string {
-  const e = err as { response?: { data?: { detail?: string | Array<{ msg: string }> } } }
-  const detail = e?.response?.data?.detail
-  if (typeof detail === "string") return detail
-  if (Array.isArray(detail)) return detail.map((d) => d.msg).join(", ")
-  return defaultMessage
+export function handleApiError(error: unknown, defaultMessage = "An error occurred. Please try again."): string {
+  if (axios.isAxiosError(error)) {
+    if (typeof error.response?.data?.detail === "string") {
+      return error.response.data.detail
+    }
+  }
+  return (error as Error)?.message || defaultMessage
 }

@@ -9,6 +9,7 @@ from app.models.verification import VerificationRequest, VerificationApproval
 from app.models.matrimony import MatrimonyProfile, ConnectionRequest
 from app.models.memorial import MemorialRecord
 from app.models.audit import AuditLog
+from app.models.email_verification import EmailVerification
 
 __all__ = [
     "UserRole",
@@ -27,4 +28,5 @@ __all__ = [
     "ConnectionRequest",
     "MemorialRecord",
     "AuditLog",
+    "EmailVerification",
 ]

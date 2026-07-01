@@ -39,10 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await api.get("/profiles/me")
         setUser(res.data)
-      } catch {
-        localStorage.removeItem("access_token")
-        setToken(null)
-        setUser(null)
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          // User is authenticated but hasn't created a profile (pending onboarding)
+          // We can parse the JWT or just set a minimal user
+          setUser({
+            id: "unknown",
+            role: "unverified",
+            full_name: "New User",
+          } as AuthUser)
+        } else {
+          localStorage.removeItem("access_token")
+          setToken(null)
+          setUser(null)
+        }
       } finally {
         setIsLoading(false)
       }

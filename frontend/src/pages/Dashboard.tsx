@@ -10,8 +10,9 @@ import {
 } from "lucide-react"
 
 const quickLinks = [
-  { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20" },
-  { to: "/matrimony", icon: Heart, label: "Matrimony", desc: "Browse eligible matches", color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
+  { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20", requireOptIn: false },
+  { to: "/matrimony", icon: Heart, label: "Matrimony", desc: "Browse eligible matches", color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20", requireOptIn: true },
+  { to: "/matrimony/edit", icon: User, label: "Edit Matrimony", desc: "Update matrimony details", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", requireOptIn: false },
 ]
 
 export default function Dashboard() {
@@ -107,24 +108,29 @@ export default function Dashboard() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
               Quick Access
             </h2>
-            {quickLinks.map(({ to, icon: Icon, label, desc, color, bg }) => (
-              <Link key={to} to={to}>
-                <Card className="glass-card hover:border-primary/20 transition-all duration-300 group cursor-pointer">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-xl border ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                        <Icon className={`h-5 w-5 ${color}`} />
+            {quickLinks.map(({ to, icon: Icon, label, desc, color, bg, requireOptIn }) => {
+              // Hide Matrimony browse link if user hasn't opted in
+              if (requireOptIn && (!user?.matrimony || !user.matrimony.opted_in)) return null;
+
+              return (
+                <Link key={to} to={to}>
+                  <Card className="glass-card hover:border-primary/20 transition-all duration-300 group cursor-pointer">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-10 h-10 rounded-xl border ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                          <Icon className={`h-5 w-5 ${color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm">{label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
 
             {/* Community info card */}
             <Card className="glass-card">

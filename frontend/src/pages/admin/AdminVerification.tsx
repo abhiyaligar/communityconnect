@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from "@/components/ui/dialog"
-import { CheckSquare, CheckCircle, XCircle, AlertTriangle, Loader2, Calendar, Phone, MapPin, Briefcase } from "lucide-react"
+import { CheckSquare, CheckCircle, XCircle, AlertTriangle, Loader2, Calendar, Phone, MapPin, Briefcase, Heart } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 type Action = "approve" | "reject" | "escalate" | null
@@ -33,8 +33,8 @@ export default function AdminVerification() {
 
   const actionMutation = useMutation({
     mutationFn: async ({ id, type }: { id: string; type: Action }) => {
-      if (type === "approve") await api.post(`/verification/${id}/approve`, { comments })
-      else if (type === "reject") await api.post(`/verification/${id}/reject`, { comments })
+      if (type === "approve") await api.post(`/verification/${id}/approve`, { decision: "approved", comments })
+      if (type === "reject") await api.post(`/verification/${id}/reject`, { decision: "rejected", comments })
       else if (type === "escalate") await api.post(`/verification/${id}/escalate`, { reason: comments })
     },
     onSuccess: () => {
@@ -104,7 +104,14 @@ export default function AdminVerification() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div>
-                          <h3 className="font-semibold">{prof?.full_name || "Unknown"}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{prof?.full_name || "Unknown"}</h3>
+                            {req.matrimony?.opted_in && (
+                              <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200">
+                                <Heart className="h-3 w-3 mr-1" /> Matrimony Opt-in
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground">
                             Submitted {new Date(req.created_at).toLocaleDateString()}
                           </p>
@@ -125,6 +132,18 @@ export default function AdminVerification() {
                           </div>
                         ))}
                       </div>
+
+                      {req.matrimony?.opted_in && (
+                        <div className="mb-4 p-3 rounded-lg bg-pink-50/50 border border-pink-100 text-sm">
+                          <p className="text-xs font-semibold text-pink-700 mb-2">Matrimony Details</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                            {req.matrimony.height_cm && <div><span className="font-medium text-foreground">Height:</span> {req.matrimony.height_cm} cm</div>}
+                            {req.matrimony.gotra && <div><span className="font-medium text-foreground">Gotra:</span> {req.matrimony.gotra}</div>}
+                            {req.matrimony.highest_qualification && <div><span className="font-medium text-foreground">Education:</span> {req.matrimony.highest_qualification}</div>}
+                            {req.matrimony.employment_type && <div><span className="font-medium text-foreground">Employment:</span> {req.matrimony.employment_type}</div>}
+                          </div>
+                        </div>
+                      )}
 
                       {req.escalation_reason && (
                         <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm">

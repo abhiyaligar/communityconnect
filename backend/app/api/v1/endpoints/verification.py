@@ -41,7 +41,7 @@ async def get_pending_verifications(
                 VerificationStatus.local_approved,
                 VerificationStatus.escalated
             ]))
-            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile))
+            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile))
         )
     else:
         # Local Admin: Get their assigned regions
@@ -59,7 +59,7 @@ async def get_pending_verifications(
                 VerificationRequest.status == VerificationStatus.pending,
                 VerificationRequest.region_id.in_(region_ids)
             )
-            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile))
+            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile))
         )
 
     result = await db.execute(stmt)
@@ -68,6 +68,8 @@ async def get_pending_verifications(
     response_data = []
     for req in requests:
         user_profile = req.target_user.profile if req.target_user else None
+        matrimony = user_profile.matrimony_profile if user_profile else None
+        
         response_data.append({
             "request_id": str(req.id),
             "user_id": str(req.target_user_id),
@@ -83,7 +85,14 @@ async def get_pending_verifications(
                 "contact_number": user_profile.contact_number if user_profile else None,
                 "address": user_profile.address if user_profile else None,
                 "occupation": user_profile.occupation if user_profile else None,
-            } if user_profile else None
+            } if user_profile else None,
+            "matrimony": {
+                "opted_in": matrimony.opted_in if matrimony else False,
+                "height_cm": matrimony.height_cm if matrimony else None,
+                "employment_type": matrimony.employment_type if matrimony and matrimony.employment_type else None,
+                "gotra": matrimony.gotra if matrimony else None,
+                "highest_qualification": matrimony.highest_qualification if matrimony and matrimony.highest_qualification else None,
+            } if matrimony else None
         })
 
     return response_data

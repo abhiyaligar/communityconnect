@@ -16,13 +16,66 @@ class MatrimonyProfile(Base):
 
     profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
     opted_in = Column(Boolean, nullable=False, default=False)
+    
+    # Physical
+    height_cm = Column(String(10), nullable=True)
+    body_type = Column(String(50), nullable=True)
+    complexion = Column(String(50), nullable=True)
+    
+    # Education
+    highest_qualification = Column(String(100), nullable=True)
+    field_of_study = Column(String(255), nullable=True)
+    institution = Column(String(255), nullable=True)
+    
+    # Professional
+    employment_type = Column(String(100), nullable=True)
+    job_title = Column(String(255), nullable=True)
+    income_range = Column(String(100), nullable=True)
+    work_location = Column(String(255), nullable=True)
+    
+    # Horoscope & Community
+    gotra = Column(String(100), nullable=True)
+    rashi = Column(String(50), nullable=True)
+    nakshatra = Column(String(100), nullable=True)
+    manglik_status = Column(String(50), nullable=True)
+    birth_time = Column(String(20), nullable=True)
+    birth_place = Column(String(255), nullable=True)
+    
+    # Family Background
+    father_name = Column(String(100), nullable=True)
+    father_occupation = Column(String(100), nullable=True)
+    mother_name = Column(String(100), nullable=True)
+    mother_occupation = Column(String(100), nullable=True)
+    brothers_count = Column(String(10), nullable=True)
+    brothers_marital_status = Column(String(50), nullable=True)
+    sisters_count = Column(String(10), nullable=True)
+    sisters_marital_status = Column(String(50), nullable=True)
+    family_type = Column(String(50), nullable=True)
+    family_values = Column(String(50), nullable=True)
+    family_financial_status = Column(String(50), nullable=True)
+    
+    # Lifestyle
+    diet = Column(String(50), nullable=True)
+    smoking = Column(String(50), nullable=True)
+    drinking = Column(String(50), nullable=True)
+    physical_activity = Column(String(50), nullable=True)
+    
+    # About Me
+    about_me = Column(Text, nullable=True)
+    hobbies = Column(JSONB, nullable=True) # List of strings
+    languages = Column(JSONB, nullable=True) # List of strings
+    
+    # Media
+    additional_photos = Column(JSONB, nullable=True) # List of URLs
+    
+    # Preferences & Privacy
+    preferences = Column(JSONB, nullable=True)
+    visibility = Column(String(50), nullable=True, default="all_verified")
+    
+    # Approvals
     double_approval_required = Column(Boolean, nullable=False, default=False)
     family_co_approver_profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
-    about_me = Column(Text, nullable=True)
-    education = Column(String(255), nullable=True)
-    family_background = Column(Text, nullable=True)
-    hobbies = Column(Text, nullable=True)
-    preferences = Column(JSONB, nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

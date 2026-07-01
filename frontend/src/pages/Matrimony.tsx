@@ -7,14 +7,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, MapPin, Briefcase, Calendar, Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { Link } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 
 export default function Matrimony() {
+  const { user } = useAuth()
   const [search, setSearch] = useState("")
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["matrimony"],
     queryFn: async () => {
-      const res = await api.get<MatrimonyEntry[]>("/admin/matrimony")
+      const res = await api.get<MatrimonyEntry[]>("/matrimony/matches")
       return res.data
     },
   })
@@ -24,6 +28,27 @@ export default function Matrimony() {
     p.profile?.address?.toLowerCase().includes(search.toLowerCase()) ||
     p.profile?.occupation?.toLowerCase().includes(search.toLowerCase())
   )
+
+  if (user && (!user.matrimony || !user.matrimony.opted_in)) {
+    return (
+      <div className="min-h-screen bg-background pt-32 px-4 flex items-center justify-center">
+        <div className="max-w-md text-center space-y-6">
+          <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto border-4 border-rose-500/20">
+            <Heart className="h-10 w-10 text-rose-500" />
+          </div>
+          <h1 className="text-3xl font-bold">Matrimony Matches</h1>
+          <p className="text-muted-foreground text-lg">
+            You must opt-in and complete your Matrimony profile before you can browse other eligible members in the community.
+          </p>
+          <Link to="/matrimony/edit" className="block mt-8">
+            <Button size="lg" className="w-full">
+              Complete Matrimony Profile
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background pt-20 pb-12 px-4">

@@ -7,63 +7,32 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { Users, Phone, ArrowRight, RotateCcw, Loader2, ShieldCheck } from "lucide-react"
+import { Users, Mail, Lock, ArrowRight, Loader2 } from "lucide-react"
 import { TokenResponse } from "@/types"
-
-type Step = "phone" | "otp"
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [step, setStep] = useState<Step>("phone")
-  const [phone, setPhone] = useState("")
-  const [otp, setOtp] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [countdown, setCountdown] = useState(0)
 
-  const startCountdown = () => {
-    setCountdown(60)
-    const timer = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) { clearInterval(timer); return 0 }
-        return c - 1
-      })
-    }, 1000)
-  }
-
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!phone.match(/^\+?[0-9]{10,15}$/)) {
-      setError("Please enter a valid phone number.")
+    if (!email || !password) {
+      setError("Please enter both email and password.")
       return
     }
+    
     setError("")
     setLoading(true)
+    
     try {
-      await api.post("/auth/otp/send", { phone_number: phone })
-      setStep("otp")
-      startCountdown()
-    } catch (err: unknown) {
-      setError(handleApiError(err, "Failed to send OTP. Try again."))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (otp.length !== 6) {
-      setError("Enter the 6-digit code.")
-      return
-    }
-    setError("")
-    setLoading(true)
-    try {
-      const res = await api.post<TokenResponse>("/auth/otp/verify", {
-        phone_number: phone,
-        code: otp,
+      const res = await api.post<TokenResponse>("/auth/login", {
+        email,
+        password,
       })
       await login(res.data.access_token, res.data.user_id, res.data.role)
 
@@ -76,129 +45,104 @@ export default function Login() {
         navigate("/dashboard")
       }
     } catch (err: unknown) {
-      setError(handleApiError(err, "Invalid or expired code."))
+      setError(handleApiError(err, "Invalid email or password."))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      {/* Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-primary/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-accent/6 rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 pointer-events-none -z-10">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[80px]" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
+      <div className="w-full max-w-md relative z-10">
         <div className="flex justify-center mb-8">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-xl shadow-primary/30 group-hover:scale-105 transition-transform">
-              <Users className="h-5 w-5 text-white" />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
+              <Users className="h-6 w-6 text-white" />
             </div>
-            <span className="font-bold text-xl gradient-text">CommunityConnect</span>
+            <span className="font-bold text-2xl tracking-tight">CommunityConnect</span>
           </Link>
         </div>
 
-        <Card className="glass-card">
-          <CardHeader className="text-center pb-2">
-            <div className="w-14 h-14 rounded-2xl glass border border-primary/30 flex items-center justify-center mx-auto mb-4">
-              {step === "phone" ? (
-                <Phone className="h-7 w-7 text-primary" />
-              ) : (
-                <ShieldCheck className="h-7 w-7 text-primary" />
-              )}
-            </div>
-            <CardTitle className="text-2xl">
-              {step === "phone" ? "Welcome Back" : "Verify Your Number"}
-            </CardTitle>
-            <CardDescription>
-              {step === "phone"
-                ? "Enter your registered phone number to sign in."
-                : `We sent a 6-digit code to ${phone}`}
+        <Card className="glass-card border-white/10 shadow-2xl backdrop-blur-xl">
+          <CardHeader className="space-y-3 pb-6">
+            <CardTitle className="text-3xl font-bold tracking-tight">Welcome back</CardTitle>
+            <CardDescription className="text-base text-muted-foreground/80">
+              Sign in to your account to continue
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="pt-6">
-            {step === "phone" ? (
-              <form onSubmit={handleSendOtp} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 9876543210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="h-12 text-base"
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12 bg-background/50 border-white/10"
                     required
                   />
                 </div>
-                {error && (
-                  <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                    {error}
-                  </p>
-                )}
-                <Button type="submit" variant="gradient" size="lg" className="w-full gap-2" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {loading ? "Sending..." : "Send OTP"}
-                  {!loading && <ArrowRight className="h-4 w-4" />}
-                </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Link to="/register" className="text-primary hover:underline font-medium">
-                    Register now
-                  </Link>
-                </p>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Verification Code</Label>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <a href="#" className="text-sm text-primary hover:underline font-medium">
+                    Forgot password?
+                  </a>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="otp"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="000000"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    className="h-12 text-2xl text-center font-mono tracking-widest"
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-12 bg-background/50 border-white/10"
                     required
                   />
                 </div>
-                {error && (
-                  <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                    {error}
-                  </p>
-                )}
-                <Button type="submit" variant="gradient" size="lg" className="w-full gap-2" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {loading ? "Verifying..." : "Verify & Sign In"}
-                </Button>
-                <div className="flex items-center justify-between text-sm">
-                  <button
-                    type="button"
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={() => { setStep("phone"); setOtp(""); setError("") }}
-                  >
-                    ← Change number
-                  </button>
-                  <button
-                    type="button"
-                    disabled={countdown > 0}
-                    className="flex items-center gap-1.5 text-primary hover:underline disabled:opacity-50 disabled:no-underline"
-                    onClick={handleSendOtp}
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
-                  </button>
+              </div>
+
+              {error && (
+                <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+                  <span className="font-medium">{error}</span>
                 </div>
-              </form>
-            )}
+              )}
+
+              <Button 
+                type="submit" 
+                variant="gradient" 
+                size="lg" 
+                className="w-full h-12 text-base font-semibold group mt-2" 
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                {loading ? "Signing in..." : "Sign in"}
+                {!loading && <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />}
+              </Button>
+            </form>
           </CardContent>
         </Card>
+
+        <p className="text-center text-sm text-muted-foreground mt-8">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-primary hover:underline font-semibold hover:text-primary/80 transition-colors">
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   )

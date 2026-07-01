@@ -3,33 +3,23 @@ CommunityConnect Backend - Authentication Schemas
 """
 
 from typing import Optional
-from datetime import date
-from pydantic import BaseModel, Field, field_validator
-import re
+from pydantic import BaseModel, EmailStr, Field
 
 
-class OTPRequest(BaseModel):
-    phone_number: str = Field(..., description="Phone number in international E.164 format")
-
-    @field_validator("phone_number")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        # Regex matching E.164 format: + followed by 1 to 15 digits
-        if not re.match(r"^\+[1-9]\d{1,14}$", v):
-            raise ValueError("Phone number must be in E.164 format (e.g. +919999999999)")
-        return v
+class EmailRegister(BaseModel):
+    email: EmailStr = Field(..., description="User's email address")
+    password: str = Field(..., min_length=8, description="Strong password")
 
 
-class OTPVerify(BaseModel):
-    phone_number: str = Field(..., description="Phone number in international E.164 format")
+class EmailVerify(BaseModel):
+    email: EmailStr = Field(..., description="User's email address")
     code: str = Field(..., min_length=6, max_length=6, description="6-digit verification code")
+    password: str = Field(..., min_length=8, description="User's password")
 
-    @field_validator("phone_number")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        if not re.match(r"^\+[1-9]\d{1,14}$", v):
-            raise ValueError("Phone number must be in E.164 format (e.g. +919999999999)")
-        return v
+
+class UserLogin(BaseModel):
+    email: EmailStr = Field(..., description="User's email address")
+    password: str = Field(..., description="User's password")
 
 
 class TokenResponse(BaseModel):
@@ -38,22 +28,3 @@ class TokenResponse(BaseModel):
     registered: bool = True
     role: Optional[str] = None
     user_id: Optional[str] = None
-
-
-class UserRegister(BaseModel):
-    phone_number: str = Field(..., description="Phone number in E.164 format")
-    code: str = Field(..., min_length=6, max_length=6, description="6-digit verification code")
-    full_name: str = Field(..., min_length=2, max_length=100)
-    date_of_birth: date
-    gender: str = Field(..., description="male, female, or other")
-    marital_status: str = Field("single", description="single, married, divorced, or widowed")
-    address: str = Field(..., min_length=5)
-    profile_photo_url: str = Field("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde")
-
-    @field_validator("phone_number")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        if not re.match(r"^\+[1-9]\d{1,14}$", v):
-            raise ValueError("Phone number must be in E.164 format (e.g. +919999999999)")
-        return v
-

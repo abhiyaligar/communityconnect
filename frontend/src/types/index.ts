@@ -26,6 +26,45 @@ export interface AuthUser {
   contact_number: string
   address?: string
   occupation?: string
+  matrimony?: {
+    opted_in: boolean
+    height_cm?: string
+    body_type?: string
+    complexion?: string
+    highest_qualification?: string
+    field_of_study?: string
+    institution?: string
+    employment_type?: string
+    job_title?: string
+    income_range?: string
+    work_location?: string
+    gotra?: string
+    rashi?: string
+    nakshatra?: string
+    manglik_status?: string
+    birth_time?: string
+    birth_place?: string
+    father_name?: string
+    father_occupation?: string
+    mother_name?: string
+    mother_occupation?: string
+    brothers_count?: string
+    brothers_marital_status?: string
+    sisters_count?: string
+    sisters_marital_status?: string
+    family_type?: string
+    family_values?: string
+    family_financial_status?: string
+    diet?: string
+    smoking?: string
+    drinking?: string
+    physical_activity?: string
+    about_me?: string
+    hobbies: string[]
+    languages: string[]
+    additional_photos: string[]
+    visibility: string
+  }
 }
 
 export interface TokenResponse {
@@ -50,6 +89,13 @@ export interface VerificationRequest {
     contact_number?: string
     address?: string
     occupation?: string
+  }
+  matrimony?: {
+    opted_in: boolean
+    height_cm?: number
+    employment_type?: string
+    gotra?: string
+    highest_qualification?: string
   }
 }
 
