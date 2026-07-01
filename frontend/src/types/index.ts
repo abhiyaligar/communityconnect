@@ -1,0 +1,99 @@
+export type UserRole =
+  | "community_admin"
+  | "local_admin"
+  | "verified_adult"
+  | "minor"
+  | "unverified"
+
+export type Gender = "male" | "female" | "other"
+export type MaritalStatus = "single" | "married" | "divorced" | "widowed"
+export type VerificationStatus =
+  | "pending"
+  | "local_approved"
+  | "local_rejected"
+  | "approved"
+  | "rejected"
+  | "escalated"
+
+export interface AuthUser {
+  id: string
+  role: UserRole
+  full_name: string
+  date_of_birth: string
+  gender: Gender
+  marital_status: MaritalStatus
+  profile_photo_url?: string
+  contact_number: string
+  address?: string
+  occupation?: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  registered: boolean
+  role: UserRole
+  user_id: string
+}
+
+export interface VerificationRequest {
+  request_id: string
+  user_id: string
+  status: VerificationStatus
+  escalated: boolean
+  escalation_reason?: string
+  created_at: string
+  profile?: {
+    full_name?: string
+    date_of_birth?: string
+    gender?: string
+    profile_photo_url?: string
+    contact_number?: string
+    address?: string
+    occupation?: string
+  }
+}
+
+export interface AdminDashboardStats {
+  total_users: number
+  verified_users: number
+  pending_verifications: number
+  matrimony_opt_ins: number
+}
+
+export interface UserProfile {
+  profile_id: string
+  user_id?: string
+  full_name: string
+  date_of_birth: string
+  gender: Gender
+  marital_status: MaritalStatus
+  profile_photo_url?: string
+  contact_number: string
+  address?: string
+  occupation?: string
+  is_memorial: boolean
+  user?: {
+    role: UserRole
+    is_active: boolean
+    phone_number: string
+  }
+}
+
+export interface MatrimonyEntry {
+  profile_id: string
+  about_me?: string
+  education?: string
+  family_background?: string
+  hobbies?: string
+  preferences?: string
+  profile?: {
+    full_name?: string
+    date_of_birth?: string
+    gender?: string
+    marital_status?: string
+    profile_photo_url?: string
+    contact_number?: string
+    address?: string
+    occupation?: string
+  }
+}

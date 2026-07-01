@@ -70,6 +70,9 @@ Upon verifying the OTP, the system returns:
 *   An **Access Token** (short-lived JWT, expires in 15 minutes) passed in the `Authorization: Bearer <token>` header.
 *   A **Refresh Token** (long-lived JWT/cookie, expires in 30 days) used to retrieve a new Access Token.
 
+> [!NOTE]
+> **Simulated OTP Development Mode:** When running in mock mode (`SMS_PROVIDER=mock`), the code is printed to the terminal logs and a master bypass code of `123456` is accepted for any phone number.
+
 ### 2.2 Role-Based Access Control (RBAC)
 The system enforces authorization levels mapped to user roles:
 

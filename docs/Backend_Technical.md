@@ -155,6 +155,7 @@ sequenceDiagram
 2. **Attempt limit**: Max 5 incorrect code verification attempts per OTP. On the 5th incorrect attempt, the OTP token record is immediately set to expired (`expires_at = current_timestamp`).
 3. **Expiry duration**: OTPs are valid for exactly 5 minutes (300 seconds) from generation.
 4. **Hashing**: OTP codes are hashed via SHA-256 before storage to protect against DB leaks.
+5. **Simulated Mode / Mock Bypass Code**: When `SMS_PROVIDER` is set to `mock` in `backend/.env`, OTP dispatches are printed to the server terminal/console. Additionally, a master bypass code of `123456` is automatically accepted for any phone number to simplify manual testing and verification.
 
 ### 3.2 JWT Token Architecture
 Upon verification, the system returns two JWT tokens:

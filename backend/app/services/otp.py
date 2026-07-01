@@ -39,6 +39,12 @@ def generate_otp(phone_number: str) -> str:
 
 def verify_otp(phone_number: str, user_otp: str) -> bool:
     """Verifies user-supplied OTP against stored hashed OTP."""
+    # In mock simulation mode, allow '123456' as a master bypass code
+    if settings.SMS_PROVIDER.lower() == "mock" and user_otp == "123456":
+        # Clear mock entry if it exists
+        _otp_store.pop(phone_number, None)
+        return True
+
     if phone_number not in _otp_store:
         return False
         
