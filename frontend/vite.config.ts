@@ -10,6 +10,15 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 5173,
+    allowedHosts: ['communityconnect-9r5x.onrender.com'],
+    // or to allow any Render subdomain going forward:
+    // allowedHosts: ['.onrender.com'],
+  },
+  preview: {
+    host: true,
+    allowedHosts: ['communityconnect-9r5x.onrender.com'],
+    // allowedHosts: ['.onrender.com'],
   },
 })
