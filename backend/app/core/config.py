@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     MSG91_AUTH_KEY: Optional[str] = None
     MSG91_TEMPLATE_ID: Optional[str] = None
 
+    # Email SMTP
+    EMAIL_PROVIDER: str = "mock"  # "mock" or "smtp"
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    FROM_EMAIL: str = "noreply@communityconnect.org"
+
     # File Storage
     STORAGE_PROVIDER: str = "local"
     UPLOAD_DIR: str = "./uploads"

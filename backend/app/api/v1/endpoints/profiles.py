@@ -1,5 +1,19 @@
 """
-CommunityConnect Backend - Profiles Endpoints
+CommunityConnect Backend — Profile Endpoints
+============================================
+
+Routes (prefix: /api/v1/profiles):
+  GET    /me                    Retrieve the currently authenticated user's full profile + wards
+  POST   /onboard               Submit the full onboarding profile (triggers admin verification)
+  PUT    /me                    Update matrimony profile fields
+  PUT    /me/username           Update the user's unique @username handle
+  PUT    /me/social             Update social media links (LinkedIn, Instagram, Facebook, Twitter)
+  GET    /by-username/{username}  Look up a public profile by username (used for co-approver verification)
+
+Access:
+  All routes require Bearer JWT authentication.
+  /onboard requires role: unverified
+  /me (PUT variants) require role: verified_adult | local_admin | community_admin
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status

@@ -1,9 +1,13 @@
 # Database Design Document
-## Community Registry & Matrimonial Platform
+## CommunityConnect Platform
 
-**Version:** 1.0
-**Database Engine:** PostgreSQL (v13+)
-**Status:** Approved for Implementation
+**Version:** 1.1.0 (Current Implementation)
+**Database Engine:** PostgreSQL (v14+)
+**ORM:** SQLAlchemy (async) with Alembic migrations
+**Status:** Implemented & Live
+
+> [!NOTE]
+> This document reflects the **current live schema** as of v1.1.0. New columns added since v1.0 are annotated with `[Added v1.1.0]`.
 
 ---
 
@@ -114,9 +118,8 @@ Stores authentication credentials, security status, and core platform roles.
 | Column Name | Data Type | Constraints | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY` | `gen_random_uuid()` | Unique user identifier. |
-| `phone_number` | `VARCHAR(15)` | `UNIQUE`, `NOT NULL` | *None* | Primary credential for OTP auth (E.164 format). |
-| `email` | `VARCHAR(255)` | `UNIQUE`, `NULLABLE` | *None* | Optional email address. |
-| `password_hash` | `VARCHAR(255)` | `NULLABLE` | *None* | Backup password hash (primarily for admins). |
+| `email` | `VARCHAR(255)` | `UNIQUE`, `NOT NULL` | *None* | Email address used for login and OTP verification. |
+| `password_hash` | `VARCHAR(255)` | `NULLABLE` | *None* | Bcrypt password hash. |
 | `role` | `user_role` | `NOT NULL` | `'unverified'` | Application level role. |
 | `is_active` | `BOOLEAN` | `NOT NULL` | `TRUE` | False if user account is deactivated/deceased. |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Signup timestamp. |
@@ -204,13 +207,18 @@ The primary member registry table. Contains demographic and contact data.
 | `user_id` | `UUID` | `UNIQUE`, `NULLABLE`, `FK -> users(id)` | *None* | Associated login account. Null for minors/unclaimed accounts. |
 | `family_unit_id` | `UUID` | `NULLABLE`, `FK -> family_units(id)` | *None* | Registry family grouping. |
 | `full_name` | `VARCHAR(100)` | `NOT NULL` | *None* | Official full name of the member. |
+| `username` | `VARCHAR(50)` | `UNIQUE`, `NULLABLE` | *None* | **[Added v1.1.0]** Unique `@username` handle used for co-approver lookup. |
 | `date_of_birth` | `DATE` | `NOT NULL` | *None* | Birth date (used for age/minor check). |
 | `gender` | `gender` | `NOT NULL` | *None* | Gender selection. |
 | `marital_status`| `marital_status` | `NOT NULL` | `'single'` | Marital status. |
-| `profile_photo_url`| `VARCHAR(512)`| `NOT NULL` | *None* | URL to public profile image in Cloud Storage. |
+| `profile_photo_url`| `VARCHAR(512)`| `NULLABLE` | *None* | URL to public profile image in Cloud Storage. |
 | `contact_number` | `VARCHAR(15)` | `NULLABLE` | *None* | Contact number (mandatory for adults). |
-| `address` | `TEXT` | `NOT NULL` | *None* | Geographic address details. |
+| `address` | `TEXT` | `NULLABLE` | *None* | Geographic address details. |
 | `occupation` | `VARCHAR(100)` | `NULLABLE` | *None* | Job title or sector. |
+| `linkedin_url` | `VARCHAR(512)` | `NULLABLE` | *None* | **[Added v1.1.0]** LinkedIn profile link. |
+| `instagram_url` | `VARCHAR(512)` | `NULLABLE` | *None* | **[Added v1.1.0]** Instagram profile link. |
+| `facebook_url` | `VARCHAR(512)` | `NULLABLE` | *None* | **[Added v1.1.0]** Facebook profile link. |
+| `twitter_url` | `VARCHAR(512)` | `NULLABLE` | *None* | **[Added v1.1.0]** Twitter/X profile link. |
 | `is_memorial` | `BOOLEAN` | `NOT NULL` | `FALSE` | Flag indicating if this profile represents a deceased member. |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Profile creation timestamp. |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Row modification timestamp. |
@@ -304,9 +312,10 @@ Opt-in extension table containing sensitive, matrimonial-specific configurations
 | Column Name | Data Type | Constraints | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `profile_id` | `UUID` | `PRIMARY KEY`, `FK -> profiles(id)` | *None* | One-to-one mapping linking registry profile. |
-| `opted_in` | `BOOLEAN` | `NOT NULL` | `FALSE` | Toggle to enable/disable visibility. |
-| `double_approval_required` | `BOOLEAN` | `NOT NULL` | `FALSE` | True if family co-approval is required. |
-| `family_co_approver_profile_id` | `UUID` | `NULLABLE`, `FK -> profiles(id)` | *None* | Target family co-approver. |
+| `opted_in` | `BOOLEAN` | `NOT NULL` | `FALSE` | Toggle to enable/disable visibility in match browsing. |
+| `double_approval_required` | `BOOLEAN` | `NOT NULL` | `FALSE` | True if family co-approval is required before a connection is approved. |
+| `family_co_approver_profile_id` | `UUID` | `NULLABLE`, `FK -> profiles(id)` | *None* | The invited guardian/co-approver profile. |
+| `family_co_approver_approved` | `BOOLEAN` | `NOT NULL` | `FALSE` | **[Added v1.1.0]** Whether the invited co-approver has confirmed the guardian relationship. |
 | `about_me` | `TEXT` | `NULLABLE` | *None* | Personal biography. |
 | `education` | `VARCHAR(255)`| `NULLABLE` | *None* | Educational qualifications. |
 | `family_background`| `TEXT` | `NULLABLE` | *None* | Family history context. |

@@ -1,5 +1,18 @@
 """
-CommunityConnect Backend - Matrimony Operations Endpoints
+CommunityConnect Backend — Matrimony Endpoints
+===============================================
+
+Routes (prefix: /api/v1/matrimony):
+  GET    /matches                                     Browse opted-in matrimony profiles (paginated, guardian-aware)
+  GET    /requests                                    List incoming & outgoing connection requests
+  POST   /requests                                    Send a new connection request to a profile
+  POST   /requests/{request_id}/action               Approve or reject an incoming connection request
+  GET    /co-approver-invitations                    List pending guardian co-approver invitations
+  POST   /co-approver-invitations/{profile_id}/action  Accept or decline a guardian invitation
+
+Access:
+  All routes require Bearer JWT authentication.
+  /matches requires role: verified_adult | local_admin | community_admin
 """
 
 from typing import List

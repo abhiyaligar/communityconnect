@@ -25,18 +25,27 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="CommunityConnect — A platform to connect and empower local communities.",
+    version="1.1.0",
+    description=(
+        "CommunityConnect — A platform to connect and empower local communities.\n\n"
+        "## Features\n"
+        "- **Community Profiles** — Member registration, admin verification, and profile management.\n"
+        "- **Matrimony** — Opt-in matrimonial profiles with double-approval co-guardian system.\n"
+        "- **Connection Requests** — Request-based matching with self & family approval workflow.\n"
+        "- **Guardian System** — Non-matrimony users can browse matches as confirmed guardians.\n"
+        "- **File Uploads** — Profile photo and document storage.\n"
+        "- **Admin Panel** — User verification, escalation, and management.\n"
+    ),
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
 )
 
-# CORS Middleware
+# CORS Middleware — allow all origins (development mode)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

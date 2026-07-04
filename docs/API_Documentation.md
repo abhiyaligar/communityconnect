@@ -1,9 +1,13 @@
-# API Documentation - Community Registry & Matrimonial Platform
+# API Documentation - CommunityConnect Platform
 
-**Version:** 1.0 (MVP Scope)  
+**Version:** 1.1.0 (Current Implementation)  
 **Base URL:** `/api/v1`  
-**Protocol:** HTTPS  
+**Protocol:** HTTP (HTTPS in production)  
 **Format:** JSON  
+**CORS:** `allow_origins=["*"]`, `allow_methods=["*"]`, `allow_headers=["*"]` (development mode)
+
+> [!NOTE]
+> This document reflects the **current implemented API** as of v1.1.0. Some sections from the original PRD design (Family Units, OTP via SMS, Registry Search) are planned for future versions and are marked accordingly.
 
 ---
 
@@ -64,26 +68,28 @@ When request payload validation fails (e.g., invalid phone format), the API retu
 
 ## 2. Security, Authentication & Access Control
 
-### 2.1 OTP-Based Authentication & JWT
-Authentication is passwordless. Users log in by requesting a One-Time Password (OTP) sent to their registered phone number.
-Upon verifying the OTP, the system returns:
-*   An **Access Token** (short-lived JWT, expires in 15 minutes) passed in the `Authorization: Bearer <token>` header.
-*   A **Refresh Token** (long-lived JWT/cookie, expires in 30 days) used to retrieve a new Access Token.
+### 2.1 Email-Based Authentication & JWT
+
+Authentication uses **email + password** with email OTP verification for new registrations. Upon login, the system returns:
+*   An **Access Token** (JWT, configurable expiry — default 30 mins) sent in the `Authorization: Bearer <token>` header.
+*   A **Refresh Token** (long-lived JWT, default 7 days) used to retrieve a new Access Token via `/auth/refresh`.
 
 > [!NOTE]
-> **Simulated OTP Development Mode:** When running in mock mode (`SMS_PROVIDER=mock`), the code is printed to the terminal logs and a master bypass code of `123456` is accepted for any phone number.
+> **Email OTP for Registration:** During registration (`POST /auth/register/email`), a 6-digit OTP is sent to the provided email. The user must verify it via `POST /auth/verify/email` within the expiry window before the account is activated.
+
+> [!NOTE]
+> **Mock mode:** Set `EMAIL_PROVIDER=mock` to skip real email sending in development. OTP codes are printed to the terminal.
 
 ### 2.2 Role-Based Access Control (RBAC)
 The system enforces authorization levels mapped to user roles:
 
 | Role Name | Authority Scope |
 | :--- | :--- |
-| **Community Admin** | Full read/write access. Can resolve verification escalations, manage regions, access dashboard, and convert profiles to memorials. |
-| **Local Admin** | Scoped read/write access to assigned geographic region. Can approve/reject verification requests, and cross-verify peer Local Admins. |
-| **Family Head** | Can read/write profile details for all members of their Family Unit (including minors). Can approve minors' data and act as a matrimonial co-approver. |
-| **Self (Verified Adult)** | Full control of own profile. Can opt-in/out of Matrimony, configure settings, and handle own connection requests. |
+| **Community Admin** | Full read/write access. Can resolve verification escalations, manage regions, access dashboard, and delete user accounts. |
+| **Local Admin** | Scoped read/write access to assigned geographic region. Can approve/reject verification requests and cross-verify peer Local Admins. |
+| **Verified Adult** | Full control of own profile. Can opt-in to Matrimony, configure co-approver, manage connection requests. Can act as a guardian (co-approver) for others. |
 | **Minor (Under 18)** | Read-only access to their own profile. No matrimonial features, no connection requests, and no self-edits. |
-| **Unverified User** | Restricted access. Can sign up and complete their own profile but cannot browse the registry, view other family units, or request connections. |
+| **Unverified User** | Restricted access. Can sign up, complete their own profile, and submit for verification. |
 
 ### 2.3 Profile Visibility Tiers
 To protect user privacy, the profile schema is partitioned into two visibility tiers:
@@ -148,116 +154,123 @@ sequenceDiagram
 
 ### 4.1 Authentication Endpoints
 
-#### 4.1.1 Send OTP
+#### 4.1.1 Register with Email (Step 1 — Send OTP)
 *   **Method:** `POST`
-*   **Path:** `/api/v1/auth/otp/send`
-*   **Description:** Requests an OTP code to be sent via SMS to the specified mobile phone number.
+*   **Path:** `/api/v1/auth/register/email`
+*   **Description:** Step 1 of registration. User provides email and password. The system sends a 6-digit OTP to the email address.
 *   **Auth Required:** None (Public)
 *   **Request Body (JSON):**
     ```json
     {
-      "phone_number": "+919876543210"
+      "email": "user@example.com",
+      "password": "securepassword"
     }
     ```
 *   **Response Body (JSON):**
     ```json
     {
-      "session_id": "otp_sess_6f2e8d91a0b5",
-      "message": "OTP sent successfully. Valid for 5 minutes."
+      "message": "OTP sent to your email. Please verify within 10 minutes."
     }
     ```
-*   **Query Parameters:** None
 *   **Status Codes:**
-    *   `200 OK`: OTP successfully generated and sent.
-    *   `400 Bad Request`: Phone number format is invalid.
-    *   `422 Unprocessable Entity`: Missing fields.
+    *   `200 OK`: OTP sent successfully.
+    *   `400 Bad Request`: Email already registered.
+    *   `422 Unprocessable Entity`: Invalid email format.
 
-#### 4.1.2 Verify OTP
+#### 4.1.2 Verify OTP & Complete Registration (Step 2)
 *   **Method:** `POST`
-*   **Path:** `/api/v1/auth/otp/verify`
-*   **Description:** Verifies the OTP sent to the user and returns an access token along with user details.
+*   **Path:** `/api/v1/auth/verify/email`
+*   **Description:** Step 2 of registration. User provides email, OTP code, and password to complete account creation. Returns a JWT access+refresh token pair.
 *   **Auth Required:** None (Public)
 *   **Request Body (JSON):**
     ```json
     {
-      "phone_number": "+919876543210",
-      "session_id": "otp_sess_6f2e8d91a0b5",
-      "otp_code": "583920"
+      "email": "user@example.com",
+      "code": "482910",
+      "password": "securepassword"
     }
     ```
 *   **Response Body (JSON):**
     ```json
     {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refresh_token": "ref_8a2d1f99c0b11e2f3a",
-      "token_type": "bearer",
-      "expires_in": 900,
-      "user": {
-        "id": 104,
-        "phone_number": "+919876543210",
-        "role": "self",
-        "is_verified": true,
-        "profile_id": 402
-      }
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "token_type": "bearer"
     }
     ```
-*   **Query Parameters:** None
 *   **Status Codes:**
-    *   `200 OK`: Verification successful.
-    *   `400 Bad Request`: Incorrect OTP code or expired session.
+    *   `200 OK`: Registration complete, tokens issued.
+    *   `400 Bad Request`: Invalid or expired OTP code.
     *   `422 Unprocessable Entity`: Validation failure.
 
-#### 4.1.3 Refresh Token
+#### 4.1.3 Login
+*   **Method:** `POST`
+*   **Path:** `/api/v1/auth/login`
+*   **Description:** Authenticates a registered user with email and password. Returns JWT tokens.
+*   **Auth Required:** None (Public)
+*   **Request Body (JSON):**
+    ```json
+    {
+      "email": "user@example.com",
+      "password": "securepassword"
+    }
+    ```
+*   **Response Body (JSON):**
+    ```json
+    {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "token_type": "bearer"
+    }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Login successful.
+    *   `401 Unauthorized`: Invalid email or password.
+    *   `403 Forbidden`: Account is deactivated.
+
+#### 4.1.4 Refresh Token
 *   **Method:** `POST`
 *   **Path:** `/api/v1/auth/refresh`
 *   **Description:** Exchanges a valid refresh token for a new access token.
-*   **Auth Required:** None (Requires valid refresh token in payload)
+*   **Auth Required:** None (Requires valid refresh token in body)
 *   **Request Body (JSON):**
     ```json
     {
-      "refresh_token": "ref_8a2d1f99c0b11e2f3a"
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     }
     ```
 *   **Response Body (JSON):**
     ```json
     {
       "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refresh_token": "ref_9b3e2a00d1c22f3g4b",
-      "token_type": "bearer",
-      "expires_in": 900
+      "token_type": "bearer"
     }
     ```
-*   **Query Parameters:** None
 *   **Status Codes:**
-    *   `200 OK`: Access token refreshed.
+    *   `200 OK`: New access token issued.
     *   `401 Unauthorized`: Invalid or expired refresh token.
 
-#### 4.1.4 Logout
+#### 4.1.5 Logout
 *   **Method:** `POST`
 *   **Path:** `/api/v1/auth/logout`
-*   **Description:** Invalidates the provided refresh token and clears the user session.
-*   **Auth Required:** Verified User, Unverified User (`Self`, `Family Head`, `Local Admin`, `Community Admin`, `Minor`)
-*   **Request Body (JSON):**
-    ```json
-    {
-      "refresh_token": "ref_9b3e2a00d1c22f3g4b"
-    }
-    ```
-*   **Response Body:** None
-*   **Query Parameters:** None
+*   **Description:** Invalidates the session.
+*   **Auth Required:** Bearer Token required
 *   **Status Codes:**
-    *   `204 No Content`: Successfully logged out.
-    *   `401 Unauthorized`: Invalid access token.
+    *   `200 OK`: Successfully logged out.
+    *   `401 Unauthorized`: Missing or invalid token.
 
 ---
 
-## 4.2 User & Profile Endpoints
+## 4.2 Profile Endpoints
 
-#### 4.2.1 Create Profile
+> [!NOTE]
+> Actual implemented prefix: `/api/v1/profiles`
+
+#### 4.2.1 Onboard Profile
 *   **Method:** `POST`
-*   **Path:** `/api/v1/profiles`
-*   **Description:** Creates a new profile. Can be done by an unverified user onboarding themselves, or a Family Head creating a profile for a family member.
-*   **Auth Required:** Authenticated User
+*   **Path:** `/api/v1/profiles/onboard`
+*   **Description:** Submits the user's full profile during the onboarding step. Triggers admin verification workflow automatically.
+*   **Auth Required:** `unverified` role
 *   **Request Body (JSON):**
     ```json
     {
@@ -303,32 +316,80 @@ sequenceDiagram
 #### 4.2.2 Get My Profile
 *   **Method:** `GET`
 *   **Path:** `/api/v1/profiles/me`
-*   **Description:** Retrieves the logged-in user's own profile. Includes all restricted details.
-*   **Auth Required:** `Self`, `Family Head`, `Local Admin`, `Community Admin`, `Minor`
-*   **Request Body:** None
+*   **Description:** Retrieves the logged-in user's full profile. Includes matrimony data, social links, and a list of `wards` (people who set the caller as their co-approver).
+*   **Auth Required:** Any authenticated user
 *   **Response Body (JSON):**
     ```json
     {
-      "id": 402,
+      "id": "uuid",
       "full_name": "Siddharth Gowda",
+      "username": "sidgowda",
       "date_of_birth": "1995-04-12",
-      "age": 31,
-      "gender": "Male",
-      "marital_status": "Unmarried",
-      "phone_number": "+919876543210",
-      "address": "45, 2nd Main, Indiranagar, Bengaluru, KA",
+      "gender": "male",
+      "marital_status": "single",
       "occupation": "Software Engineer",
-      "profile_photo_url": "https://storage.googleapis.com/comm-photos/profile_104.jpg",
-      "family_unit_id": 12,
-      "relationship_to_head": "Self",
-      "is_verified": true,
-      "is_memorial": false
+      "address": "Bengaluru, KA",
+      "profile_photo_url": "https://...",
+      "role": "verified_adult",
+      "matrimony": {
+        "opted_in": true,
+        "double_approval_required": false,
+        "family_co_approver_profile_id": null,
+        "family_co_approver_approved": false
+      },
+      "wards": [
+        {
+          "profile_id": "uuid",
+          "full_name": "Priya Hegde",
+          "username": "priyahegde",
+          "gender": "female",
+          "approved": true
+        }
+      ]
     }
     ```
-*   **Query Parameters:** None
 *   **Status Codes:**
     *   `200 OK`: Success.
-    *   `401 Unauthorized`: Missing or invalid authentication token.
+    *   `401 Unauthorized`: Missing or invalid token.
+
+#### 4.2.3 Update Username
+*   **Method:** `PUT`
+*   **Path:** `/api/v1/profiles/me/username`
+*   **Description:** Sets or updates the user's unique `@username` handle. Used for co-approver lookup.
+*   **Auth Required:** `verified_adult` | `local_admin` | `community_admin`
+*   **Request Body (JSON):**
+    ```json
+    { "username": "sidgowda" }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Username updated.
+    *   `409 Conflict`: Username already taken.
+
+#### 4.2.4 Lookup Profile by Username
+*   **Method:** `GET`
+*   **Path:** `/api/v1/profiles/by-username/{username}`
+*   **Description:** Looks up a profile by their `@username`. Used by the Matrimony edit page to find and assign a co-approver.
+*   **Auth Required:** Any authenticated user
+*   **Status Codes:**
+    *   `200 OK`: Profile found.
+    *   `404 Not Found`: No user with that username.
+
+#### 4.2.5 Update Social Links
+*   **Method:** `PUT`
+*   **Path:** `/api/v1/profiles/me/social`
+*   **Description:** Updates social media profile links (LinkedIn, Instagram, Facebook, Twitter/X).
+*   **Auth Required:** `verified_adult` | `local_admin` | `community_admin`
+*   **Request Body (JSON):**
+    ```json
+    {
+      "linkedin_url": "https://linkedin.com/in/sidgowda",
+      "instagram_url": null,
+      "facebook_url": null,
+      "twitter_url": null
+    }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Social links updated.
 
 #### 4.2.3 Update My Profile
 *   **Method:** `PUT`
@@ -746,386 +807,188 @@ sequenceDiagram
 
 ---
 
-### 4.5 Matrimonial Endpoints
+### 4.5 Matrimony Endpoints
 
-#### 4.5.1 Opt-In to Matrimonial Module
+> [!NOTE]
+> Actual implemented prefix: `/api/v1/matrimony`
+
+#### 4.5.1 Opt-In to Matrimony
 *   **Method:** `POST`
-*   **Path:** `/api/v1/matrimonial/opt-in`
-*   **Description:** Opts a verified, unmarried, adult member into the matrimonial matchmaking system. Allows configuring optional family co-approval at setup.
-*   **Auth Required:** `Self` (Verified Adult)
-*   **Request Body (JSON):**
-    ```json
-    {
-      "require_double_approval": true,
-      "family_co_approver_profile_id": 305
-    }
-    ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "profile_id": 402,
-      "matrimonial_status": "opted_in",
-      "require_double_approval": true,
-      "family_co_approver_profile_id": 305,
-      "opted_in_at": "2026-06-30T18:48:00Z"
-    }
-    ```
-*   **Query Parameters:** None
+*   **Path:** `/api/v1/matrimony/opt-in`
+*   **Description:** Opts a verified, eligible adult into the matrimony system. Creates a `MatrimonyProfile` record if one does not exist, then sets `opted_in = true`.
+*   **Auth Required:** `verified_adult`
+*   **Request Body:** None
 *   **Status Codes:**
-    *   `200 OK`: Successfully opted in.
-    *   `400 Bad Request`: User is not eligible (e.g., married, under 18, or not verified).
+    *   `200 OK`: Opted in successfully.
+    *   `400 Bad Request`: Not eligible (married, not verified, or under 18).
 
-#### 4.5.2 Configure Matrimonial Settings
-*   **Method:** `PUT`
-*   **Path:** `/api/v1/matrimonial/settings`
-*   **Description:** Updates matrimonial preferences, including double approval toggles and co-approver details.
-*   **Auth Required:** `Self` (Verified Adult, Opted in)
-*   **Request Body (JSON):**
-    ```json
-    {
-      "require_double_approval": false,
-      "family_co_approver_profile_id": null
-    }
-    ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "profile_id": 402,
-      "require_double_approval": false,
-      "family_co_approver_profile_id": null,
-      "updated_at": "2026-06-30T18:49:00Z"
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Settings updated.
-    *   `400 Bad Request`: Invalid co-approver selected.
-
-#### 4.5.3 Browse Matrimonial Profiles
+#### 4.5.2 Browse Matches
 *   **Method:** `GET`
-*   **Path:** `/api/v1/matrimonial/profiles`
-*   **Description:** Browses matrimonial database. Returns only Public Tier fields (`id`, `full_name`, `age`, `gender`, `profile_photo_url`) unless a connection request has been mutually approved.
-*   **Auth Required:** Verified Adult (Opted into Matrimony)
-*   **Request Body:** None
+*   **Path:** `/api/v1/matrimony/matches`
+*   **Description:** Returns a list of eligible matrimony profiles of the opposite gender. Also accessible to **confirmed guardians** (non-matrimony users who are approved co-approvers). Guardian users see the opposite gender of their ward(s).
+*   **Auth Required:** `verified_adult` | `local_admin` | `community_admin`
 *   **Response Body (JSON):**
     ```json
-    {
-      "results": [
-        {
-          "profile_id": 501,
+    [
+      {
+        "profile_id": "uuid",
+        "profile": {
           "full_name": "Ananya Hegde",
-          "age": 28,
-          "gender": "Female",
-          "profile_photo_url": "https://storage.googleapis.com/comm-photos/profile_501.jpg",
-          "connection_status": "none"
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "limit": 10,
-        "total_results": 45
+          "date_of_birth": "1998-09-24",
+          "gender": "female",
+          "occupation": "Architect",
+          "address": "Bengaluru, KA",
+          "profile_photo_url": "https://..."
+        },
+        "matrimony": {
+          "about_me": "...",
+          "education": "B.Arch",
+          "hobbies": "Painting"
+        },
+        "connection_status": "none",
+        "connection_request_id": null
       }
-    }
+    ]
     ```
-*   **Query Parameters:**
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `gender` | String | No | Filter by gender (`Male`/`Female`). |
-| `age_min` | Integer | No | Minimum age filter. |
-| `age_max` | Integer | No | Maximum age filter. |
-| `page` | Integer | No | Page number (default: 1). |
-| `limit` | Integer | No | Records per page (default: 10). |
-
 *   **Status Codes:**
-    *   `200 OK`: Matrimonial listings retrieved.
-    *   `403 Forbidden`: User has not opted into the matrimonial module.
+    *   `200 OK`: Match list returned.
+    *   `403 Forbidden`: User is not opted in and has no confirmed wards.
 
-#### 4.5.4 Opt-Out of Matrimonial Module
-*   **Method:** `POST`
-*   **Path:** `/api/v1/matrimonial/opt-out`
-*   **Description:** Suspends or removes profile from the matrimonial browse listing. Active connection requests remain but cannot be modified.
-*   **Auth Required:** `Self` (Verified Adult)
-*   **Request Body:** None
-*   **Response Body (JSON):**
+#### 4.5.3 Edit Matrimony Profile
+*   **Method:** `PUT`
+*   **Path:** `/api/v1/matrimony/edit`
+*   **Description:** Updates the user's matrimony profile details (about me, education, hobbies, co-approver settings).
+*   **Auth Required:** `verified_adult`
+*   **Request Body (JSON):**
     ```json
     {
-      "profile_id": 402,
-      "matrimonial_status": "opted_out",
-      "opted_out_at": "2026-06-30T18:50:00Z"
+      "about_me": "Looking for a life partner",
+      "education": "B.E. Computer Science",
+      "hobbies": "Reading, Hiking",
+      "family_background": "Traditional family from Hassan",
+      "double_approval_required": true,
+      "family_co_approver_username": "priyahegde"
     }
     ```
-*   **Query Parameters:** None
 *   **Status Codes:**
-    *   `200 OK`: Matrimonial access deactivated.
+    *   `200 OK`: Profile updated.
+    *   `404 Not Found`: Co-approver username not found.
+
+#### 4.5.4 Send Connection Request
+*   **Method:** `POST`
+*   **Path:** `/api/v1/matrimony/requests`
+*   **Description:** Sends a matrimonial connection interest request to a profile.
+*   **Auth Required:** `verified_adult` (opted in)
+*   **Request Body (JSON):**
+    ```json
+    { "receiver_profile_id": "uuid" }
+    ```
+*   **Status Codes:**
+    *   `201 Created`: Request sent.
+    *   `400 Bad Request`: Cannot connect to yourself or non-opted-in profile.
+    *   `409 Conflict`: Active request already exists.
+
+#### 4.5.5 List Connection Requests
+*   **Method:** `GET`
+*   **Path:** `/api/v1/matrimony/requests`
+*   **Description:** Returns all incoming and outgoing connection requests for the current user.
+*   **Auth Required:** `verified_adult`
+*   **Status Codes:**
+    *   `200 OK`: Request lists returned.
+
+#### 4.5.6 Action on Request (Approve/Decline)
+*   **Method:** `POST`
+*   **Path:** `/api/v1/matrimony/requests/{request_id}/action`
+*   **Description:** The receiver (or their confirmed co-approver) approves or declines an incoming connection request. If `double_approval_required` is true, self-approval sets status to `pending_family_approval`.
+*   **Auth Required:** `verified_adult`
+*   **Request Body (JSON):**
+    ```json
+    { "action": "approve" }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Action recorded.
+    *   `403 Forbidden`: Caller is not the receiver or co-approver.
+
+#### 4.5.7 List Guardian Co-Approver Invitations
+*   **Method:** `GET`
+*   **Path:** `/api/v1/matrimony/co-approver-invitations`
+*   **Description:** Returns pending co-approver invitations received by the current user — i.e. other users who have designated them as their family guardian/co-approver and are awaiting confirmation.
+*   **Auth Required:** Any authenticated user
+*   **Status Codes:**
+    *   `200 OK`: Invitation list returned.
+
+#### 4.5.8 Accept or Decline Guardian Invitation
+*   **Method:** `POST`
+*   **Path:** `/api/v1/matrimony/co-approver-invitations/{profile_id}/action`
+*   **Description:** The invited guardian accepts or declines the co-approver invitation from a ward. Accepting sets `family_co_approver_approved = true` on the ward's matrimony profile and unlocks Guardian Mode browsing.
+*   **Auth Required:** Any authenticated user
+*   **Request Body (JSON):**
+    ```json
+    { "action": "accept" }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Invitation accepted/declined.
+    *   `404 Not Found`: Invitation not found.
 
 ---
 
-### 4.6 Connection Request Endpoints
+### 4.6 Connection Requests
 
-#### 4.6.1 Send Connection Request
-*   **Method:** `POST`
-*   **Path:** `/api/v1/connections`
-*   **Description:** Sends a matrimonial connection interest request.
-*   **Auth Required:** Verified Adult (Opted into Matrimony)
-*   **Request Body (JSON):**
-    ```json
-    {
-      "receiver_profile_id": 501
-    }
-    ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "connection_id": 312,
-      "sender_profile_id": 402,
-      "receiver_profile_id": 501,
-      "status": "pending_self_approval",
-      "created_at": "2026-06-30T18:51:00Z"
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `201 Created`: Request sent successfully.
-    *   `400 Bad Request`: Cannot send request to yourself or someone who is not opted in.
-    *   `409 Conflict`: Active connection request already exists.
-
-#### 4.6.2 List Connection Requests
-*   **Method:** `GET`
-*   **Path:** `/api/v1/connections`
-*   **Description:** Lists all incoming, outgoing, or family-approval pending connection requests.
-*   **Auth Required:** Verified Adult (Opted into Matrimony or designated Co-Approver)
-*   **Request Body:** None
-*   **Response Body (JSON):**
-    ```json
-    {
-      "connections": [
-        {
-          "connection_id": 312,
-          "sender_profile_id": 402,
-          "sender_name": "Siddharth Gowda",
-          "receiver_profile_id": 501,
-          "status": "pending_self_approval",
-          "direction": "incoming",
-          "created_at": "2026-06-30T18:51:00Z"
-        }
-      ]
-    }
-    ```
-*   **Query Parameters:**
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `type` | String | No | Filter by request direction: `incoming`, `outgoing`, or `family`. |
-| `status` | String | No | Filter by state: `pending_self_approval`, `pending_family_approval`, `approved`, `rejected`. |
-
-*   **Status Codes:**
-    *   `200 OK`: Request list retrieved.
-
-#### 4.6.3 Respond to Connection Request (Self-Approval)
-*   **Method:** `POST`
-*   **Path:** `/api/v1/connections/{connection_id}/respond`
-*   **Description:** Accept or decline a matrimonial connection request. If double approval is configured, accepting moves the request to `pending_family_approval`.
-*   **Auth Required:** Receiver (`Self` owner of the target profile)
-*   **Request Body (JSON):**
-    ```json
-    {
-      "action": "approve"
-    }
-    ```
-*   **Response Body (JSON - Case: Double Approval Enabled):**
-    ```json
-    {
-      "connection_id": 312,
-      "status": "pending_family_approval",
-      "updated_at": "2026-06-30T18:53:00Z"
-    }
-    ```
-*   **Response Body (JSON - Case: Double Approval Disabled, Connection Complete):**
-    ```json
-    {
-      "connection_id": 312,
-      "status": "approved",
-      "details_revealed": {
-        "phone_number": "+919876543210",
-        "address": "90, 4th Cross, HSR Layout, Bengaluru, KA",
-        "occupation": "Senior Software Engineer"
-      },
-      "updated_at": "2026-06-30T18:53:00Z"
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Response updated.
-    *   `400 Bad Request`: Invalid action (must be `approve` or `reject`).
-    *   `403 Forbidden`: Requester is not the target receiver.
-
-#### 4.6.4 Family Co-Approve Connection Request
-*   **Method:** `POST`
-*   **Path:** `/api/v1/connections/{connection_id}/family-approve`
-*   **Description:** Approves or declines a connection request as the designated family co-approver.
-*   **Auth Required:** Designated Co-Approver
-*   **Request Body (JSON):**
-    ```json
-    {
-      "action": "approve"
-    }
-    ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "connection_id": 312,
-      "status": "approved",
-      "details_revealed": {
-        "phone_number": "+919876543210",
-        "address": "90, 4th Cross, HSR Layout, Bengaluru, KA",
-        "occupation": "Senior Software Engineer"
-      },
-      "family_approved_by": 305,
-      "updated_at": "2026-06-30T18:54:00Z"
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Family co-approval registered.
-    *   `403 Forbidden`: Requester is not the designated co-approver.
+> [!NOTE]
+> These are now part of the Matrimony module under `/api/v1/matrimony/requests`. See section 4.5 above.
 
 ---
 
 ### 4.7 Admin Endpoints
 
-#### 4.7.1 Admin Dashboard Stats
-*   **Method:** `GET`
-*   **Path:** `/api/v1/admin/dashboard/stats`
-*   **Description:** Fetches general statistics for verification activities and platform usage.
-*   **Auth Required:** `Community Admin`
-*   **Request Body:** None
-*   **Response Body (JSON):**
-    ```json
-    {
-      "total_members": 10450,
-      "verified_members": 9820,
-      "pending_verifications": 15,
-      "escalated_verifications": 3,
-      "matrimonial_opt_ins": 420,
-      "active_connections": 85
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Statistics retrieved.
-    *   `403 Forbidden`: Requester is not a Community Admin.
+> [!NOTE]
+> Actual implemented prefix: `/api/v1/admin`
 
-#### 4.7.2 Manage Regions
-*   **Method:** `GET`
-*   **Path:** `/api/v1/admin/regions`
-*   **Description:** Retrieves all geographic regions mapped to local admins.
-*   **Auth Required:** `Local Admin`, `Community Admin`
-*   **Request Body:** None
-*   **Response Body (JSON):**
-    ```json
-    {
-      "regions": [
-        {
-          "region_id": 4,
-          "region_name": "Bengaluru South",
-          "assigned_admins": [
-            {
-              "admin_profile_id": 1002,
-              "admin_name": "Ramesh Gowda"
-            }
-          ]
-        }
-      ]
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Regions returned.
-
-#### 4.7.3 Create Region
+#### 4.7.1 Create Admin Account
 *   **Method:** `POST`
-*   **Path:** `/api/v1/admin/regions`
-*   **Description:** Defines a new geographic administration region.
-*   **Auth Required:** `Community Admin`
+*   **Path:** `/api/v1/admin/create-admin`
+*   **Description:** Creates a new `local_admin` or `community_admin` account. No authentication required for initial bootstrapping.
+*   **Auth Required:** None (bootstrapping)
 *   **Request Body (JSON):**
     ```json
     {
-      "region_name": "Bengaluru East"
+      "email": "admin@example.com",
+      "password": "adminpass",
+      "role": "local_admin",
+      "full_name": "Ramesh Gowda"
     }
     ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "region_id": 5,
-      "region_name": "Bengaluru East",
-      "created_at": "2026-06-30T18:55:00Z"
-    }
-    ```
-*   **Query Parameters:** None
 *   **Status Codes:**
-    *   `201 Created`: Region created.
+    *   `201 Created`: Admin created.
+    *   `409 Conflict`: Email already in use.
 
-#### 4.7.4 Profile Memorial Handling (Deactivation)
-*   **Method:** `POST`
-*   **Path:** `/api/v1/admin/profiles/{profile_id}/memorialize`
-*   **Description:** Deactivates a profile and converts it into a read-only **Memorial Record** upon verification of death.
-*   **Auth Required:** `Community Admin`
-*   **Request Body (JSON):**
-    ```json
-    {
-      "date_of_death": "2026-05-10",
-      "notes": "Announced and verified via Family Head and Community Trust Notice."
-    }
-    ```
-*   **Response Body (JSON):**
-    ```json
-    {
-      "profile_id": 204,
-      "is_verified": false,
-      "is_memorial": true,
-      "deactivated_at": "2026-06-30T18:56:00Z",
-      "notes": "Announced and verified via Family Head and Community Trust Notice."
-    }
-    ```
-*   **Query Parameters:** None
-*   **Status Codes:**
-    *   `200 OK`: Profile successfully memorialized and converted to read-only.
-    *   `404 Not Found`: Profile not found.
-
-#### 4.7.5 Get Audit Logs
+#### 4.7.2 List All Users
 *   **Method:** `GET`
-*   **Path:** `/api/v1/admin/audit-logs`
-*   **Description:** Returns audit trails of administrator and verification actions.
-*   **Auth Required:** `Community Admin`
-*   **Request Body:** None
-*   **Response Body (JSON):**
-    ```json
-    {
-      "logs": [
-        {
-          "log_id": 4820,
-          "admin_profile_id": 1002,
-          "action": "approve_verification",
-          "target_profile_id": 402,
-          "timestamp": "2026-06-30T18:45:00Z",
-          "details": "Approved verification request ID 88"
-        }
-      ]
-    }
-    ```
-*   **Query Parameters:**
-
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `action` | String | No | Filter logs by action (e.g., `approve_verification`, `memorialize`). |
-| `page` | Integer | No | Pagination page index. |
-| `limit` | Integer | No | Page limit. |
-
+*   **Path:** `/api/v1/admin/users`
+*   **Description:** Returns all registered users with their profiles and verification status. Admin only.
+*   **Auth Required:** `community_admin` | `local_admin`
 *   **Status Codes:**
-    *   `200 OK`: Logs successfully retrieved.
+    *   `200 OK`: User list returned.
+    *   `403 Forbidden`: Not an admin.
 
----
+#### 4.7.3 Delete User Account
+*   **Method:** `DELETE`
+*   **Path:** `/api/v1/admin/users/{user_id}`
+*   **Description:** Permanently deletes a user account and all related data (profile, matrimony profile, connection requests). Community Admin only.
+*   **Auth Required:** `community_admin`
+*   **Status Codes:**
+    *   `200 OK`: User deleted.
+    *   `403 Forbidden`: Not a Community Admin.
+    *   `404 Not Found`: User not found.
+
+#### 4.7.4 Admin Dashboard Stats
+*   **Method:** `GET`
+*   **Path:** `/api/v1/admin/stats`
+*   **Description:** Returns platform-wide statistics.
+*   **Auth Required:** `community_admin` | `local_admin`
+*   **Status Codes:**
+    *   `200 OK`: Stats returned.
+
 
 ## 4.8 Search & Browse
 
