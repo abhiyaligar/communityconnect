@@ -59,6 +59,9 @@ class ProfileOnboard(BaseModel):
     additional_photos: List[str] = []
     visibility: str = "public"
     
+    # Social
+    social_links: Optional[dict] = None
+    
     class Config:
         json_schema_extra = {
             "example": {
@@ -126,3 +129,6 @@ class MatrimonyProfileUpdate(BaseModel):
     # Media & Settings
     additional_photos: Optional[List[str]] = None
     visibility: Optional[str] = None
+
+class SocialLinksUpdate(BaseModel):
+    social_links: dict

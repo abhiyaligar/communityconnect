@@ -13,25 +13,18 @@ export default function PendingVerification() {
   const { user, logout } = useAuth()
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-primary/8 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
 
       <div className="relative w-full max-w-lg text-center">
         {/* Icon */}
-        <div className="relative mx-auto w-24 h-24 mb-8">
-          <div className="w-24 h-24 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Clock className="h-12 w-12 text-amber-400" />
-          </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+        <div className="relative mx-auto w-16 h-16 mb-8">
+          <div className="w-16 h-16 rounded-full bg-secondary border border-border flex items-center justify-center">
+            <Clock className="h-8 w-8 text-foreground" />
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-3">
-          Verification <span className="gradient-text">Pending</span>
+        <h1 className="text-2xl font-bold mb-3">
+          Verification Pending
         </h1>
         <p className="text-muted-foreground mb-2">
           Hi <strong>{user?.full_name}</strong>! Your registration was successful.
@@ -42,30 +35,30 @@ export default function PendingVerification() {
         </p>
 
         {/* Steps */}
-        <Card className="glass-card text-left mb-8">
+        <Card className="border border-border shadow-none bg-card text-left mb-8">
           <CardContent className="p-6 space-y-6">
             {steps.map((s, i) => (
               <div key={i} className="flex gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                   s.done
-                    ? "gradient-primary"
+                    ? "bg-primary text-primary-foreground"
                     : i === 1
-                    ? "bg-amber-500/20 border border-amber-500/30"
-                    : "bg-muted border border-border"
+                    ? "bg-secondary border border-border text-foreground"
+                    : "bg-muted border border-border text-muted-foreground"
                 }`}>
                   {s.done ? (
-                    <CheckCircle className="h-5 w-5 text-white" />
+                    <CheckCircle className="h-4.5 w-4.5" />
                   ) : i === 1 ? (
-                    <Clock className="h-5 w-5 text-amber-400" />
+                    <Clock className="h-4.5 w-4.5" />
                   ) : (
-                    <span className="text-xs text-muted-foreground font-bold">{i + 1}</span>
+                    <span className="text-xs font-bold">{i + 1}</span>
                   )}
                 </div>
-                <div className="flex-1 pt-1">
-                  <p className={`font-semibold text-sm mb-1 ${s.done ? "text-foreground" : i === 1 ? "text-amber-400" : "text-muted-foreground"}`}>
+                <div className="flex-1 pt-0.5">
+                  <p className={`font-semibold text-xs mb-0.5 ${s.done ? "text-foreground" : i === 1 ? "text-foreground" : "text-muted-foreground"}`}>
                     {s.title}
                   </p>
-                  <p className="text-sm text-muted-foreground">{s.desc}</p>
+                  <p className="text-xs text-muted-foreground leading-normal">{s.desc}</p>
                 </div>
               </div>
             ))}

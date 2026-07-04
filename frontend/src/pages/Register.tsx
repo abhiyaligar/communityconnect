@@ -172,35 +172,30 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 pointer-events-none -z-10">
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[80px]" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
 
       <div className="w-full max-w-xl relative z-10">
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-              <Users className="h-6 w-6 text-white" />
+            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center group-hover:opacity-90 transition-opacity">
+              <Users className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl tracking-tight">CommunityConnect</span>
+            <span className="font-semibold text-lg tracking-tight text-foreground">CommunityConnect</span>
           </Link>
         </div>
 
-        <Card className="glass-card border-white/10 shadow-2xl backdrop-blur-xl">
+        <Card className="border border-border shadow-sm bg-card">
           {/* STEP 1: Email & Password */}
           {step === "email" && (
             <>
               <CardHeader className="text-center pb-2">
-                <div className="w-14 h-14 rounded-2xl glass border border-primary/30 flex items-center justify-center mx-auto mb-4 bg-primary/5">
-                  <Mail className="h-7 w-7 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
+                  <Mail className="h-6 w-6 text-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Create Account</CardTitle>
-                <CardDescription>Enter your email and password to begin.</CardDescription>
+                <CardTitle className="text-xl">Create Account</CardTitle>
+                <CardDescription className="text-xs">Enter your email and password to begin.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4">
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
@@ -210,7 +205,7 @@ export default function Register() {
                       placeholder="name@example.com"
                       value={form.email}
                       onChange={(e) => setF("email")(e.target.value)}
-                      className="h-12 bg-background/50 border-white/10"
+                      className="h-10 bg-background border-border"
                       required
                     />
                   </div>
@@ -222,15 +217,15 @@ export default function Register() {
                       placeholder="••••••••"
                       value={form.password}
                       onChange={(e) => setF("password")(e.target.value)}
-                      className="h-12 bg-background/50 border-white/10"
+                      className="h-10 bg-background border-border"
                       required
                     />
                   </div>
-                  {error && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-                  <Button type="submit" variant="gradient" size="lg" className="w-full h-12 gap-2 mt-4" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+                  <Button type="submit" size="lg" className="w-full h-10 gap-2 mt-4" disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     {loading ? "Sending OTP..." : "Continue"}
-                    {!loading && <ArrowRight className="h-5 w-5" />}
+                    {!loading && <ArrowRight className="h-4 w-4" />}
                   </Button>
                 </form>
                 <p className="text-center text-sm text-muted-foreground mt-6">
@@ -244,13 +239,13 @@ export default function Register() {
           {step === "otp" && (
             <>
               <CardHeader className="text-center pb-2">
-                <div className="w-14 h-14 rounded-2xl glass border border-primary/30 flex items-center justify-center mx-auto mb-4 bg-primary/5">
-                  <ShieldCheck className="h-7 w-7 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheck className="h-6 w-6 text-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Verify Email</CardTitle>
-                <CardDescription>We sent a 6-digit code to {form.email}</CardDescription>
+                <CardTitle className="text-xl">Verify Email</CardTitle>
+                <CardDescription className="text-xs">We sent a 6-digit code to {form.email}</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-4">
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="code">Verification Code</Label>
@@ -262,13 +257,13 @@ export default function Register() {
                       maxLength={6}
                       value={form.code}
                       onChange={(e) => setF("code")(e.target.value.replace(/\D/g, ""))}
-                      className="h-14 text-3xl text-center font-mono tracking-[0.5em] bg-background/50 border-white/10"
+                      className="h-12 text-2xl text-center font-mono tracking-[0.5em] bg-background border-border"
                       required
                     />
                   </div>
-                  {error && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-                  <Button type="submit" variant="gradient" size="lg" className="w-full h-12 mt-2" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : "Verify & Continue"}
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+                  <Button type="submit" size="lg" className="w-full h-10 mt-2" disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Verify & Continue"}
                   </Button>
                   <div className="flex items-center justify-between text-sm mt-4">
                     <button type="button" onClick={() => { setStep("email"); setError("") }} className="text-muted-foreground hover:text-foreground flex items-center gap-1">
@@ -287,11 +282,11 @@ export default function Register() {
           {step === "core" && (
             <>
               <CardHeader className="text-center pb-2">
-                <div className="w-14 h-14 rounded-2xl glass border border-primary/30 flex items-center justify-center mx-auto mb-4 bg-primary/5">
-                  <User className="h-7 w-7 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
+                  <User className="h-6 w-6 text-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Your Profile</CardTitle>
-                <CardDescription>Tell us a bit about yourself.</CardDescription>
+                <CardTitle className="text-xl">Your Profile</CardTitle>
+                <CardDescription className="text-xs">Tell us a bit about yourself.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <form onSubmit={(e) => { e.preventDefault(); setStep("matrimony") }} className="space-y-4">
@@ -343,7 +338,7 @@ export default function Register() {
                   </div>
                   
                   <div className="pt-2">
-                    <Button type="submit" variant="gradient" className="w-full h-11">
+                    <Button type="submit" className="w-full h-10 text-xs">
                       Next Step <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
@@ -356,25 +351,25 @@ export default function Register() {
           {step === "matrimony" && (
             <>
               <CardHeader className="text-center pb-2">
-                <div className="w-14 h-14 rounded-2xl glass border border-primary/30 flex items-center justify-center mx-auto mb-4 bg-primary/5">
-                  <Heart className="h-7 w-7 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
+                  <Heart className="h-6 w-6 text-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Matrimony (Optional)</CardTitle>
-                <CardDescription>Find your perfect life partner within the community.</CardDescription>
+                <CardTitle className="text-xl">Matrimony (Optional)</CardTitle>
+                <CardDescription className="text-xs">Find your perfect life partner within the community.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
                 <form onSubmit={handleOnboard} className="space-y-6">
                   
-                  <div className="flex items-center space-x-3 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                  <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />
-                    <Label htmlFor="create_matrimony" className="font-semibold cursor-pointer text-base">
+                    <Label htmlFor="create_matrimony" className="font-semibold cursor-pointer text-sm text-foreground">
                       Yes, create my Matrimony Profile
                     </Label>
                   </div>
 
                   {form.create_matrimony && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                      <h3 className="font-medium text-sm text-primary uppercase tracking-wider">Quick Details</h3>
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Quick Details</h3>
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -422,13 +417,13 @@ export default function Register() {
                     </div>
                   )}
 
-                  {error && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
                   <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" className="flex-1 h-11" onClick={() => setStep("core")}>
+                    <Button type="button" variant="outline" className="flex-1 h-10 text-xs" onClick={() => setStep("core")}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
-                    <Button type="submit" variant="gradient" className="flex-1 h-11" disabled={loading}>
+                    <Button type="submit" className="flex-1 h-10 text-xs" disabled={loading}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {loading ? "Submitting..." : "Complete Setup"}
                     </Button>
@@ -440,19 +435,19 @@ export default function Register() {
 
           {/* STEP 5: SUCCESS */}
           {step === "success" && (
-            <CardContent className="py-16 text-center space-y-5">
-              <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto animate-in zoom-in duration-500 shadow-xl shadow-primary/30">
-                <CheckCircle className="h-10 w-10 text-white" />
+            <CardContent className="py-12 text-center space-y-4">
+              <div className="w-14 h-14 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto">
+                <CheckCircle className="h-8 w-8 text-foreground" />
               </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Welcome aboard!</h2>
-                <p className="text-muted-foreground text-lg">
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-bold tracking-tight">Welcome aboard!</h2>
+                <p className="text-sm text-muted-foreground">
                   Your profile has been created.
                 </p>
               </div>
-              <div className="pt-4">
-                <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
-                <p className="text-sm text-muted-foreground mt-4">Redirecting...</p>
+              <div className="pt-2">
+                <Loader2 className="h-6 w-6 text-foreground animate-spin mx-auto" />
+                <p className="text-xs text-muted-foreground mt-3">Redirecting...</p>
               </div>
             </CardContent>
           )}

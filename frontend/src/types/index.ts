@@ -26,6 +26,12 @@ export interface AuthUser {
   contact_number: string
   address?: string
   occupation?: string
+  social_links?: {
+    linkedin?: string
+    instagram?: string
+    facebook?: string
+    twitter?: string
+  }
   matrimony?: {
     opted_in: boolean
     height_cm?: string
@@ -128,10 +134,8 @@ export interface UserProfile {
 export interface MatrimonyEntry {
   profile_id: string
   about_me?: string
-  education?: string
-  family_background?: string
-  hobbies?: string
-  preferences?: string
+  hobbies?: string[]
+  languages?: string[]
   profile?: {
     full_name?: string
     date_of_birth?: string
@@ -141,5 +145,36 @@ export interface MatrimonyEntry {
     contact_number?: string
     address?: string
     occupation?: string
+  }
+  matrimony_details?: {
+    height_cm?: string
+    body_type?: string
+    complexion?: string
+    highest_qualification?: string
+    field_of_study?: string
+    institution?: string
+    employment_type?: string
+    job_title?: string
+    income_range?: string
+    work_location?: string
+    gotra?: string
+    rashi?: string
+    nakshatra?: string
+    manglik_status?: string
+    diet?: string
+    smoking?: string
+    drinking?: string
+    physical_activity?: string
+    father_name?: string
+    father_occupation?: string
+    mother_name?: string
+    mother_occupation?: string
+    brothers_count?: string
+    brothers_marital_status?: string
+    sisters_count?: string
+    sisters_marital_status?: string
+    family_type?: string
+    family_values?: string
+    family_financial_status?: string
   }
 }

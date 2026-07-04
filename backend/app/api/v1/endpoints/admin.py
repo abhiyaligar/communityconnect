@@ -237,8 +237,8 @@ async def list_all_matrimony_profiles(
         response_data.append({
             "profile_id": str(mat.profile_id),
             "about_me": mat.about_me,
-            "education": mat.education,
-            "family_background": mat.family_background,
+            "education": mat.highest_qualification,
+            "family_background": f"Father: {mat.father_name or '—'} ({mat.father_occupation or '—'}), Mother: {mat.mother_name or '—'} ({mat.mother_occupation or '—'})",
             "hobbies": mat.hobbies,
             "preferences": mat.preferences,
             "profile": {

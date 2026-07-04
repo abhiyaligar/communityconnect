@@ -14,6 +14,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (token: string, userId: string, role: UserRole) => Promise<void>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
   isAuthenticated: boolean
   hasRole: (...roles: UserRole[]) => boolean
   isAdmin: boolean
@@ -81,6 +82,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const refreshUser = async () => {
+    const savedToken = localStorage.getItem("access_token")
+    if (!savedToken) return
+    try {
+      const res = await api.get("/profiles/me")
+      setUser(res.data)
+    } catch (err) {
+      console.error("Failed to refresh user profile data", err)
+    }
+  }
+
   const hasRole = (...roles: UserRole[]) => {
     if (!user) return false
     return roles.includes(user.role as UserRole)
@@ -97,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
+        refreshUser,
         isAuthenticated: !!token && !!user,
         hasRole,
         isAdmin,

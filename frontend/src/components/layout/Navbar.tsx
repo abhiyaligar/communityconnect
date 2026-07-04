@@ -10,9 +10,12 @@ import {
   Home,
   Heart,
   Shield,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/contexts/ThemeContext"
 
 export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin } = useAuth()
@@ -24,20 +27,26 @@ export function Navbar() {
     navigate("/login")
   }
 
+  const { theme, setTheme } = useTheme()
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
   const initials = user?.full_name
     ? user.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 glass border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shadow-lg shadow-primary/30 group-hover:scale-105 transition-transform">
-              <Users className="h-4 w-4 text-white" />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 rounded bg-primary flex items-center justify-center group-hover:opacity-90 transition-opacity">
+              <Users className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg gradient-text">CommunityConnect</span>
+            <span className="font-semibold text-base text-foreground tracking-tight">CommunityConnect</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -67,17 +76,27 @@ export function Navbar() {
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <Link to="/profile">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-                    <Avatar className="h-7 w-7">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-secondary transition-colors cursor-pointer">
+                    <Avatar className="h-7 w-7 border border-border">
                       <AvatarImage src={user?.profile_photo_url} />
-                      <AvatarFallback className="text-xs gradient-primary text-white">
+                      <AvatarFallback className="text-xs bg-muted text-foreground">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium truncate max-w-[120px]">
+                    <span className="text-xs font-semibold text-foreground truncate max-w-[120px]">
                       {user?.full_name}
                     </span>
                   </div>
@@ -97,19 +116,30 @@ export function Navbar() {
                   <Button variant="ghost" size="sm">Sign In</Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="gradient" size="sm">Join Community</Button>
+                  <Button size="sm">Join Community</Button>
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-white/5"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* Mobile Menu Toggle & Theme toggle */}
+          <div className="flex items-center gap-1 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <button
+              className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -124,13 +154,13 @@ export function Navbar() {
           {isAuthenticated ? (
             <>
               <Link to="/profile" onClick={() => setMobileOpen(false)}>
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5">
-                  <Avatar className="h-8 w-8">
+                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarImage src={user?.profile_photo_url} />
-                    <AvatarFallback className="text-xs gradient-primary text-white">{initials}</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-muted text-foreground">{initials}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-sm">{user?.full_name}</p>
+                    <p className="font-semibold text-sm">{user?.full_name}</p>
                     <p className="text-xs text-muted-foreground capitalize">{user?.role?.replace(/_/g, " ")}</p>
                   </div>
                 </div>

@@ -10,9 +10,9 @@ import {
 } from "lucide-react"
 
 const quickLinks = [
-  { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/20", requireOptIn: false },
-  { to: "/matrimony", icon: Heart, label: "Matrimony", desc: "Browse eligible matches", color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20", requireOptIn: true },
-  { to: "/matrimony/edit", icon: User, label: "Edit Matrimony", desc: "Update matrimony details", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", requireOptIn: false },
+  { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: false },
+  { to: "/matrimony", icon: Heart, label: "Matrimony", desc: "Browse eligible matches", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: true },
+  { to: "/matrimony/edit", icon: User, label: "Edit Matrimony", desc: "Update matrimony details", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: false },
 ]
 
 export default function Dashboard() {
@@ -34,24 +34,21 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background pt-20 pb-12 px-4">
       <div className="max-w-5xl mx-auto">
         {/* Hero Welcome */}
-        <div className="relative glass-card rounded-3xl p-8 mb-8 overflow-hidden">
-          <div className="absolute inset-0 gradient-primary opacity-5 rounded-3xl" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-2xl translate-x-16 -translate-y-16" />
-
-          <div className="relative flex items-start gap-6">
-            <Avatar className="h-16 w-16 border-2 border-primary/30">
+        <div className="relative border border-border bg-secondary/50 rounded-2xl p-6 mb-8 overflow-hidden">
+          <div className="relative flex items-center gap-5">
+            <Avatar className="h-14 w-14 border border-border">
               <AvatarImage src={user?.profile_photo_url} />
-              <AvatarFallback className="text-xl font-bold gradient-primary text-white">
+              <AvatarFallback className="text-lg font-bold bg-muted text-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">Welcome back, {user?.full_name?.split(" ")[0]}!</h1>
-                <Sparkles className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-2 mb-1.5">
+                <h1 className="text-xl font-bold tracking-tight">Welcome back, {user?.full_name?.split(" ")[0]}!</h1>
+                <Sparkles className="h-4.5 w-4.5 text-foreground" />
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={roleBadgeVariant}>
+                <Badge variant={roleBadgeVariant === "success" ? "default" : "secondary"}>
                   {user?.role === "verified_adult" ? (
                     <CheckCircle className="h-3 w-3 mr-1" />
                   ) : (
@@ -60,10 +57,10 @@ export default function Dashboard() {
                   {roleLabel[user?.role || ""] || user?.role}
                 </Badge>
                 {user?.gender && (
-                  <Badge variant="outline" className="capitalize">{user.gender}</Badge>
+                  <Badge variant="outline" className="capitalize text-xs font-normal">{user.gender}</Badge>
                 )}
                 {user?.marital_status && (
-                  <Badge variant="outline" className="capitalize">{user.marital_status.replace(/_/g, " ")}</Badge>
+                  <Badge variant="outline" className="capitalize text-xs font-normal">{user.marital_status.replace(/_/g, " ")}</Badge>
                 )}
               </div>
             </div>
@@ -73,10 +70,10 @@ export default function Dashboard() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Summary */}
           <div className="md:col-span-2">
-            <Card className="glass-card h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <User className="h-4 w-4 text-primary" /> Your Information
+            <Card className="border border-border shadow-none h-full bg-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  <User className="h-4 w-4 text-foreground" /> Your Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -86,10 +83,10 @@ export default function Dashboard() {
                   { icon: Briefcase, label: "Occupation", value: user?.occupation || "Not set" },
                   { icon: Users, label: "Date of Birth", value: user?.date_of_birth },
                 ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <div key={label} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/20">
                     <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</p>
                       <p className="text-sm font-medium">{value || "—"}</p>
                     </div>
                   </div>
@@ -114,17 +111,17 @@ export default function Dashboard() {
 
               return (
                 <Link key={to} to={to}>
-                  <Card className="glass-card hover:border-primary/20 transition-all duration-300 group cursor-pointer">
-                    <CardContent className="p-5">
+                  <Card className="border border-border shadow-none bg-card hover:bg-secondary/40 transition-colors cursor-pointer">
+                    <CardContent className="p-4">
                       <div className="flex items-start gap-4">
-                        <div className={`w-10 h-10 rounded-xl border ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                          <Icon className={`h-5 w-5 ${color}`} />
+                        <div className={`w-9 h-9 rounded border ${bg} flex items-center justify-center shrink-0`}>
+                          <Icon className={`h-4 w-4 ${color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm">{label}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mt-1" />
                       </div>
                     </CardContent>
                   </Card>
@@ -133,11 +130,11 @@ export default function Dashboard() {
             })}
 
             {/* Community info card */}
-            <Card className="glass-card">
-              <CardContent className="p-5">
+            <Card className="border border-border shadow-none bg-card">
+              <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
+                  <div className="w-9 h-9 rounded bg-secondary border border-border flex items-center justify-center">
+                    <Users className="h-4 w-4 text-foreground" />
                   </div>
                   <div>
                     <p className="font-semibold text-sm">Community</p>
@@ -146,8 +143,8 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <Badge variant={roleBadgeVariant} className="text-xs">
+                    <span className="text-xs text-muted-foreground">Status</span>
+                    <Badge variant={roleBadgeVariant === "success" ? "default" : "secondary"} className="text-[10px] font-semibold">
                       {roleLabel[user?.role || ""] || user?.role}
                     </Badge>
                   </div>

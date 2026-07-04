@@ -7,22 +7,65 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { ArrowLeft, Loader2, Save, Heart, User, Briefcase, Star, Users, Coffee } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Heart, User, Briefcase, Star, Users, Coffee, Eye } from "lucide-react"
 
 export default function EditMatrimony() {
   const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPreview, setShowPreview] = useState(false)
 
   // Form State
-  const [formData, setFormData] = useState<any>({})
+  const [formData, setFormData] = useState<any>({
+    height_cm: "",
+    body_type: "",
+    complexion: "",
+    highest_qualification: "",
+    field_of_study: "",
+    institution: "",
+    employment_type: "",
+    job_title: "",
+    income_range: "",
+    work_location: "",
+    gotra: "",
+    rashi: "",
+    nakshatra: "",
+    manglik_status: "",
+    birth_time: "",
+    birth_place: "",
+    father_name: "",
+    father_occupation: "",
+    mother_name: "",
+    mother_occupation: "",
+    brothers_count: "",
+    brothers_marital_status: "",
+    sisters_count: "",
+    sisters_marital_status: "",
+    family_type: "",
+    family_values: "",
+    family_financial_status: "",
+    diet: "",
+    smoking: "",
+    drinking: "",
+    physical_activity: "",
+    about_me: "",
+    hobbies: "",
+    languages: "",
+  })
 
   useEffect(() => {
     if (user && user.matrimony) {
-      setFormData(user.matrimony)
+      setFormData({
+        ...user.matrimony,
+        hobbies: Array.isArray(user.matrimony.hobbies) ? user.matrimony.hobbies.join(", ") : user.matrimony.hobbies || "",
+        languages: Array.isArray(user.matrimony.languages) ? user.matrimony.languages.join(", ") : user.matrimony.languages || "",
+      })
     }
   }, [user])
 
@@ -35,13 +78,21 @@ export default function EditMatrimony() {
     setFormData((prev: any) => ({ ...prev, [name]: value }))
   }
 
+  const getPayload = () => {
+    return {
+      ...formData,
+      hobbies: formData.hobbies ? formData.hobbies.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+      languages: formData.languages ? formData.languages.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
     
     try {
-      await api.put("/profiles/me/matrimony", formData)
+      await api.put("/profiles/me/matrimony", getPayload())
       await refreshUser()
       navigate("/dashboard")
     } catch (err) {
@@ -53,6 +104,16 @@ export default function EditMatrimony() {
 
   if (!user) return null
 
+  const userAge = user?.date_of_birth
+    ? Math.floor((Date.now() - new Date(user.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+    : null
+
+  const initials = user?.full_name
+    ? user.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?"
+
+  const previewPayload = getPayload()
+
   return (
     <div className="min-h-screen bg-background pt-20 pb-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -60,18 +121,17 @@ export default function EditMatrimony() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
-        <Card className="glass-card shadow-2xl overflow-hidden border-primary/20">
-          <div className="h-2 gradient-primary" />
-          <CardHeader className="text-center pb-8 pt-10">
-            <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 ring-8 ring-primary/5">
-              <Heart className="h-8 w-8 text-primary" />
+        <Card className="border border-border shadow-none overflow-hidden bg-card">
+          <CardHeader className="text-center pb-6 pt-8">
+            <div className="mx-auto bg-muted w-12 h-12 rounded-full flex items-center justify-center mb-3">
+              <Heart className="h-6 w-6 text-foreground" />
             </div>
-            <CardTitle className="text-3xl">Matrimony Profile</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle className="text-2xl font-bold tracking-tight">Matrimony Profile</CardTitle>
+            <CardDescription className="text-sm">
               Complete your profile to find the perfect match within the community.
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-8 sm:px-12 pb-12">
+          <CardContent className="px-6 sm:px-8 pb-10">
             
             {error && (
               <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-xl mb-6 text-center border border-destructive/20 font-medium">
@@ -79,13 +139,33 @@ export default function EditMatrimony() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-12">
+            <form onSubmit={handleSubmit} className="space-y-10">
               
-              {/* SECTION: PHYSICAL */}
-              <section className="space-y-6">
+              {/* SECTION: ABOUT ME */}
+              <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <User className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Physical Attributes</h3>
+                  <User className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">About Me</h3>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="about_me">Describe yourself, your outlook, and what you are looking for in a partner</Label>
+                  <textarea
+                    id="about_me"
+                    name="about_me"
+                    rows={4}
+                    placeholder="E.g. I am family-oriented, working in tech..."
+                    value={formData.about_me || ""}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                </div>
+              </section>
+
+              {/* SECTION: PHYSICAL */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <User className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Physical Attributes</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="space-y-2">
@@ -119,12 +199,12 @@ export default function EditMatrimony() {
               </section>
 
               {/* SECTION: PROFESSIONAL */}
-              <section className="space-y-6">
+              <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <Briefcase className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Education & Career</h3>
+                  <Briefcase className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Education & Career</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label>Highest Qualification</Label>
                     <Select value={formData.highest_qualification || ""} onValueChange={(v) => handleSelect("highest_qualification", v)}>
@@ -145,6 +225,10 @@ export default function EditMatrimony() {
                     <Input name="field_of_study" placeholder="e.g. Computer Science" value={formData.field_of_study || ""} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
+                    <Label>Institution</Label>
+                    <Input name="institution" placeholder="e.g. IIT Bangalore" value={formData.institution || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Employment Type</Label>
                     <Select value={formData.employment_type || ""} onValueChange={(v) => handleSelect("employment_type", v)}>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -156,6 +240,10 @@ export default function EditMatrimony() {
                         <SelectItem value="not_working">Not Working</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Job Title / Designation</Label>
+                    <Input name="job_title" placeholder="e.g. Software Engineer" value={formData.job_title || ""} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label>Income Range</Label>
@@ -171,14 +259,18 @@ export default function EditMatrimony() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2 sm:col-span-3">
+                    <Label>Work Location / City</Label>
+                    <Input name="work_location" placeholder="e.g. Bengaluru, Karnataka" value={formData.work_location || ""} onChange={handleChange} />
+                  </div>
                 </div>
               </section>
 
               {/* SECTION: HOROSCOPE */}
-              <section className="space-y-6">
+              <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <Star className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Horoscope & Astro</h3>
+                  <Star className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Horoscope & Astro</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div className="space-y-2">
@@ -188,6 +280,10 @@ export default function EditMatrimony() {
                   <div className="space-y-2">
                     <Label>Rashi / Zodiac</Label>
                     <Input name="rashi" placeholder="e.g. Leo" value={formData.rashi || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nakshatra</Label>
+                    <Input name="nakshatra" placeholder="e.g. Rohini" value={formData.nakshatra || ""} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
                     <Label>Manglik Status</Label>
@@ -201,16 +297,100 @@ export default function EditMatrimony() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Birth Time</Label>
+                    <Input name="birth_time" placeholder="e.g. 05:45 PM" value={formData.birth_time || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Birth Place</Label>
+                    <Input name="birth_place" placeholder="e.g. Mysuru, Karnataka" value={formData.birth_place || ""} onChange={handleChange} />
+                  </div>
+                </div>
+              </section>
+
+              {/* SECTION: FAMILY */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Users className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Family Background</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Father's Name</Label>
+                    <Input name="father_name" placeholder="Father's full name" value={formData.father_name || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Father's Occupation</Label>
+                    <Input name="father_occupation" placeholder="e.g. Retired Engineer" value={formData.father_occupation || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mother's Name</Label>
+                    <Input name="mother_name" placeholder="Mother's full name" value={formData.mother_name || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mother's Occupation</Label>
+                    <Input name="mother_occupation" placeholder="e.g. Teacher" value={formData.mother_occupation || ""} onChange={handleChange} />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Brothers (Count / Marital status)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input name="brothers_count" placeholder="Count" type="number" value={formData.brothers_count || ""} onChange={handleChange} />
+                      <Input name="brothers_marital_status" placeholder="e.g. Married / Single" value={formData.brothers_marital_status || ""} onChange={handleChange} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sisters (Count / Marital status)</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input name="sisters_count" placeholder="Count" type="number" value={formData.sisters_count || ""} onChange={handleChange} />
+                      <Input name="sisters_marital_status" placeholder="e.g. Married / Single" value={formData.sisters_marital_status || ""} onChange={handleChange} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Family Type</Label>
+                    <Select value={formData.family_type || ""} onValueChange={(v) => handleSelect("family_type", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nuclear">Nuclear</SelectItem>
+                        <SelectItem value="joint">Joint</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Family Values</Label>
+                    <Select value={formData.family_values || ""} onValueChange={(v) => handleSelect("family_values", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="traditional">Traditional</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="liberal">Liberal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Family Financial Status</Label>
+                    <Select value={formData.family_financial_status || ""} onValueChange={(v) => handleSelect("family_financial_status", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="rich">Rich</SelectItem>
+                        <SelectItem value="upper_middle">Upper Middle Class</SelectItem>
+                        <SelectItem value="middle">Middle Class</SelectItem>
+                        <SelectItem value="lower_middle">Lower Middle Class</SelectItem>
+                        <SelectItem value="poor">Lower Class</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </section>
 
               {/* SECTION: LIFESTYLE */}
-              <section className="space-y-6">
+              <section className="space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <Coffee className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Lifestyle</h3>
+                  <Coffee className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Lifestyle</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Diet</Label>
                     <Select value={formData.diet || ""} onValueChange={(v) => handleSelect("diet", v)}>
@@ -244,23 +424,268 @@ export default function EditMatrimony() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Physical Activity</Label>
+                    <Select value={formData.physical_activity || ""} onValueChange={(v) => handleSelect("physical_activity", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no">No / Low</SelectItem>
+                        <SelectItem value="occasionally">Occasionally</SelectItem>
+                        <SelectItem value="yes">Regular / Active</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+
+              {/* SECTION: HOBBIES & LANGUAGES */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Heart className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Hobbies & Languages</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="hobbies">Hobbies (comma-separated)</Label>
+                    <Input id="hobbies" name="hobbies" placeholder="e.g. Reading, Hiking, Cooking" value={formData.hobbies || ""} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="languages">Languages spoken (comma-separated)</Label>
+                    <Input id="languages" name="languages" placeholder="e.g. English, Hindi, Kannada" value={formData.languages || ""} onChange={handleChange} />
+                  </div>
                 </div>
               </section>
 
               <Separator />
 
-              <div className="flex justify-end gap-4 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-                <Button type="submit" size="lg" disabled={loading} className="w-40 shadow-lg shadow-primary/20">
-                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                  Save Profile
+              <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
+                <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setShowPreview(true)}>
+                  <Eye className="mr-2 h-4 w-4" /> Preview Profile
                 </Button>
+                <div className="flex justify-end gap-3 w-full sm:w-auto">
+                  <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate(-1)}>Cancel</Button>
+                  <Button type="submit" disabled={loading} className="w-40 flex-1 sm:flex-none">
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Profile
+                  </Button>
+                </div>
               </div>
 
             </form>
           </CardContent>
         </Card>
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto border border-border bg-card">
+          <DialogHeader className="pb-4 border-b border-border">
+            <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+              <Avatar className="h-16 w-16 border border-border">
+                <AvatarImage src={user.profile_photo_url} />
+                <AvatarFallback className="text-xl font-bold bg-muted text-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <DialogTitle className="text-xl font-bold">{user.full_name}</DialogTitle>
+                  <Badge className="text-[10px]">Preview Mode</Badge>
+                </div>
+                <DialogDescription className="text-xs flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                  {userAge && <Badge variant="secondary" className="text-[10px]">{userAge} yrs</Badge>}
+                  <Badge variant="outline" className="text-[10px] capitalize font-normal">{user.gender}</Badge>
+                  <Badge variant="outline" className="text-[10px] capitalize font-normal">{user.marital_status}</Badge>
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-8 pt-4 text-sm">
+            {/* About Me */}
+            {previewPayload.about_me && (
+              <div className="space-y-2">
+                <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider">About Me</h4>
+                <p className="text-foreground leading-relaxed bg-secondary/30 p-3.5 rounded-lg border border-border/50">{previewPayload.about_me}</p>
+              </div>
+            )}
+
+            {/* Personal & Physical */}
+            <div className="space-y-3">
+              <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <User className="h-4 w-4 text-foreground" /> Personal Details
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-secondary/20 rounded-lg border border-border/30">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Height</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.height_cm ? `${previewPayload.height_cm} cm` : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Body Type</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.body_type || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Complexion</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.complexion || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Horoscope */}
+            <div className="space-y-3">
+              <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <Star className="h-4 w-4 text-foreground" /> Horoscope & Astro
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-secondary/20 rounded-lg border border-border/30">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Gotra</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.gotra || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Rashi</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.rashi || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Nakshatra</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.nakshatra || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Manglik</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.manglik_status || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Birth Time</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.birth_time || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Birth Place</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.birth_place || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Professional */}
+            <div className="space-y-3">
+              <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <Briefcase className="h-4 w-4 text-foreground" /> Education & Career
+              </h4>
+              <div className="grid grid-cols-2 gap-3 p-3 bg-secondary/20 rounded-lg border border-border/30">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Qualification</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.highest_qualification || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Field of Study</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.field_of_study || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Institution</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.institution || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Employment Type</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.employment_type?.replace(/_/g, " ") || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Job Title</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.job_title || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Income Range</p>
+                  <p className="font-semibold text-xs mt-0.5 uppercase">{previewPayload.income_range?.replace(/_/g, " ") || "—"}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Work Location</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.work_location || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Family Details */}
+            <div className="space-y-3">
+              <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-foreground" /> Family details
+              </h4>
+              <div className="grid grid-cols-2 gap-3 p-3 bg-secondary/20 rounded-lg border border-border/30">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Father's Name</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.father_name || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Father's Occupation</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.father_occupation || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Mother's Name</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.mother_name || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Mother's Occupation</p>
+                  <p className="font-semibold text-xs mt-0.5">{previewPayload.mother_occupation || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Siblings</p>
+                  <p className="font-semibold text-xs mt-0.5">
+                    Brothers: {previewPayload.brothers_count || "0"} ({previewPayload.brothers_marital_status || "—"}), 
+                    Sisters: {previewPayload.sisters_count || "0"} ({previewPayload.sisters_marital_status || "—"})
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Family Details</p>
+                  <p className="font-semibold text-xs mt-0.5">
+                    {previewPayload.family_type || "—"} Type, {previewPayload.family_values || "—"} Values
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Lifestyle & Hobbies */}
+            <div className="space-y-3">
+              <h4 className="text-xs uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <Coffee className="h-4 w-4 text-foreground" /> Lifestyle & Preferences
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-secondary/20 rounded-lg border border-border/30">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Diet</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.diet || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Smoking</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.smoking || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold">Drinking</p>
+                  <p className="font-semibold text-xs mt-0.5 capitalize">{previewPayload.drinking || "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hobbies / Languages */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {previewPayload.hobbies && previewPayload.hobbies.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Hobbies</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {previewPayload.hobbies.map((h: string) => (
+                      <Badge key={h} variant="secondary" className="text-[10px] font-normal">{h}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {previewPayload.languages && previewPayload.languages.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Languages</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {previewPayload.languages.map((l: string) => (
+                      <Badge key={l} variant="secondary" className="text-[10px] font-normal">{l}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

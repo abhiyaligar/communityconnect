@@ -52,27 +52,22 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[80px]" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-              <Users className="h-6 w-6 text-white" />
+            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center group-hover:opacity-90 transition-opacity">
+              <Users className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl tracking-tight">CommunityConnect</span>
+            <span className="font-semibold text-lg tracking-tight text-foreground">CommunityConnect</span>
           </Link>
         </div>
 
-        <Card className="glass-card border-white/10 shadow-2xl backdrop-blur-xl">
-          <CardHeader className="space-y-3 pb-6">
-            <CardTitle className="text-3xl font-bold tracking-tight">Welcome back</CardTitle>
-            <CardDescription className="text-base text-muted-foreground/80">
+        <Card className="border border-border shadow-sm bg-card">
+          <CardHeader className="space-y-1.5 pb-6">
+            <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               Sign in to your account to continue
             </CardDescription>
           </CardHeader>
@@ -89,7 +84,7 @@ export default function Login() {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-12 bg-background/50 border-white/10"
+                    className="pl-10 h-10 bg-background border-border"
                     required
                   />
                 </div>
@@ -98,7 +93,7 @@ export default function Login() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <a href="#" className="text-sm text-primary hover:underline font-medium">
+                  <a href="#" className="text-xs text-muted-foreground hover:text-foreground hover:underline font-medium">
                     Forgot password?
                   </a>
                 </div>
@@ -110,7 +105,7 @@ export default function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-12 bg-background/50 border-white/10"
+                    className="pl-10 h-10 bg-background border-border"
                     required
                   />
                 </div>
@@ -124,14 +119,13 @@ export default function Login() {
 
               <Button 
                 type="submit" 
-                variant="gradient" 
                 size="lg" 
-                className="w-full h-12 text-base font-semibold group mt-2" 
+                className="w-full h-10 text-sm font-semibold mt-2" 
                 disabled={loading}
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {loading ? "Signing in..." : "Sign in"}
-                {!loading && <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />}
+                {!loading && <ArrowRight className="h-4 w-4 ml-2" />}
               </Button>
             </form>
           </CardContent>

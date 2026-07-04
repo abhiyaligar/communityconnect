@@ -17,29 +17,29 @@ const features = [
     icon: Shield,
     title: "Verified Community",
     desc: "Every member is manually verified to ensure authenticity and trust within the community.",
-    color: "text-violet-400",
-    bg: "bg-violet-500/10 border-violet-500/20",
+    color: "text-foreground",
+    bg: "bg-muted border-border",
   },
   {
     icon: Heart,
     title: "Matrimony Platform",
     desc: "Connect with compatible partners from within your trusted community network.",
-    color: "text-rose-400",
-    bg: "bg-rose-500/10 border-rose-500/20",
+    color: "text-foreground",
+    bg: "bg-muted border-border",
   },
   {
     icon: Users,
     title: "Family Trees",
     desc: "Map and preserve your family heritage across generations in a beautiful digital format.",
-    color: "text-sky-400",
-    bg: "bg-sky-500/10 border-sky-500/20",
+    color: "text-foreground",
+    bg: "bg-muted border-border",
   },
   {
     icon: Globe,
     title: "Regional Connect",
     desc: "Stay connected with members from your region, managed by trusted local administrators.",
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10 border-emerald-500/20",
+    color: "text-foreground",
+    bg: "bg-muted border-border",
   },
 ]
 
@@ -64,30 +64,29 @@ export default function Landing() {
 
         <div className="relative max-w-4xl mx-auto text-center">
           {/* Tag */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/30 text-sm font-medium text-primary mb-8 animate-fade-in">
-            <Star className="h-3.5 w-3.5 fill-primary" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-secondary border border-border text-xs font-semibold text-foreground mb-8">
+            <Star className="h-3 w-3 fill-foreground text-foreground" />
             Trusted by Communities Nationwide
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6 animate-fade-in">
-            Your Community,{" "}
-            <span className="gradient-text">Connected</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6">
+            Your Community, Connected
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in">
+          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
             CommunityConnect brings your community together — verified members,
             family trees, matrimony matching, and region-level governance all in
-            one secure platform.
+            one secure, minimal platform.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/register">
-              <Button variant="gradient" size="xl" className="gap-2 w-full sm:w-auto">
-                Join Your Community <ArrowRight className="h-5 w-5" />
+              <Button size="lg" className="w-full sm:w-auto font-medium">
+                Join Your Community
               </Button>
             </Link>
             <Link to="/login">
-              <Button variant="outline" size="xl" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto font-medium">
                 Sign In
               </Button>
             </Link>
@@ -100,10 +99,10 @@ export default function Landing() {
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="glass-card rounded-xl p-5 text-center"
+                className="bg-card border border-border rounded-xl p-5 text-center"
               >
-                <p className="text-3xl font-bold gradient-text">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -111,17 +110,17 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4 border-t border-border bg-secondary/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-sm text-muted-foreground mb-6">
-              <Zap className="h-3.5 w-3.5 text-accent" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary border border-border text-xs text-muted-foreground mb-6">
+              <Zap className="h-3 w-3 text-foreground" />
               Why CommunityConnect
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Built for your <span className="gradient-text">community</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+              Built for your community
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-muted-foreground max-w-xl mx-auto text-sm">
               Every feature is designed to strengthen connections, preserve heritage,
               and empower communities to self-govern.
             </p>
@@ -129,13 +128,13 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-2 gap-6">
             {features.map((f) => (
-              <Card key={f.title} className="glass-card hover:border-primary/20 transition-all duration-300 group">
+              <Card key={f.title} className="bg-card border border-border hover:shadow-md transition-shadow group">
                 <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-xl border ${f.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <f.icon className={`h-6 w-6 ${f.color}`} />
+                  <div className={`w-10 h-10 rounded-lg border ${f.bg} flex items-center justify-center mb-4`}>
+                    <f.icon className={`h-5 w-5 ${f.color}`} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                  <h3 className="text-base font-semibold mb-2">{f.title}</h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
                 </CardContent>
               </Card>
             ))}
@@ -144,24 +143,24 @@ export default function Landing() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 px-4 bg-gradient-to-b from-transparent to-card/30">
+      <section className="py-24 px-4 border-t border-border bg-background">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4">
-            Join in <span className="gradient-text">3 simple steps</span>
+          <h2 className="text-3xl font-extrabold mb-4">
+            Join in 3 simple steps
           </h2>
-          <p className="text-muted-foreground mb-16">Getting started is quick and easy</p>
+          <p className="text-muted-foreground text-sm mb-16">Getting started is quick and easy</p>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
-              { step: "01", title: "Register", desc: "Sign up with your phone number and complete your profile with verified details." },
+              { step: "01", title: "Register", desc: "Sign up with your email and complete your profile with verified details." },
               { step: "02", title: "Get Verified", desc: "A local admin or community admin reviews and approves your membership." },
               { step: "03", title: "Connect", desc: "Access all community features — matrimony, family trees, and regional connections." },
             ].map((item) => (
               <div key={item.step} className="relative">
-                <div className="glass-card rounded-2xl p-8 h-full">
-                  <div className="text-5xl font-black gradient-text opacity-30 mb-4">{item.step}</div>
-                  <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+                <div className="bg-card border border-border rounded-xl p-6 h-full text-left">
+                  <div className="text-3xl font-black text-muted-foreground/30 mb-3">{item.step}</div>
+                  <h3 className="text-base font-semibold mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -170,18 +169,17 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-4">
+      <section className="py-20 px-4 border-t border-border bg-secondary/10">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="glass-card rounded-3xl p-12 relative overflow-hidden">
-            <div className="absolute inset-0 gradient-primary opacity-5 rounded-3xl" />
-            <CheckCircle className="h-12 w-12 text-primary mx-auto mb-6" />
-            <h2 className="text-4xl font-bold mb-4">Ready to connect?</h2>
-            <p className="text-muted-foreground mb-8">
+          <div className="bg-card border border-border rounded-2xl p-10 relative overflow-hidden">
+            <CheckCircle className="h-10 w-10 text-foreground mx-auto mb-6" />
+            <h2 className="text-3xl font-bold mb-3">Ready to connect?</h2>
+            <p className="text-muted-foreground text-sm mb-8">
               Join thousands of verified community members today.
             </p>
             <Link to="/register">
-              <Button variant="gradient" size="xl" className="gap-2">
-                Get Started Free <ArrowRight className="h-5 w-5" />
+              <Button size="lg" className="font-medium">
+                Get Started Free
               </Button>
             </Link>
           </div>

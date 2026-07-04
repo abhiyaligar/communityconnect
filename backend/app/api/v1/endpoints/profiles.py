@@ -17,7 +17,7 @@ from app.models.enums import (
     Gender, MaritalStatus, BodyType, Complexion, EducationLevel,
     EmploymentType, IncomeRange, ManglikStatus, Diet, ActivityLevel, ProfileVisibility
 )
-from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate
+from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate
 
 router = APIRouter()
 
@@ -55,8 +55,8 @@ async def get_my_profile(
         "profile_photo_url": profile.profile_photo_url,
         "contact_number": profile.contact_number,
         "address": profile.address,
-        "address": profile.address,
         "occupation": profile.occupation,
+        "social_links": profile.social_links,
         "matrimony": {
             "opted_in": profile.matrimony_profile.opted_in if profile.matrimony_profile else False,
             "height_cm": profile.matrimony_profile.height_cm if profile.matrimony_profile else None,
@@ -134,6 +134,7 @@ async def onboard_profile(
         address=payload.address,
         profile_photo_url=payload.profile_photo_url,
         is_memorial=False,
+        social_links=payload.social_links,
     )
     db.add(new_profile)
     await db.flush()
@@ -274,3 +275,24 @@ async def update_matrimony_profile(
         
     await db.commit()
     return {"message": "Matrimony profile updated successfully."}
+
+
+@router.put("/me/social", status_code=status.HTTP_200_OK)
+async def update_social_links(
+    payload: SocialLinksUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Updates the social handles for the current user's profile.
+    """
+    stmt = select(Profile).where(Profile.user_id == current_user.id)
+    result = await db.execute(stmt)
+    profile = result.scalars().first()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    profile.social_links = payload.social_links
+    await db.commit()
+    return {"message": "Social links updated successfully."}

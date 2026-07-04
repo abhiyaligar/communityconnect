@@ -131,7 +131,18 @@ async def get_matrimony_matches(
                 "diet": diet,
                 "smoking": smoking,
                 "drinking": drinking,
-                "physical_activity": physical_activity
+                "physical_activity": physical_activity,
+                "father_name": mat.father_name,
+                "father_occupation": mat.father_occupation,
+                "mother_name": mat.mother_name,
+                "mother_occupation": mat.mother_occupation,
+                "brothers_count": mat.brothers_count,
+                "brothers_marital_status": mat.brothers_marital_status,
+                "sisters_count": mat.sisters_count,
+                "sisters_marital_status": mat.sisters_marital_status,
+                "family_type": mat.family_type,
+                "family_values": mat.family_values,
+                "family_financial_status": mat.family_financial_status
             }
         })
 
