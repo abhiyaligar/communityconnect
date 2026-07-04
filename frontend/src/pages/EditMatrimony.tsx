@@ -21,6 +21,15 @@ export default function EditMatrimony() {
   const [error, setError] = useState("")
   const [showPreview, setShowPreview] = useState(false)
 
+  // Double Approval State
+  const [doubleApprovalRequired, setDoubleApprovalRequired] = useState(false)
+  const [coApproverUsername, setCoApproverUsername] = useState("")
+  const [coApproverProfileId, setCoApproverProfileId] = useState<string | null>(null)
+  const [coApproverName, setCoApproverName] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyError, setVerifyError] = useState("")
+  const [coApproverApproved, setCoApproverApproved] = useState(false)
+
   // Form State
   const [formData, setFormData] = useState<any>({
     height_cm: "",
@@ -66,8 +75,53 @@ export default function EditMatrimony() {
         hobbies: Array.isArray(user.matrimony.hobbies) ? user.matrimony.hobbies.join(", ") : user.matrimony.hobbies || "",
         languages: Array.isArray(user.matrimony.languages) ? user.matrimony.languages.join(", ") : user.matrimony.languages || "",
       })
+      setDoubleApprovalRequired(!!user.matrimony.double_approval_required)
+      setCoApproverUsername(user.matrimony.family_co_approver_username || "")
+      setCoApproverProfileId(user.matrimony.family_co_approver_profile_id || null)
+      setCoApproverName(user.matrimony.family_co_approver_name || null)
+      setCoApproverApproved(!!user.matrimony.family_co_approver_approved)
     }
   }, [user])
+
+  const handleVerifyUsername = async () => {
+    if (!coApproverUsername.trim()) return
+    setVerifying(true)
+    setVerifyError("")
+    setCoApproverName(null)
+    setCoApproverProfileId(null)
+    setCoApproverApproved(false)
+    try {
+      const res = await api.get(`/profiles/by-username/${coApproverUsername.trim()}`)
+      // Check if trying to co-approve yourself (user's own profile ID, wait, user.id is user account ID, profile_id is returned by lookup)
+      // Let's verify: AuthUser has profile_id? Wait, in types/index.ts, AuthUser does NOT have profile_id directly, wait, does it?
+      // Let's check GET /me response: it returns user details but actually profile details.
+      // Wait, in profiles.py GET /me returns:
+      // "id": str(current_user.id) -> this is the user ID. But wait! The co-approver_profile_id is a PROFILE ID.
+      // In the lookup by-username we return {"profile_id": str(profile.id), "full_name": profile.full_name}.
+      // So to check if it's the current user, we can compare res.data.profile_id with user's profile ID?
+      // Wait! How does frontend know current user's profile ID?
+      // Let's check `types/index.ts` AuthUser:
+      // `export interface AuthUser { id: string; role: UserRole; ... }`
+      // Wait, is user.id the profile ID or user ID?
+      // Let's check `profiles.py` GET /me:
+      // `return { "id": str(current_user.id), ... }` -> user.id is the User ID.
+      // Wait, how do we get current user's Profile ID in frontend?
+      // Ah, in profiles.py onboarding we raise 400 if profile already exists.
+      // Let's check if we return the Profile ID in GET /me.
+      // We didn't, but wait, can we compare the username? If res.data.full_name is user.full_name, or if we lookup the username, if coApproverUsername.trim() === user.username, it's themselves!
+      // Comparing username is MUCH easier and 100% correct!
+      if (coApproverUsername.trim() === user?.username) {
+        setVerifyError("You cannot select yourself as a family co-approver.")
+      } else {
+        setCoApproverProfileId(res.data.profile_id)
+        setCoApproverName(res.data.full_name)
+      }
+    } catch (err: any) {
+      setVerifyError(err.response?.data?.detail || "Username not found.")
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const handleSelect = (field: string, value: string) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }))
@@ -83,11 +137,17 @@ export default function EditMatrimony() {
       ...formData,
       hobbies: formData.hobbies ? formData.hobbies.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
       languages: formData.languages ? formData.languages.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
+      double_approval_required: doubleApprovalRequired,
+      family_co_approver_profile_id: doubleApprovalRequired ? coApproverProfileId : null,
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (doubleApprovalRequired && !coApproverProfileId) {
+      setError("Please verify a valid family co-approver username before saving.")
+      return
+    }
     setLoading(true)
     setError("")
     
@@ -453,6 +513,97 @@ export default function EditMatrimony() {
                     <Label htmlFor="languages">Languages spoken (comma-separated)</Label>
                     <Input id="languages" name="languages" placeholder="e.g. English, Hindi, Kannada" value={formData.languages || ""} onChange={handleChange} />
                   </div>
+                </div>
+              </section>
+
+              {/* SECTION: DOUBLE APPROVAL */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Users className="h-4.5 w-4.5 text-foreground" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Double Approval Settings</h3>
+                </div>
+                <div className="space-y-4 bg-secondary/10 p-4 rounded-xl border border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="double_approval" className="text-sm font-semibold cursor-pointer">Require Family Member Approval</Label>
+                      <p className="text-xs text-muted-foreground">
+                        If enabled, requests to connect will require approval from both you and a designated family member.
+                      </p>
+                    </div>
+                    <input
+                      id="double_approval"
+                      type="checkbox"
+                      checked={doubleApprovalRequired}
+                      onChange={(e) => {
+                        setDoubleApprovalRequired(e.target.checked)
+                        if (!e.target.checked) {
+                          setCoApproverUsername("")
+                          setCoApproverProfileId(null)
+                          setCoApproverName(null)
+                          setVerifyError("")
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-foreground"
+                    />
+                  </div>
+
+                  {doubleApprovalRequired && (
+                    <div className="space-y-3 pt-3 border-t border-border/40">
+                      <Label htmlFor="co_approver">Family Co-approver Username</Label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">@</span>
+                          <Input
+                            id="co_approver"
+                            value={coApproverUsername}
+                            onChange={(e) => {
+                              setCoApproverUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
+                              setCoApproverProfileId(null)
+                              setCoApproverName(null)
+                              setCoApproverApproved(false)
+                              setVerifyError("")
+                            }}
+                            className="pl-7 font-mono text-xs"
+                            placeholder="username"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleVerifyUsername}
+                          disabled={verifying || !coApproverUsername.trim()}
+                          className="text-xs"
+                        >
+                          {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Verify"}
+                        </Button>
+                      </div>
+                      
+                      {coApproverName && (
+                        <div className="space-y-1 mt-1">
+                          <p className="text-xs text-emerald-600 font-medium">
+                            ✓ Verified: <span className="font-semibold">{coApproverName}</span>
+                          </p>
+                          {coApproverApproved ? (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-normal py-0">
+                              Verified & Confirmed ✓
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-normal py-0">
+                              Pending Guardian Confirmation ⏳
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {verifyError && (
+                        <p className="text-xs text-destructive font-medium">{verifyError}</p>
+                      )}
+                      {!coApproverProfileId && !verifyError && (
+                        <p className="text-xs text-amber-500 font-medium">
+                          * Please verify the co-approver username to save.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </section>
 

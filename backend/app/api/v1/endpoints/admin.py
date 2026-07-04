@@ -157,6 +157,7 @@ async def list_all_users(
             "profile_id": str(prof.id),
             "user_id": str(prof.user_id) if prof.user_id else None,
             "full_name": prof.full_name,
+            "username": prof.username,
             "date_of_birth": prof.date_of_birth,
             "gender": prof.gender.value,
             "marital_status": prof.marital_status.value,
@@ -255,3 +256,21 @@ async def list_all_matrimony_profiles(
     return response_data
 
 
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
+async def delete_user_account_admin(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin]))
+):
+    """
+    Permanent deletion of user account and associated profile/matrimony details.
+    """
+    stmt = select(User).where(User.id == user_id)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User account not found.")
+
+    await db.delete(user)
+    await db.commit()
+    return {"message": "User account and all associated profile details deleted successfully."}

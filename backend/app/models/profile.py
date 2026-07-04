@@ -16,6 +16,7 @@ class Profile(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
+    username = Column(String(50), unique=True, nullable=True, index=True)
     family_unit_id = Column(UUID(as_uuid=True), ForeignKey("family_units.id", ondelete="SET NULL"), nullable=True)
     full_name = Column(String(100), nullable=False)
     date_of_birth = Column(Date, nullable=False)

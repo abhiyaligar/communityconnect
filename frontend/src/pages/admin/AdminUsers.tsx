@@ -12,14 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog"
-import { Users, Search, Pencil, CheckCircle, XCircle, Loader2, Shield } from "lucide-react"
+import { Users, Search, Pencil, CheckCircle, XCircle, Loader2, Shield, Trash2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
 export default function AdminUsers() {
   const queryClient = useQueryClient()
   const { user: currentUser } = useAuth()
   const [search, setSearch] = useState("")
   const [editTarget, setEditTarget] = useState<UserProfile | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null)
   const [editForm, setEditForm] = useState<Partial<UserProfile & { is_active: boolean; role: string }>>({})
 
   const { data: users, isLoading } = useQuery({
@@ -37,7 +39,25 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] })
       setEditTarget(null)
+      toast.success("User profile updated successfully.")
     },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Failed to update user profile.")
+    }
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await api.delete(`/admin/users/${userId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+      setDeleteTarget(null)
+      toast.success("User account deleted successfully.")
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Failed to delete user account.")
+    }
   })
 
   const filtered = users?.filter((u) =>
@@ -120,8 +140,11 @@ export default function AdminUsers() {
                     <AvatarFallback className="text-sm gradient-primary text-white">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <p className="font-medium text-sm truncate">{u.full_name}</p>
+                      {u.username && (
+                        <span className="text-[10px] text-muted-foreground font-mono">@{u.username}</span>
+                      )}
                       {u.is_memorial && <Badge variant="outline" className="text-xs">Memorial</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">{u.user?.phone_number} • {u.address || "No address"}</p>
@@ -136,9 +159,21 @@ export default function AdminUsers() {
                       <XCircle className="h-4 w-4 text-destructive hidden md:block" />
                     )}
                     {currentUser?.role === "community_admin" && (
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {currentUser?.id !== u.user_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteTarget(u)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -232,6 +267,38 @@ export default function AdminUsers() {
             <Button variant="gradient" onClick={handleSave} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-md bg-card border border-border">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" /> Delete User Account
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-3 text-sm space-y-2">
+            <p>
+              Are you absolutely sure you want to delete <strong className="text-foreground">{deleteTarget?.full_name}</strong>'s account?
+            </p>
+            <p className="text-muted-foreground">
+              This action is permanent and will delete their profile, matrimony settings, and connection requests. It cannot be undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget?.user_id && deleteMutation.mutate(deleteTarget.user_id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Delete Account
             </Button>
           </DialogFooter>
         </DialogContent>

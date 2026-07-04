@@ -6,7 +6,6 @@ import {
   Shield,
   Heart,
   CheckCircle,
-  ArrowRight,
   Globe,
   Star,
   Zap,

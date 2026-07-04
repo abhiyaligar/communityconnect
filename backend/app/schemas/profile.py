@@ -2,9 +2,11 @@
 CommunityConnect Backend - Profile & Matrimony Schemas
 """
 
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, HttpUrl, Field, field_validator
 from typing import Optional, List
 from datetime import date
+from uuid import UUID
+import re
 
 # -----------------
 # Onboarding Schema
@@ -61,6 +63,9 @@ class ProfileOnboard(BaseModel):
     
     # Social
     social_links: Optional[dict] = None
+    
+    # Username
+    username: Optional[str] = None
     
     class Config:
         json_schema_extra = {
@@ -129,6 +134,21 @@ class MatrimonyProfileUpdate(BaseModel):
     # Media & Settings
     additional_photos: Optional[List[str]] = None
     visibility: Optional[str] = None
+    
+    # Double Approval
+    double_approval_required: Optional[bool] = None
+    family_co_approver_profile_id: Optional[UUID] = None
 
 class SocialLinksUpdate(BaseModel):
     social_links: dict
+
+class UsernameUpdate(BaseModel):
+    username: str
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        v = v.lower().strip()
+        if not re.match(r"^[a-z0-9_]{3,20}$", v):
+            raise ValueError("Username must be 3-20 characters and contain only lowercase letters, numbers, and underscores.")
+        return v

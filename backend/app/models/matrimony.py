@@ -75,6 +75,7 @@ class MatrimonyProfile(Base):
     # Approvals
     double_approval_required = Column(Boolean, nullable=False, default=False)
     family_co_approver_profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True)
+    family_co_approver_approved = Column(Boolean, nullable=False, default=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

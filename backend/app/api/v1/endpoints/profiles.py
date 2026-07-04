@@ -17,9 +17,25 @@ from app.models.enums import (
     Gender, MaritalStatus, BodyType, Complexion, EducationLevel,
     EmploymentType, IncomeRange, ManglikStatus, Diet, ActivityLevel, ProfileVisibility
 )
-from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate
+import re
+import random
+from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate, UsernameUpdate
 
 router = APIRouter()
+
+async def generate_unique_username(db: AsyncSession, full_name: str) -> str:
+    base = re.sub(r'[^a-z0-9_]', '', full_name.lower().replace(' ', '_'))
+    if not base or len(base) < 3:
+        base = "user"
+    base = base[:15]
+    
+    username = base
+    while True:
+        stmt = select(Profile).where(Profile.username == username)
+        result = await db.execute(stmt)
+        if not result.scalars().first():
+            return username
+        username = f"{base}_{random.randint(100, 999)}"
 
 
 @router.get("/me", status_code=status.HTTP_200_OK)
@@ -34,7 +50,9 @@ async def get_my_profile(
     stmt = (
         select(Profile)
         .where(Profile.user_id == current_user.id)
-        .options(selectinload(Profile.matrimony_profile))
+        .options(
+            selectinload(Profile.matrimony_profile).selectinload(MatrimonyProfile.family_co_approver)
+        )
     )
     result = await db.execute(stmt)
     profile = result.scalars().first()
@@ -45,10 +63,25 @@ async def get_my_profile(
             detail="Profile not found for this user account."
         )
 
+    # Auto-generate username if empty
+    if not profile.username:
+        profile.username = await generate_unique_username(db, profile.full_name)
+        await db.commit()
+
+    # Fetch wards where current user is designated as co-approver
+    wards_stmt = (
+        select(MatrimonyProfile)
+        .where(MatrimonyProfile.family_co_approver_profile_id == profile.id)
+        .options(selectinload(MatrimonyProfile.profile))
+    )
+    wards_res = await db.execute(wards_stmt)
+    wards = wards_res.scalars().all()
+
     return {
         "id": str(current_user.id),
         "role": current_user.role.value,
         "full_name": profile.full_name,
+        "username": profile.username,
         "date_of_birth": profile.date_of_birth,
         "gender": profile.gender.value,
         "marital_status": profile.marital_status.value,
@@ -59,6 +92,11 @@ async def get_my_profile(
         "social_links": profile.social_links,
         "matrimony": {
             "opted_in": profile.matrimony_profile.opted_in if profile.matrimony_profile else False,
+            "double_approval_required": profile.matrimony_profile.double_approval_required if profile.matrimony_profile else False,
+            "family_co_approver_profile_id": str(profile.matrimony_profile.family_co_approver_profile_id) if (profile.matrimony_profile and profile.matrimony_profile.family_co_approver_profile_id) else None,
+            "family_co_approver_name": profile.matrimony_profile.family_co_approver.full_name if (profile.matrimony_profile and profile.matrimony_profile.family_co_approver) else None,
+            "family_co_approver_username": profile.matrimony_profile.family_co_approver.username if (profile.matrimony_profile and profile.matrimony_profile.family_co_approver) else None,
+            "family_co_approver_approved": profile.matrimony_profile.family_co_approver_approved if profile.matrimony_profile else False,
             "height_cm": profile.matrimony_profile.height_cm if profile.matrimony_profile else None,
             "body_type": profile.matrimony_profile.body_type if profile.matrimony_profile else None,
             "complexion": profile.matrimony_profile.complexion if profile.matrimony_profile else None,
@@ -95,7 +133,17 @@ async def get_my_profile(
             "languages": profile.matrimony_profile.languages if profile.matrimony_profile else [],
             "additional_photos": profile.matrimony_profile.additional_photos if profile.matrimony_profile else [],
             "visibility": profile.matrimony_profile.visibility if profile.matrimony_profile else "public"
-        }
+        },
+        "wards": [
+            {
+                "profile_id": str(w.profile_id),
+                "full_name": w.profile.full_name if w.profile else None,
+                "username": w.profile.username if w.profile else None,
+                "gender": w.profile.gender.value if w.profile else None,
+                "approved": w.family_co_approver_approved
+            }
+            for w in wards
+        ]
     }
 
 
@@ -123,9 +171,20 @@ async def onboard_profile(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    # Check and generate username
+    username_val = payload.username
+    if not username_val:
+        username_val = await generate_unique_username(db, payload.full_name)
+    else:
+        stmt_u = select(Profile).where(Profile.username == username_val)
+        res_u = await db.execute(stmt_u)
+        if res_u.scalars().first():
+            raise HTTPException(status_code=400, detail="Username is already taken.")
+
     # 3. Create Core Profile
     new_profile = Profile(
         user_id=current_user.id,
+        username=username_val,
         full_name=payload.full_name,
         date_of_birth=payload.date_of_birth,
         gender=gender_val,
@@ -256,6 +315,16 @@ async def update_matrimony_profile(
 
     # 3. Update fields if provided in payload
     update_data = payload.model_dump(exclude_unset=True)
+
+    if "family_co_approver_profile_id" in update_data:
+        co_id = update_data["family_co_approver_profile_id"]
+        if co_id != mat_prof.family_co_approver_profile_id:
+            mat_prof.family_co_approver_approved = False
+        
+        if co_id is not None:
+            res_co = await db.get(Profile, co_id)
+            if not res_co:
+                raise HTTPException(status_code=400, detail="Family co-approver profile not found.")
     
     # We must handle enum mappings for certain fields if they are in the dict
     enum_mappings = {
@@ -275,6 +344,57 @@ async def update_matrimony_profile(
         
     await db.commit()
     return {"message": "Matrimony profile updated successfully."}
+
+
+@router.get("/by-username/{username}", status_code=status.HTTP_200_OK)
+async def get_profile_by_username(
+    username: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Looks up a profile by username. Useful for adding co-approvers.
+    """
+    stmt = select(Profile).where(Profile.username == username.lower().strip())
+    result = await db.execute(stmt)
+    profile = result.scalars().first()
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Username not found.")
+        
+    return {
+        "profile_id": str(profile.id),
+        "full_name": profile.full_name
+    }
+
+
+@router.put("/me/username", status_code=status.HTTP_200_OK)
+async def update_username(
+    payload: UsernameUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Manually sets or updates the logged-in user's username.
+    """
+    stmt = select(Profile).where(Profile.user_id == current_user.id)
+    result = await db.execute(stmt)
+    profile = result.scalars().first()
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+        
+    new_username = payload.username
+    
+    # Check if username is already taken by someone else
+    stmt_check = select(Profile).where(Profile.username == new_username, Profile.id != profile.id)
+    result_check = await db.execute(stmt_check)
+    if result_check.scalars().first():
+        raise HTTPException(status_code=400, detail="Username is already taken.")
+        
+    profile.username = new_username
+    await db.commit()
+    return {"message": "Username updated successfully.", "username": new_username}
 
 
 @router.put("/me/social", status_code=status.HTTP_200_OK)

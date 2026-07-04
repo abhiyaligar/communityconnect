@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { AuthUser } from "@/types"
 import api from "@/lib/api"
@@ -87,6 +88,69 @@ function SocialLinksEditor({ user, onSuccess }: { user: AuthUser, onSuccess: () 
   )
 }
 
+function UsernameEditor({ user, onSuccess }: { user: AuthUser, onSuccess: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [username, setUsername] = useState(user.username || "")
+  const [error, setError] = useState("")
+
+  const handleSave = async () => {
+    setError("")
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      setError("Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores.")
+      return
+    }
+    setLoading(true)
+    try {
+      await api.put("/profiles/me/username", { username })
+      toast.success("Username updated successfully")
+      onSuccess()
+      setOpen(false)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to update username")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary">
+          <Edit className="h-3 w-3" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Edit Username</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">@</span>
+              <Input
+                id="username"
+                value={username}
+                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                className="pl-7 font-mono text-xs"
+                placeholder="username"
+              />
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={handleSave} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function Profile() {
   const { user, refreshUser } = useAuth()
 
@@ -116,6 +180,9 @@ export default function Profile() {
               </Avatar>
               <div className="pb-1">
                 <h1 className="text-xl font-bold tracking-tight">{user?.full_name}</h1>
+                {user?.username && (
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">@{user.username}</p>
+                )}
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Badge variant={user?.role === "verified_adult" ? "default" : "secondary"} className="text-[10px]">
                     {user?.role === "verified_adult" && <ShieldCheck className="h-3 w-3 mr-1" />}
@@ -246,11 +313,38 @@ export default function Profile() {
               </div>
               <Separator />
               <div className="flex justify-between items-center py-2">
+                <span className="text-xs text-muted-foreground">Username</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-mono font-semibold">@{user?.username || "—"}</span>
+                  {user && <UsernameEditor user={user} onSuccess={refreshUser} />}
+                </div>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center py-2">
                 <span className="text-xs text-muted-foreground">Account Role</span>
                 <Badge variant={user?.role === "verified_adult" ? "default" : "secondary"} className="text-[10px] font-semibold capitalize">
                   {user?.role?.replace(/_/g, " ")}
                 </Badge>
               </div>
+              {user?.role === "verified_adult" && (
+                <>
+                  <Separator />
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-xs text-muted-foreground">Matrimony</span>
+                    {user?.matrimony?.opted_in ? (
+                      <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[10px] font-medium">
+                        Joined
+                      </Badge>
+                    ) : (
+                      <Link to="/matrimony/edit">
+                        <Button variant="outline" size="sm" className="h-7 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/5 border-rose-500/20">
+                          Join Matrimony
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
               <Separator />
               <div className="flex justify-between items-center py-2">
                 <span className="text-xs text-muted-foreground">Verification</span>

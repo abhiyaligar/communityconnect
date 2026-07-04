@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -6,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
 import {
   User, Heart, Users, CheckCircle, Clock,
-  MapPin, Phone, Briefcase, ArrowRight, Sparkles
+  MapPin, Phone, Briefcase, ArrowRight, Sparkles, Shield, Loader2
 } from "lucide-react"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 const quickLinks = [
   { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: false },
@@ -16,7 +19,24 @@ const quickLinks = [
 ]
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
+  const showMatrimony = !!user?.matrimony?.opted_in || !!(user?.wards && user.wards.length > 0)
+  const [loadingInvId, setLoadingInvId] = useState<string | null>(null)
+
+  const pendingGuardianRequests = user?.wards?.filter(w => !w.approved) || []
+
+  const handleDashboardInvitation = async (profileId: string, action: "accept" | "decline") => {
+    setLoadingInvId(profileId)
+    try {
+      await api.post(`/matrimony/co-approver-invitations/${profileId}/action`, { action })
+      toast.success(`Invitation ${action}ed successfully.`)
+      await refreshUser()
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || `Failed to ${action} invitation.`)
+    } finally {
+      setLoadingInvId(null)
+    }
+  }
 
   const initials = user?.full_name
     ? user.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -67,6 +87,53 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Pending Guardian Invitations Section */}
+        {pendingGuardianRequests.length > 0 && (
+          <Card className="border border-purple-500/20 bg-purple-500/5 shadow-none rounded-2xl mb-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Pending Guardian Invitations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingGuardianRequests.map((req) => (
+                <div key={req.profile_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-card border border-purple-500/10 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarFallback className="text-xs bg-purple-100 text-purple-700 font-semibold">
+                        {req.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-sm">{req.full_name}</p>
+                      <p className="text-xs text-muted-foreground font-mono">@{req.username}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleDashboardInvitation(req.profile_id, "decline")}
+                      disabled={loadingInvId === req.profile_id}
+                      className="text-xs h-8 border-destructive/20 text-destructive hover:bg-destructive/10"
+                    >
+                      {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Decline"}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleDashboardInvitation(req.profile_id, "accept")}
+                      disabled={loadingInvId === req.profile_id}
+                      className="text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Accept & Confirm"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Summary */}
           <div className="md:col-span-2">
@@ -106,6 +173,9 @@ export default function Dashboard() {
               Quick Access
             </h2>
             {quickLinks.map(({ to, icon: Icon, label, desc, color, bg, requireOptIn }) => {
+              // Hide Matrimony links if showMatrimony is false
+              if (to.startsWith("/matrimony") && !showMatrimony) return null;
+
               // Hide Matrimony browse link if user hasn't opted in
               if (requireOptIn && (!user?.matrimony || !user.matrimony.opted_in)) return null;
 

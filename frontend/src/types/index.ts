@@ -19,6 +19,7 @@ export interface AuthUser {
   id: string
   role: UserRole
   full_name: string
+  username?: string
   date_of_birth: string
   gender: Gender
   marital_status: MaritalStatus
@@ -34,6 +35,11 @@ export interface AuthUser {
   }
   matrimony?: {
     opted_in: boolean
+    double_approval_required?: boolean
+    family_co_approver_profile_id?: string | null
+    family_co_approver_name?: string | null
+    family_co_approver_username?: string | null
+    family_co_approver_approved?: boolean
     height_cm?: string
     body_type?: string
     complexion?: string
@@ -71,6 +77,13 @@ export interface AuthUser {
     additional_photos: string[]
     visibility: string
   }
+  wards?: Array<{
+    profile_id: string
+    full_name: string
+    username: string
+    gender: string
+    approved: boolean
+  }>
 }
 
 export interface TokenResponse {
@@ -116,6 +129,7 @@ export interface UserProfile {
   profile_id: string
   user_id?: string
   full_name: string
+  username?: string
   date_of_birth: string
   gender: Gender
   marital_status: MaritalStatus
@@ -130,12 +144,13 @@ export interface UserProfile {
     phone_number: string
   }
 }
-
 export interface MatrimonyEntry {
   profile_id: string
   about_me?: string
   hobbies?: string[]
   languages?: string[]
+  connection_status?: string
+  connection_request_id?: string | null
   profile?: {
     full_name?: string
     date_of_birth?: string
@@ -145,6 +160,7 @@ export interface MatrimonyEntry {
     contact_number?: string
     address?: string
     occupation?: string
+    username?: string
   }
   matrimony_details?: {
     height_cm?: string
@@ -176,5 +192,6 @@ export interface MatrimonyEntry {
     family_type?: string
     family_values?: string
     family_financial_status?: string
+    additional_photos?: string[]
   }
 }

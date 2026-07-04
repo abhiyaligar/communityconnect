@@ -15,6 +15,7 @@ import Dashboard from "@/pages/Dashboard"
 import Profile from "@/pages/Profile"
 import Matrimony from "@/pages/Matrimony"
 import EditMatrimony from "@/pages/EditMatrimony"
+import MatrimonyRequests from "@/pages/MatrimonyRequests"
 import NotFound from "@/pages/NotFound"
 
 // Admin Pages
@@ -95,6 +96,15 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={["verified_adult"]}>
               <Navbar />
               <EditMatrimony />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matrimony/requests"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult"]}>
+              <Navbar />
+              <MatrimonyRequests />
             </ProtectedRoute>
           }
         />

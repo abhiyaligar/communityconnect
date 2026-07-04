@@ -21,6 +21,7 @@ export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const showMatrimony = !!user?.matrimony?.opted_in || !!(user?.wards && user.wards.length > 0)
 
   const handleLogout = async () => {
     await logout()
@@ -58,11 +59,13 @@ export function Navbar() {
                     <Home className="h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
-                <Link to="/matrimony">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Heart className="h-4 w-4" /> Matrimony
-                  </Button>
-                </Link>
+                {showMatrimony && (
+                  <Link to="/matrimony">
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Heart className="h-4 w-4" /> Matrimony
+                    </Button>
+                  </Link>
+                )}
               </>
             )}
             {isAdmin && (
@@ -172,11 +175,13 @@ export function Navbar() {
                       <Home className="h-4 w-4" /> Dashboard
                     </Button>
                   </Link>
-                  <Link to="/matrimony" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-2">
-                      <Heart className="h-4 w-4" /> Matrimony
-                    </Button>
-                  </Link>
+                  {showMatrimony && (
+                    <Link to="/matrimony" onClick={() => setMobileOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <Heart className="h-4 w-4" /> Matrimony
+                      </Button>
+                    </Link>
+                  )}
                 </>
               )}
               {isAdmin && (

@@ -106,9 +106,9 @@ export default function AdminMatrimony() {
                         {entry.about_me}
                       </p>
                     )}
-                    {entry.education && (
+                    {entry.matrimony_details?.highest_qualification && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        🎓 {entry.education}
+                        🎓 {entry.matrimony_details.highest_qualification}
                       </p>
                     )}
                   </CardContent>
