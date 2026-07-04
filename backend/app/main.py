@@ -42,14 +42,15 @@ app = FastAPI(
 )
 
 # CORS Middleware — allow all origins (development mode)
+allowed_origins = os.getenv("CORS_ORIGINS", "").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Include API v1 routes
 app.include_router(api_router, prefix="/api/v1")
 
