@@ -33,7 +33,7 @@ from app.models.enums import (
 )
 import re
 import random
-from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate, UsernameUpdate
+from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate, UsernameUpdate, ProfileUpdate
 
 router = APIRouter()
 
@@ -154,6 +154,7 @@ async def get_my_profile(
                 "full_name": w.profile.full_name if w.profile else None,
                 "username": w.profile.username if w.profile else None,
                 "gender": w.profile.gender.value if w.profile else None,
+                "profile_photo_url": w.profile.profile_photo_url if w.profile else None,
                 "approved": w.family_co_approver_approved
             }
             for w in wards
@@ -290,6 +291,50 @@ async def onboard_profile(
     await db.commit()
     
     return {"message": "Onboarding completed successfully. Please wait for admin approval."}
+
+
+@router.put("/me", status_code=status.HTTP_200_OK)
+async def update_my_profile(
+    payload: ProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Updates the logged-in user's core profile details (address, occupation, etc.),
+    explicitly locking name, DOB, and role from updates.
+    """
+    stmt = select(Profile).where(Profile.user_id == current_user.id)
+    result = await db.execute(stmt)
+    profile = result.scalars().first()
+
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found."
+        )
+
+    # Update basic text/json fields if provided in payload
+    update_data = payload.model_dump(exclude_unset=True)
+
+    # Safely parse enums if updated
+    if "gender" in update_data and update_data["gender"] is not None:
+        try:
+            profile.gender = Gender(update_data["gender"].lower())
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid gender value.")
+            
+    if "marital_status" in update_data and update_data["marital_status"] is not None:
+        try:
+            profile.marital_status = MaritalStatus(update_data["marital_status"].lower())
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid marital status value.")
+
+    for field in ["address", "occupation", "profile_photo_url", "contact_number", "social_links"]:
+        if field in update_data:
+            setattr(profile, field, update_data[field])
+
+    await db.commit()
+    return {"message": "Profile updated successfully."}
 
 
 @router.put("/me/matrimony", status_code=status.HTTP_200_OK)

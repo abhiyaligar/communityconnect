@@ -1,365 +1,586 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
-import { AuthUser } from "@/types"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
-import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 import {
-  User, Phone, MapPin, Briefcase, Calendar,
-  Users, ShieldCheck, Clock,
-  Link as LinkIcon, Edit, Loader2
+  Download,
+  Edit,
+  Globe,
+  Lock,
+  Plus,
+  MoreVertical,
+  Check,
+  Loader2
 } from "lucide-react"
-
-const LinkedinIcon = (props: React.SVGProps<SVGSVGElement>) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-const TwitterIcon = (props: React.SVGProps<SVGSVGElement>) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
-
-
-function SocialLinksEditor({ user, onSuccess }: { user: AuthUser, onSuccess: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [links, setLinks] = useState({
-    linkedin: user.social_links?.linkedin || "",
-    instagram: user.social_links?.instagram || "",
-    facebook: user.social_links?.facebook || "",
-    twitter: user.social_links?.twitter || "",
-  })
-
-  const handleSave = async () => {
-    setLoading(true)
-    try {
-      await api.put("/profiles/me/social", { social_links: links })
-      toast.success("Social links updated")
-      onSuccess()
-      setOpen(false)
-    } catch (err) {
-      toast.error("Failed to update social links")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
-          <Edit className="h-3 w-3" /> Edit
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Social Links</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="linkedin" className="flex items-center gap-2"><LinkedinIcon className="h-4 w-4"/> LinkedIn URL</Label>
-            <Input id="linkedin" value={links.linkedin} onChange={e => setLinks({...links, linkedin: e.target.value})} placeholder="https://linkedin.com/in/username" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="instagram" className="flex items-center gap-2"><InstagramIcon className="h-4 w-4"/> Instagram URL</Label>
-            <Input id="instagram" value={links.instagram} onChange={e => setLinks({...links, instagram: e.target.value})} placeholder="https://instagram.com/username" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="facebook" className="flex items-center gap-2"><FacebookIcon className="h-4 w-4"/> Facebook URL</Label>
-            <Input id="facebook" value={links.facebook} onChange={e => setLinks({...links, facebook: e.target.value})} placeholder="https://facebook.com/username" />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="twitter" className="flex items-center gap-2"><TwitterIcon className="h-4 w-4"/> X (Twitter) URL</Label>
-            <Input id="twitter" value={links.twitter} onChange={e => setLinks({...links, twitter: e.target.value})} placeholder="https://x.com/username" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function UsernameEditor({ user, onSuccess }: { user: AuthUser, onSuccess: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [username, setUsername] = useState(user.username || "")
-  const [error, setError] = useState("")
-
-  const handleSave = async () => {
-    setError("")
-    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-      setError("Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores.")
-      return
-    }
-    setLoading(true)
-    try {
-      await api.put("/profiles/me/username", { username })
-      toast.success("Username updated successfully")
-      onSuccess()
-      setOpen(false)
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to update username")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary">
-          <Edit className="h-3 w-3" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Edit Username</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">@</span>
-              <Input
-                id="username"
-                value={username}
-                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                className="pl-7 font-mono text-xs"
-                placeholder="username"
-              />
-            </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button size="sm" onClick={handleSave} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import { toast } from "sonner"
 
 export default function Profile() {
+  const queryClient = useQueryClient()
   const { user, refreshUser } = useAuth()
 
-  const initials = user?.full_name
-    ? user.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+  // Toggle state switches for contact details
+  const [phonePublic, setPhonePublic] = useState(true)
+  const [emailPublic, setEmailPublic] = useState(false)
+  const [addressPublic, setAddressPublic] = useState(true)
+
+  // Dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  // Profile Edit fields state
+  const [phone, setPhone] = useState("")
+  const [address, setAddress] = useState("")
+  const [occupation, setOccupation] = useState("")
+  const [photoUrl, setPhotoUrl] = useState("")
+  const [gender, setGender] = useState("male")
+  const [maritalStatus, setMaritalStatus] = useState("single")
+  const [linkedin, setLinkedin] = useState("")
+  const [instagram, setInstagram] = useState("")
+  const [facebook, setFacebook] = useState("")
+  const [twitter, setTwitter] = useState("")
+
+  useEffect(() => {
+    if (user) {
+      setPhone(user.contact_number || "")
+      setAddress(user.address || "")
+      setOccupation(user.occupation || "")
+      setPhotoUrl(user.profile_photo_url || "")
+      setGender(user.gender || "male")
+      setMaritalStatus(user.marital_status || "single")
+      setLinkedin(user.social_links?.linkedin || "")
+      setInstagram(user.social_links?.instagram || "")
+      setFacebook(user.social_links?.facebook || "")
+      setTwitter(user.social_links?.twitter || "")
+    }
+  }, [user, isEditDialogOpen])
+
+  // Update Core Profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        contact_number: phone,
+        address,
+        occupation,
+        profile_photo_url: photoUrl,
+        gender,
+        marital_status: maritalStatus,
+        social_links: {
+          linkedin,
+          instagram,
+          facebook,
+          twitter
+        }
+      }
+      await api.put("/profiles/me", payload)
+    },
+    onSuccess: () => {
+      toast.success("Profile details updated successfully!")
+      setIsEditDialogOpen(false)
+      refreshUser()
+      queryClient.invalidateQueries({ queryKey: ["profiles", "me"] })
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Failed to update profile.")
+    }
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateProfileMutation.mutate()
+  }
+
+  // Use logged in user profile details from database
+  const profileData = {
+    full_name: user?.full_name || "Anonymous User",
+    profile_photo_url: user?.profile_photo_url || "",
+    role: user?.role === "verified_adult" ? "Family Head" : (user?.role?.replace(/_/g, " ") || "Member"),
+    date_of_birth: user?.date_of_birth ? new Date(user.date_of_birth).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—",
+    blood_group: "—",
+    marital_status: user?.marital_status ? user.marital_status.charAt(0).toUpperCase() + user.marital_status.slice(1) : "—",
+    phone: user?.contact_number || "—",
+    email: (user as any)?.email || "—",
+    address: user?.address || "—",
+    bio: user?.occupation ? `${user.occupation} within the community.` : "Community member."
+  }
+
+  const initials = profileData.full_name
+    ? profileData.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
 
-  const age = user?.date_of_birth
-    ? Math.floor((Date.now() - new Date(user.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
-    : null
+  const CustomSwitch = ({ checked, onChange }: { checked: boolean, onChange: (v: boolean) => void }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+        checked ? "bg-[#10b981]" : "bg-[#eceef0]"
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+          checked ? "translate-x-4" : "translate-x-0"
+        )}
+      />
+    </button>
+  )
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12 px-4">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="relative border border-border rounded-2xl overflow-hidden bg-card">
-          {/* Banner */}
-          <div className="h-24 bg-secondary/50" />
+    <div className="space-y-8 animate-fade-in text-[#0f172a]">
+      {/* Header and Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
+            Member Profile
+          </h1>
+          <p className="text-sm text-[#64748b] mt-1">
+            Comprehensive view and family linkage details.
+          </p>
+        </div>
 
-          <div className="px-6 pb-6">
-            <div className="flex items-end gap-5 -mt-8 mb-6">
-              <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
-                <AvatarImage src={user?.profile_photo_url} />
-                <AvatarFallback className="text-xl font-bold bg-muted text-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="pb-1">
-                <h1 className="text-xl font-bold tracking-tight">{user?.full_name}</h1>
-                {user?.username && (
-                  <p className="text-xs text-muted-foreground font-mono mt-0.5">@{user.username}</p>
-                )}
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <Badge variant={user?.role === "verified_adult" ? "default" : "secondary"} className="text-[10px]">
-                    {user?.role === "verified_adult" && <ShieldCheck className="h-3 w-3 mr-1" />}
-                    {user?.role === "unverified" && <Clock className="h-3 w-3 mr-1" />}
-                    <span className="capitalize">{user?.role?.replace(/_/g, " ")}</span>
-                  </Badge>
-                  {user?.gender && (
-                    <Badge variant="outline" className="capitalize text-[10px] font-normal">{user.gender}</Badge>
-                  )}
-                </div>
-              </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="border-[#e2e8f0] text-[#0f172a] gap-2 text-xs font-semibold px-4 py-2">
+            <Download className="h-4 w-4" />
+            <span>Export Data</span>
+          </Button>
+          <Button
+            className="bg-[#0f172a] text-white hover:bg-[#1e293b] gap-2 text-xs font-semibold px-4 py-2"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <Edit className="h-4 w-4" />
+            <span>Edit Profile</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Grid Layout */}
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
+        {/* Left Column: Profile Summary Card */}
+        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col items-center text-center space-y-6">
+          <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
+            <AvatarImage src={profileData.profile_photo_url} />
+            <AvatarFallback className="text-3xl bg-[#f1f5f9] text-[#0f172a] font-bold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-[#0f172a]">
+              {profileData.full_name}
+            </h2>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-[#10b981]/10 text-[#10b981]">
+              <Check className="h-3 w-3" />
+              {user?.role === "unverified" ? "Pending Review" : "Identity Verified"}
+            </span>
+          </div>
+
+          <p className="text-xs text-[#64748b] leading-relaxed max-w-xs">
+            {profileData.bio}
+          </p>
+
+          {/* Metadata Table */}
+          <div className="w-full pt-6 border-t border-[#e2e8f0] space-y-3.5 text-xs text-left">
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">Role</span>
+              <span className="bg-[#f1f5f9] px-2.5 py-1 rounded-md text-[#0f172a] font-bold capitalize">
+                {profileData.role}
+              </span>
             </div>
 
-            <Separator className="mb-6" />
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">Date of Birth</span>
+              <span className="font-semibold text-[#0f172a]">{profileData.date_of_birth}</span>
+            </div>
 
-            {/* Info Grid */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                { icon: Phone, label: "Phone Number", value: user?.contact_number },
-                { icon: Calendar, label: "Date of Birth", value: user?.date_of_birth ? `${new Date(user.date_of_birth).toLocaleDateString()} (${age} yrs)` : "—" },
-                { icon: MapPin, label: "Address", value: user?.address || "Not provided" },
-                { icon: Briefcase, label: "Occupation", value: user?.occupation || "Not provided" },
-                { icon: Users, label: "Marital Status", value: user?.marital_status ? user.marital_status.charAt(0).toUpperCase() + user.marital_status.slice(1) : "—" },
-                { icon: User, label: "Gender", value: user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "—" },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex gap-3 p-3.5 rounded-xl bg-secondary/35 border border-border">
-                  <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0 border border-border">
-                    <Icon className="h-4 w-4 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-0.5">{label}</p>
-                    <p className="text-sm font-semibold">{value}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">Blood Group</span>
+              <span className="font-semibold text-[#0f172a]">{profileData.blood_group}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-[#64748b]">Marital Status</span>
+              <span className="font-semibold text-[#0f172a]">{profileData.marital_status}</span>
             </div>
           </div>
         </div>
 
-        {/* Social Links */}
-        <Card className="border border-border shadow-none bg-card">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <LinkIcon className="h-4 w-4 text-foreground" /> Social Links
-            </CardTitle>
-            {user && <SocialLinksEditor user={user} onSuccess={refreshUser} />}
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <LinkedinIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        {/* Right Column: Stack of Cards */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Card 1: Contact Information */}
+          <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
+            <CardHeader className="border-b border-[#e2e8f0] pb-4 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b]">
+                Contact Information
+              </CardTitle>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-[#eceef0] text-[#0f172a]">
+                Visibility Controls Active
+              </span>
+            </CardHeader>
+            <CardContent className="divide-y divide-[#e2e8f0] p-0">
+              {/* Phone Row */}
+              <div className="p-6 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">
+                    Phone Number
+                  </p>
+                  <p className="text-sm font-semibold text-[#0f172a]">
+                    {profileData.phone}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">LinkedIn</p>
-                  {user?.social_links?.linkedin ? (
-                    <a href={user.social_links.linkedin} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline truncate block">
-                      {user.social_links.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">—</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center shrink-0">
-                  <InstagramIcon className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Instagram</p>
-                  {user?.social_links?.instagram ? (
-                    <a href={user.social_links.instagram} target="_blank" rel="noreferrer" className="text-sm text-pink-600 hover:underline truncate block">
-                      {user.social_links.instagram.replace(/^https?:\/\/(www\.)?/, '')}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">—</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600/10 flex items-center justify-center shrink-0">
-                  <FacebookIcon className="h-4 w-4 text-blue-700 dark:text-blue-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Facebook</p>
-                  {user?.social_links?.facebook ? (
-                    <a href={user.social_links.facebook} target="_blank" rel="noreferrer" className="text-sm text-blue-700 hover:underline truncate block">
-                      {user.social_links.facebook.replace(/^https?:\/\/(www\.)?/, '')}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">—</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-500/10 flex items-center justify-center shrink-0">
-                  <TwitterIcon className="h-4 w-4 text-slate-800 dark:text-slate-200" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">X (Twitter)</p>
-                  {user?.social_links?.twitter ? (
-                    <a href={user.social_links.twitter} target="_blank" rel="noreferrer" className="text-sm text-foreground hover:underline truncate block">
-                      {user.social_links.twitter.replace(/^https?:\/\/(www\.)?/, '')}
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">—</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Account Info */}
-        <Card className="border border-border shadow-none bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-foreground" /> Account Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-muted-foreground">Member ID</span>
-                <code className="text-xs bg-muted px-2 py-1 rounded border border-border font-mono">
-                  {user ? "CC-" + user.contact_number?.slice(-4) : "—"}
-                </code>
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-muted-foreground">Username</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-mono font-semibold">@{user?.username || "—"}</span>
-                  {user && <UsernameEditor user={user} onSuccess={refreshUser} />}
+                <div className="flex items-center gap-4">
+                  {phonePublic ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#10b981]/10 text-[#10b981]">
+                      <Globe className="h-3 w-3" />
+                      Public
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#64748b]/10 text-[#64748b]">
+                      <Lock className="h-3 w-3" />
+                      Restricted
+                    </span>
+                  )}
+
+                  <CustomSwitch checked={phonePublic} onChange={setPhonePublic} />
                 </div>
               </div>
-              <Separator />
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-muted-foreground">Account Role</span>
-                <Badge variant={user?.role === "verified_adult" ? "default" : "secondary"} className="text-[10px] font-semibold capitalize">
-                  {user?.role?.replace(/_/g, " ")}
-                </Badge>
-              </div>
-              {user?.role === "verified_adult" && (
-                <>
-                  <Separator />
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-xs text-muted-foreground">Matrimony</span>
-                    {user?.matrimony?.opted_in ? (
-                      <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[10px] font-medium">
-                        Joined
-                      </Badge>
-                    ) : (
-                      <Link to="/matrimony/edit">
-                        <Button variant="outline" size="sm" className="h-7 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/5 border-rose-500/20">
-                          Join Matrimony
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </>
-              )}
-              <Separator />
-              <div className="flex justify-between items-center py-2">
-                <span className="text-xs text-muted-foreground">Verification</span>
-                <span className="text-xs font-semibold">
-                  {user?.role === "unverified" ? (
-                    <span className="text-amber-500">Pending review</span>
+
+              {/* Email Row */}
+              <div className="p-6 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">
+                    Email Address
+                  </p>
+                  <p className="text-sm font-semibold text-[#0f172a]">
+                    {profileData.email}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {emailPublic ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#10b981]/10 text-[#10b981]">
+                      <Globe className="h-3 w-3" />
+                      Public
+                    </span>
                   ) : (
-                    <span className="text-emerald-600">Verified ✓</span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#64748b]/10 text-[#64748b]">
+                      <Lock className="h-3 w-3" />
+                      Restricted
+                    </span>
                   )}
-                </span>
+
+                  <CustomSwitch checked={emailPublic} onChange={setEmailPublic} />
+                </div>
+              </div>
+
+              {/* Address Row */}
+              <div className="p-6 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">
+                    Residential Address
+                  </p>
+                  <p className="text-sm font-semibold text-[#0f172a] leading-snug max-w-sm">
+                    {profileData.address}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {addressPublic ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#10b981]/10 text-[#10b981]">
+                      <Globe className="h-3 w-3" />
+                      Public
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-[#64748b]/10 text-[#64748b]">
+                      <Lock className="h-3 w-3" />
+                      Restricted
+                    </span>
+                  )}
+
+                  <CustomSwitch checked={addressPublic} onChange={setAddressPublic} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Family Unit */}
+          <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
+            <CardHeader className="border-b border-[#e2e8f0] pb-4 flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b]">
+                  Family Unit
+                </CardTitle>
+                <p className="text-[11px] text-[#64748b] font-medium leading-none">
+                  Manage your dependents and view linked accounts.
+                </p>
+              </div>
+
+              <Button
+                variant="outline"
+                className="border-[#e2e8f0] text-xs font-semibold gap-1.5 h-8"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Member</span>
+              </Button>
+            </CardHeader>
+            <CardContent className="divide-y divide-[#e2e8f0] p-0">
+              {/* Row 1: Self */}
+              <div className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
+                    <AvatarImage src={profileData.profile_photo_url} />
+                    <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-bold text-xs text-[#0f172a] flex items-center gap-1.5">
+                      <span>{profileData.full_name}</span>
+                      <span className="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-[#dae2fd] text-[#131b2e]">
+                        Self
+                      </span>
+                    </h4>
+                    <p className="text-[10px] text-[#64748b] font-medium">
+                      {profileData.role} • {user?.role === "unverified" ? "Pending" : "Verified"}
+                    </p>
+                  </div>
+                </div>
+
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b]">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Dynamic Wards list */}
+              {user?.wards && user.wards.length > 0 ? (
+                user.wards.map((ward) => {
+                  const wardInitials = ward.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"
+                  return (
+                    <div key={ward.profile_id} className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
+                          <AvatarImage src={ward.profile_photo_url} />
+                          <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
+                            {wardInitials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-bold text-xs text-[#0f172a] flex items-center gap-1.5">
+                            <span>{ward.full_name}</span>
+                            {ward.approved && <Check className="h-3.5 w-3.5 text-[#10b981] font-extrabold" />}
+                          </h4>
+                          <p className="text-[10px] text-[#64748b] font-medium">
+                            Dependent • {ward.approved ? "Verified" : "Pending Approval"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        className="border-[#e2e8f0] text-[10px] font-bold h-8 px-3"
+                      >
+                        {ward.approved ? "View Profile" : "Edit Details"}
+                      </Button>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="p-6 text-center text-xs text-[#64748b]">
+                  No dependents linked to this profile.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto border border-[#e2e8f0] bg-white p-8 rounded-2xl text-[#0f172a]">
+          <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">
+            <DialogTitle className="text-xl font-bold text-[#0f172a]">Edit Profile details</DialogTitle>
+            <p className="text-xs text-[#64748b]">Update your personal attributes. Core items like name and date of birth cannot be modified.</p>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6 pt-4 text-xs">
+            {/* Locked Readonly Fields */}
+            <div className="grid sm:grid-cols-3 gap-4 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl">
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={user?.full_name || ""}
+                  disabled
+                  className="w-full bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b] cursor-not-allowed p-2 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Date of Birth</label>
+                <input
+                  type="text"
+                  value={profileData.date_of_birth}
+                  disabled
+                  className="w-full bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b] cursor-not-allowed p-2 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Role</label>
+                <input
+                  type="text"
+                  value={profileData.role}
+                  disabled
+                  className="w-full bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b] cursor-not-allowed p-2 rounded-lg"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Editable Fields */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Contact Number</label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 99999 99999"
+                  className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Occupation</label>
+                <input
+                  type="text"
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  placeholder="Software Architect"
+                  className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Gender</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Marital Status</label>
+                <select
+                  value={maritalStatus}
+                  onChange={(e) => setMaritalStatus(e.target.value)}
+                  className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none"
+                >
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Residential Address</label>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Residential Address"
+                rows={3}
+                className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a] resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Profile Photo URL</label>
+              <input
+                type="text"
+                value={photoUrl}
+                onChange={(e) => setPhotoUrl(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
+                className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+              />
+            </div>
+
+            {/* Social Links Sub-block */}
+            <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
+              <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Social Links</h4>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">LinkedIn Username</label>
+                  <input
+                    type="text"
+                    value={linkedin}
+                    onChange={(e) => setLinkedin(e.target.value)}
+                    placeholder="linkedin-username"
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Instagram Username</label>
+                  <input
+                    type="text"
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    placeholder="instagram-username"
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Facebook Username</label>
+                  <input
+                    type="text"
+                    value={facebook}
+                    onChange={(e) => setFacebook(e.target.value)}
+                    placeholder="facebook-username"
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Twitter Username</label>
+                  <input
+                    type="text"
+                    value={twitter}
+                    onChange={(e) => setTwitter(e.target.value)}
+                    placeholder="twitter-username"
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dialog Footer Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-[#e2e8f0]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold px-4 h-9 rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateProfileMutation.isPending}
+                className="bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-9 rounded-lg flex items-center gap-1.5"
+              >
+                {updateProfileMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>Save Changes</span>
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

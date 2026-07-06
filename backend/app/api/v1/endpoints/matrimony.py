@@ -220,6 +220,7 @@ async def get_matrimony_matches(
                 "family_type": mat.family_type,
                 "family_values": mat.family_values,
                 "family_financial_status": mat.family_financial_status,
+                "family_background": mat.family_background,
                 "additional_photos": additional_photos
             }
         })

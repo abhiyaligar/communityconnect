@@ -1,6 +1,5 @@
-"""
-CommunityConnect Backend - Profile & Matrimony Schemas
-"""
+
+# CommunityConnect Backend - Profile & Matrimony Schemas
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 from typing import Optional, List
@@ -85,7 +84,7 @@ class ProfileOnboard(BaseModel):
 
 # -----------------
 # Update Schemas
-# -----------------
+#-----------------
 class MatrimonyProfileUpdate(BaseModel):
     # Physical
     height_cm: Optional[str] = None
@@ -152,3 +151,13 @@ class UsernameUpdate(BaseModel):
         if not re.match(r"^[a-z0-9_]{3,20}$", v):
             raise ValueError("Username must be 3-20 characters and contain only lowercase letters, numbers, and underscores.")
         return v
+
+class ProfileUpdate(BaseModel):
+    address: Optional[str] = None
+    occupation: Optional[str] = None
+    profile_photo_url: Optional[str] = None
+    contact_number: Optional[str] = None
+    gender: Optional[str] = None
+    marital_status: Optional[str] = None
+    social_links: Optional[dict] = None
+

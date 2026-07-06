@@ -4,6 +4,7 @@ CommunityConnect Backend - Administrative Endpoints
 
 from datetime import date
 import uuid
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ from app.models.region import AdminRegion, LocalAdminRegion
 from app.models.verification import VerificationRequest
 from app.models.matrimony import MatrimonyProfile
 from app.models.enums import UserRole, Gender, MaritalStatus, VerificationStatus
-from app.schemas.admin import AdminCreate, ProfileAdminUpdate
+from app.schemas.admin import AdminCreate, ProfileAdminUpdate, RegionCreate, RegionResponse
 
 router = APIRouter()
 
@@ -28,15 +29,22 @@ router = APIRouter()
 async def create_administrator(
     request: AdminCreate,
     db: AsyncSession = Depends(get_db),
-    current_admin: User = Depends(RoleChecker([UserRole.community_admin]))
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin]))
 ):
     """
     Creates a new administrator account (either community_admin or local_admin).
-    - Can only be called by an existing community_admin.
+    - Can be called by community_admin.
+    - Can be called by local_admin only if creating another local_admin.
     - Password is encrypted.
     - Automatically creates a corresponding verified Profile.
     - Scopes local_admin to a specific AdminRegion if region_id is provided.
     """
+    # 0. Check permissions: local_admin cannot create community_admin
+    if current_admin.role == UserRole.local_admin and request.role == UserRole.community_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Local administrators cannot create community administrators."
+        )
     # 1. Check if user already exists
     stmt = select(User).where(User.phone_number == request.phone_number)
     result = await db.execute(stmt)
@@ -141,13 +149,21 @@ async def get_admin_dashboard_stats(
 
 @router.get("/users", status_code=status.HTTP_200_OK)
 async def list_all_users(
+    limit: int = 10,
+    offset: int = 0,
     db: AsyncSession = Depends(get_db),
     current_admin: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin]))
 ):
     """
-    Returns a list of all users and profiles inside the system.
+    Returns a list of all users and profiles inside the system (paginated).
     """
-    stmt = select(Profile).join(User, Profile.user_id == User.id).options(selectinload(Profile.user))
+    stmt = (
+        select(Profile)
+        .join(User, Profile.user_id == User.id)
+        .options(selectinload(Profile.user))
+        .offset(offset)
+        .limit(limit)
+    )
     result = await db.execute(stmt)
     profiles = result.scalars().all()
 
@@ -274,3 +290,58 @@ async def delete_user_account_admin(
     await db.delete(user)
     await db.commit()
     return {"message": "User account and all associated profile details deleted successfully."}
+
+
+@router.post("/regions", response_model=RegionResponse, status_code=status.HTTP_201_CREATED)
+async def create_region(
+    payload: RegionCreate,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin]))
+):
+    """
+    Creates a new geographic admin region.
+    - Scoped only to community_admin.
+    """
+    # Check if region name already exists
+    name_stmt = select(AdminRegion).where(AdminRegion.name == payload.name)
+    name_res = await db.execute(name_stmt)
+    if name_res.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A region with this name already exists."
+        )
+
+    # Check if PIN code already exists
+    pin_stmt = select(AdminRegion).where(AdminRegion.pin_code == payload.pin_code)
+    pin_res = await db.execute(pin_stmt)
+    if pin_res.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A region with this PIN code already exists."
+        )
+
+    region = AdminRegion(
+        name=payload.name,
+        pin_code=payload.pin_code,
+        description=payload.description
+    )
+    db.add(region)
+    await db.commit()
+    await db.refresh(region)
+    return region
+
+
+@router.get("/regions", response_model=List[RegionResponse])
+async def list_regions(
+    limit: int = 10,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin]))
+):
+    """
+    Returns a paginated list of geographic admin regions.
+    - Accessible by both community_admin and local_admin.
+    """
+    stmt = select(AdminRegion).order_by(AdminRegion.name).offset(offset).limit(limit)
+    res = await db.execute(stmt)
+    return res.scalars().all()

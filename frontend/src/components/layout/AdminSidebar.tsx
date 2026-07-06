@@ -74,7 +74,7 @@ export function AdminSidebar() {
           </NavLink>
         ))}
 
-        {user?.role === "community_admin" && (
+        {(user?.role === "community_admin" || user?.role === "local_admin") && (
           <>
             <div className="pt-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-3">

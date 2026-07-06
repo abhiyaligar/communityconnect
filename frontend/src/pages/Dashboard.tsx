@@ -1,27 +1,59 @@
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useNavigate } from "react-router-dom"
 import {
-  User, Heart, Users, CheckCircle, Clock,
-  MapPin, Phone, Briefcase, ArrowRight, Sparkles, Shield, Loader2
+  Users,
+  Heart,
+  Clock,
+  Landmark,
+  Shield,
+  Loader2,
+  ArrowRight
 } from "lucide-react"
 import api from "@/lib/api"
 import { toast } from "sonner"
 
-const quickLinks = [
-  { to: "/profile", icon: User, label: "View Profile", desc: "Manage your personal info", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: false },
-  { to: "/matrimony", icon: Heart, label: "Matrimony", desc: "Browse eligible matches", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: true },
-  { to: "/matrimony/edit", icon: User, label: "Edit Matrimony", desc: "Update matrimony details", color: "text-foreground", bg: "bg-secondary border-border", requireOptIn: false },
-]
-
 export default function Dashboard() {
-  const { user, refreshUser } = useAuth()
-  const showMatrimony = !!user?.matrimony?.opted_in || !!(user?.wards && user.wards.length > 0)
+  const { user, refreshUser, isAdmin } = useAuth()
+  const navigate = useNavigate()
   const [loadingInvId, setLoadingInvId] = useState<string | null>(null)
+
+  // Fetch admin stats if user is admin
+  const { data: adminStats, isLoading: loadingAdminStats } = useQuery({
+    queryKey: ["dashboard-admin-stats"],
+    queryFn: async () => {
+      const res = await api.get("/admin/dashboard")
+      return res.data
+    },
+    enabled: isAdmin,
+    retry: false
+  })
+
+  // Fetch verified pending list for admin feed
+  const { data: pendingVerifications, isLoading: loadingPendingVer } = useQuery({
+    queryKey: ["dashboard-pending-verifications"],
+    queryFn: async () => {
+      const res = await api.get("/verification/pending")
+      return res.data
+    },
+    enabled: isAdmin,
+    retry: false
+  })
+
+  // Fetch user requests if standard member
+  const { data: connectionData, isLoading: loadingConn } = useQuery({
+    queryKey: ["dashboard-connection-requests"],
+    queryFn: async () => {
+      const res = await api.get("/matrimony/requests")
+      return res.data
+    },
+    enabled: !isAdmin,
+    retry: false
+  })
 
   const pendingGuardianRequests = user?.wards?.filter(w => !w.approved) || []
 
@@ -38,189 +70,313 @@ export default function Dashboard() {
     }
   }
 
-  const initials = user?.full_name
-    ? user.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "?"
-
-  const roleLabel: Record<string, string> = {
-    verified_adult: "Verified Adult",
-    minor: "Minor",
-    unverified: "Unverified",
-  }
-
-  const roleBadgeVariant = user?.role === "verified_adult" ? "success" : user?.role === "minor" ? "info" : "warning"
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Hero Welcome */}
-        <div className="relative border border-border bg-secondary/50 rounded-2xl p-6 mb-8 overflow-hidden">
-          <div className="relative flex items-center gap-5">
-            <Avatar className="h-14 w-14 border border-border">
-              <AvatarImage src={user?.profile_photo_url} />
-              <AvatarFallback className="text-lg font-bold bg-muted text-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1.5">
-                <h1 className="text-xl font-bold tracking-tight">Welcome back, {user?.full_name?.split(" ")[0]}!</h1>
-                <Sparkles className="h-4.5 w-4.5 text-foreground" />
+    <div className="space-y-8 animate-fade-in text-[#0f172a]">
+      {/* Hero Welcome & Verification Level Badge */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
+              {isAdmin ? "Welcome back, Admin." : `Welcome back, ${user?.full_name?.split(" ")[0] || "User"}.`}
+            </h1>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border border-[#10b981] text-[#10b981]">
+              Verified Adult Level 3
+            </span>
+          </div>
+          <p className="text-sm text-[#64748b] mt-1">
+            Here is the latest overview of the Community Hub.
+          </p>
+        </div>
+      </div>
+
+      {/* Pending Guardian Invitations Block */}
+      {pendingGuardianRequests.length > 0 && (
+        <Card className="border border-purple-500/20 bg-purple-500/5 shadow-none rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-purple-700 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-purple-600" /> Pending Guardian Invitations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pendingGuardianRequests.map((req) => (
+              <div key={req.profile_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-card border border-purple-500/10 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-border">
+                    <AvatarFallback className="text-xs bg-purple-100 text-purple-700 font-semibold">
+                      {req.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-sm">{req.full_name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">@{req.username}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleDashboardInvitation(req.profile_id, "decline")}
+                    disabled={loadingInvId === req.profile_id}
+                    className="text-xs h-8 border-destructive/20 text-destructive hover:bg-destructive/10"
+                  >
+                    {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Decline"}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleDashboardInvitation(req.profile_id, "accept")}
+                    disabled={loadingInvId === req.profile_id}
+                    className="text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Accept & Confirm"}
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={roleBadgeVariant === "success" ? "default" : "secondary"}>
-                  {user?.role === "verified_adult" ? (
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                  ) : (
-                    <Clock className="h-3 w-3 mr-1" />
-                  )}
-                  {roleLabel[user?.role || ""] || user?.role}
-                </Badge>
-                {user?.gender && (
-                  <Badge variant="outline" className="capitalize text-xs font-normal">{user.gender}</Badge>
-                )}
-                {user?.marital_status && (
-                  <Badge variant="outline" className="capitalize text-xs font-normal">{user.marital_status.replace(/_/g, " ")}</Badge>
-                )}
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dynamic Statistics Row */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {isAdmin ? (
+          <>
+            {/* Admin Stats */}
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex justify-between items-start shadow-sm">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Verified Members
+                </p>
+                <p className="text-3xl font-extrabold text-[#0f172a]">
+                  {loadingAdminStats ? "..." : adminStats?.verified_users || 0}
+                </p>
+                <p className="text-xs text-[#64748b]">Total active directory size</p>
               </div>
+              <div className="w-10 h-10 rounded-xl bg-[#f1f5f9] flex items-center justify-center text-[#0f172a]">
+                <Users className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex justify-between items-start shadow-sm">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Active Matrimonial
+                </p>
+                <p className="text-3xl font-extrabold text-[#0f172a]">
+                  {loadingAdminStats ? "..." : adminStats?.matrimony_opt_ins || 0}
+                </p>
+                <p className="text-xs text-[#64748b]">Opted-in matrimonial matches</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#f1f5f9] flex items-center justify-center text-[#0f172a]">
+                <Heart className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="bg-[#0f172a] text-white rounded-2xl p-6 flex justify-between items-start shadow-sm sm:col-span-2 lg:col-span-1">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Pending Approvals
+                </p>
+                <p className="text-3xl font-extrabold">
+                  {loadingAdminStats ? "..." : adminStats?.pending_verifications || 0}
+                </p>
+                <p className="text-xs text-[#64748b] font-medium">Action required by Admins</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                <Clock className="h-5 w-5" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Standard User Stats */}
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex justify-between items-start shadow-sm">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Incoming Requests
+                </p>
+                <p className="text-3xl font-extrabold text-[#0f172a]">
+                  {loadingConn ? "..." : connectionData?.incoming?.length || 0}
+                </p>
+                <p className="text-xs text-[#64748b]">Matrimonial connection interests</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#f1f5f9] flex items-center justify-center text-[#0f172a]">
+                <Users className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex justify-between items-start shadow-sm">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Outgoing Requests
+                </p>
+                <p className="text-3xl font-extrabold text-[#0f172a]">
+                  {loadingConn ? "..." : connectionData?.outgoing?.length || 0}
+                </p>
+                <p className="text-xs text-[#64748b]">Sent matrimonial proposals</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#f1f5f9] flex items-center justify-center text-[#0f172a]">
+                <Heart className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="bg-[#0f172a] text-white rounded-2xl p-6 flex justify-between items-start shadow-sm sm:col-span-2 lg:col-span-1">
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-bold text-[#64748b] tracking-wider">
+                  Linked Dependents
+                </p>
+                <p className="text-3xl font-extrabold">
+                  {user?.wards?.length || 0}
+                </p>
+                <p className="text-xs text-[#64748b] font-medium">Assigned minor profiles</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white">
+                <Clock className="h-5 w-5" />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Main Grid Content */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left Columns (Quick Access Modules) */}
+        <div className="lg:col-span-2 space-y-6">
+          <h2 className="text-xs font-bold text-[#64748b] uppercase tracking-wider px-1">
+            Quick Access Modules
+          </h2>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {/* Module 1: Community Registry */}
+            <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-64">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-[#eceef0] flex items-center justify-center text-[#0f172a]">
+                  <Landmark className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-[#0f172a]">
+                  Community Registry
+                </h3>
+                <p className="text-xs text-[#64748b] leading-relaxed">
+                  Access the secure database of all verified community members. View profiles and organizational structures.
+                </p>
+              </div>
+              <Button
+                variant="link"
+                className="text-[#0f172a] hover:text-[#64748b] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
+                onClick={() => navigate("/registry")}
+              >
+                <span>Open Module</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Module 2: Matrimonial Module */}
+            <div className="bg-[#eaf5ef] border border-[#d2ebe0] rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-64">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-[#c5e6d7] flex items-center justify-center text-[#006c49]">
+                  <Heart className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-[#006c49]">
+                  Matrimonial Module
+                </h3>
+                <p className="text-xs text-[#00714d] leading-relaxed">
+                  Navigate the confidential matrimonial network. Strictly restricted to verified adults.
+                </p>
+              </div>
+              <Button
+                variant="link"
+                className="text-[#00714d] hover:text-[#006c49] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
+                onClick={() => navigate("/matrimony")}
+              >
+                <span>Open Module</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* Pending Guardian Invitations Section */}
-        {pendingGuardianRequests.length > 0 && (
-          <Card className="border border-purple-500/20 bg-purple-500/5 shadow-none rounded-2xl mb-8">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Pending Guardian Invitations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pendingGuardianRequests.map((req) => (
-                <div key={req.profile_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-card border border-purple-500/10 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-border">
-                      <AvatarFallback className="text-xs bg-purple-100 text-purple-700 font-semibold">
-                        {req.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-sm">{req.full_name}</p>
-                      <p className="text-xs text-muted-foreground font-mono">@{req.username}</p>
+        {/* Right Column (Awaiting Actions / Recent Requests) */}
+        <div className="space-y-6">
+          <h2 className="text-xs font-bold text-[#64748b] uppercase tracking-wider px-1">
+            {isAdmin ? "Awaiting Verification" : "Matrimony Requests"}
+          </h2>
+
+          <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col justify-between min-h-[384px]">
+            <div className="space-y-6">
+              {isAdmin ? (
+                <>
+                  {loadingPendingVer ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#0f172a]" />
                     </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => handleDashboardInvitation(req.profile_id, "decline")}
-                      disabled={loadingInvId === req.profile_id}
-                      className="text-xs h-8 border-destructive/20 text-destructive hover:bg-destructive/10"
-                    >
-                      {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Decline"}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleDashboardInvitation(req.profile_id, "accept")}
-                      disabled={loadingInvId === req.profile_id}
-                      className="text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      {loadingInvId === req.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Accept & Confirm"}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Profile Summary */}
-          <div className="md:col-span-2">
-            <Card className="border border-border shadow-none h-full bg-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  <User className="h-4 w-4 text-foreground" /> Your Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { icon: Phone, label: "Phone", value: user?.contact_number },
-                  { icon: MapPin, label: "Address", value: user?.address || "Not set" },
-                  { icon: Briefcase, label: "Occupation", value: user?.occupation || "Not set" },
-                  { icon: Users, label: "Date of Birth", value: user?.date_of_birth },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-secondary/20">
-                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</p>
-                      <p className="text-sm font-medium">{value || "—"}</p>
-                    </div>
-                  </div>
-                ))}
-                <Link to="/profile">
-                  <Button variant="outline" className="w-full mt-2 gap-2">
-                    View Full Profile <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
-              Quick Access
-            </h2>
-            {quickLinks.map(({ to, icon: Icon, label, desc, color, bg, requireOptIn }) => {
-              // Hide Matrimony links if showMatrimony is false
-              if (to.startsWith("/matrimony") && !showMatrimony) return null;
-
-              // Hide Matrimony browse link if user hasn't opted in
-              if (requireOptIn && (!user?.matrimony || !user.matrimony.opted_in)) return null;
-
-              return (
-                <Link key={to} to={to}>
-                  <Card className="border border-border shadow-none bg-card hover:bg-secondary/40 transition-colors cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className={`w-9 h-9 rounded border ${bg} flex items-center justify-center shrink-0`}>
-                          <Icon className={`h-4 w-4 ${color}`} />
+                  ) : pendingVerifications && pendingVerifications.length > 0 ? (
+                    pendingVerifications.slice(0, 3).map((req: any) => (
+                      <div key={req.request_id} className="flex gap-4">
+                        <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
+                          <AvatarImage src={req.profile?.profile_photo_url} />
+                          <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">
+                            {req.profile?.full_name?.split(" ").map((n: string) => n[0]).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-[#0f172a]">
+                            {req.profile?.full_name}
+                          </p>
+                          <p className="text-[11px] text-[#64748b] leading-tight">
+                            Requested verification from {req.profile?.address || "North Region"}.
+                          </p>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm">{label}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-                        </div>
-                        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mt-1" />
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
-            })}
+                    ))
+                  ) : (
+                    <div className="text-center py-10 text-xs text-[#64748b]">
+                      No verifications awaiting review.
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {loadingConn ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#0f172a]" />
+                    </div>
+                  ) : connectionData?.incoming && connectionData.incoming.length > 0 ? (
+                    connectionData.incoming.slice(0, 3).map((req: any) => (
+                      <div key={req.id} className="flex gap-4">
+                        <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
+                          <AvatarImage src={req.sender?.profile_photo_url} />
+                          <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">
+                            {req.sender?.full_name?.split(" ").map((n: string) => n[0]).join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-[#0f172a]">
+                            {req.sender?.full_name}
+                          </p>
+                          <p className="text-[11px] text-[#64748b] leading-tight">
+                            Sent you a connection request.
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 text-xs text-[#64748b]">
+                      No pending connection requests.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
-            {/* Community info card */}
-            <Card className="border border-border shadow-none bg-card">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded bg-secondary border border-border flex items-center justify-center">
-                    <Users className="h-4 w-4 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">Community</p>
-                    <p className="text-xs text-muted-foreground">Your membership status</p>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-xs text-muted-foreground">Status</span>
-                    <Badge variant={roleBadgeVariant === "success" ? "default" : "secondary"} className="text-[10px] font-semibold">
-                      {roleLabel[user?.role || ""] || user?.role}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="pt-4 border-t border-[#e2e8f0] text-center">
+              <Button
+                variant="link"
+                className="text-[#0f172a] hover:text-[#64748b] text-xs font-bold p-0"
+                onClick={() => navigate(isAdmin ? "/verification" : "/matrimony/requests")}
+              >
+                {isAdmin ? "Manage Verifications" : "View All Requests"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

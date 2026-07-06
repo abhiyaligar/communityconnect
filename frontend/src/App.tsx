@@ -35,6 +35,9 @@ const queryClient = new QueryClient({
   },
 })
 
+import { MainLayout } from "@/components/layout/MainLayout"
+import Registry from "@/pages/Registry"
+
 function AppRoutes() {
   return (
     <>
@@ -62,31 +65,54 @@ function AppRoutes() {
           }
         />
 
-        {/* Verified Member Routes */}
+        {/* Verified Member & Admin Routes under MainLayout */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["verified_adult", "minor"]}>
-              <Navbar />
-              <Dashboard />
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/registry"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Registry />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute allowedRoles={["verified_adult", "minor", "unverified"]}>
-              <Navbar />
-              <Profile />
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "unverified", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Profile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/verification"
+          element={
+            <ProtectedRoute allowedRoles={["local_admin", "community_admin"]}>
+              <MainLayout>
+                <AdminVerification />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
         <Route
           path="/matrimony"
           element={
-            <ProtectedRoute allowedRoles={["verified_adult"]}>
-              <Navbar />
-              <Matrimony />
+            <ProtectedRoute allowedRoles={["verified_adult", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Matrimony />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
@@ -94,8 +120,9 @@ function AppRoutes() {
           path="/matrimony/edit"
           element={
             <ProtectedRoute allowedRoles={["verified_adult"]}>
-              <Navbar />
-              <EditMatrimony />
+              <MainLayout>
+                <EditMatrimony />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
@@ -103,13 +130,14 @@ function AppRoutes() {
           path="/matrimony/requests"
           element={
             <ProtectedRoute allowedRoles={["verified_adult"]}>
-              <Navbar />
-              <MatrimonyRequests />
+              <MainLayout>
+                <MatrimonyRequests />
+              </MainLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Admin Routes */}
+        {/* Legacy Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -126,7 +154,7 @@ function AppRoutes() {
           <Route
             path="create-admin"
             element={
-              <ProtectedRoute allowedRoles={["community_admin"]}>
+              <ProtectedRoute allowedRoles={["community_admin", "local_admin"]}>
                 <CreateAdmin />
               </ProtectedRoute>
             }

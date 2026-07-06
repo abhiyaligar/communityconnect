@@ -46,3 +46,28 @@ class ProfileAdminUpdate(BaseModel):
     role: UserRole
     is_active: bool
 
+
+class RegionCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100, description="Name of the admin region")
+    pin_code: str = Field(..., min_length=3, max_length=20, description="Unique PIN code/Zipcode of the region")
+    description: Optional[str] = Field(None, description="Optional description of the region")
+
+    @field_validator("pin_code")
+    @classmethod
+    def validate_pin(cls, v: str) -> str:
+        v = v.strip()
+        if not re.match(r"^[A-Za-z0-9\s-]{3,20}$", v):
+            raise ValueError("PIN Code must be alphanumeric between 3 and 20 characters (spaces/hyphens allowed)")
+        return v
+
+
+class RegionResponse(BaseModel):
+    id: UUID
+    name: str
+    pin_code: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+

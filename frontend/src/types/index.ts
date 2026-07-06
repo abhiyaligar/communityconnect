@@ -82,6 +82,7 @@ export interface AuthUser {
     full_name: string
     username: string
     gender: string
+    profile_photo_url?: string
     approved: boolean
   }>
 }
@@ -192,6 +193,7 @@ export interface MatrimonyEntry {
     family_type?: string
     family_values?: string
     family_financial_status?: string
+    family_background?: string
     additional_photos?: string[]
   }
 }
