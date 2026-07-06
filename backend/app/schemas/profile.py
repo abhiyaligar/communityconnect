@@ -18,6 +18,7 @@ class ProfileOnboard(BaseModel):
     marital_status: str
     phone_number: str
     address: str
+    region_id: Optional[UUID] = None
     profile_photo_url: str = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"
     
     # Matrimony Opt-in

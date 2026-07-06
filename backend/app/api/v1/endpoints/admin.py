@@ -68,11 +68,22 @@ async def create_administrator(
 
     # 3. Create User record
     hashed_pwd = hash_password(request.password)
+    
+    # If a local admin is creating a local admin, their initial role is set to unverified
+    # until they receive 4 peer local admin approvals or 1 community admin approval.
+    initial_role = request.role
+    is_peer_approval_needed = (
+        current_admin.role == UserRole.local_admin and 
+        request.role == UserRole.local_admin
+    )
+    if is_peer_approval_needed:
+        initial_role = UserRole.unverified
+
     user = User(
         phone_number=request.phone_number,
         email=request.email,
         password_hash=hashed_pwd,
-        role=request.role,
+        role=initial_role,
         is_active=True
     )
     db.add(user)
@@ -100,6 +111,18 @@ async def create_administrator(
             region_id=request.region_id
         )
         db.add(mapping)
+        await db.flush()
+
+    # 6. Create Verification Request for peer approval if created by local admin
+    if is_peer_approval_needed:
+        from app.models.verification import VerificationRequest
+        from app.models.enums import VerificationStatus
+        verification_req = VerificationRequest(
+            target_user_id=user.id,
+            region_id=request.region_id,
+            status=VerificationStatus.pending
+        )
+        db.add(verification_req)
 
     await db.commit()
 
@@ -161,9 +184,18 @@ async def list_all_users(
         select(Profile)
         .join(User, Profile.user_id == User.id)
         .options(selectinload(Profile.user))
-        .offset(offset)
-        .limit(limit)
     )
+
+    if current_admin.role == UserRole.local_admin:
+        from app.models.region import LocalAdminRegion
+        reg_stmt = select(LocalAdminRegion.region_id).where(LocalAdminRegion.user_id == current_admin.id)
+        reg_res = await db.execute(reg_stmt)
+        region_ids = reg_res.scalars().all()
+        if not region_ids:
+            return []
+        stmt = stmt.where(Profile.region_id.in_(region_ids))
+
+    stmt = stmt.offset(offset).limit(limit)
     result = await db.execute(stmt)
     profiles = result.scalars().all()
 
@@ -330,18 +362,23 @@ async def create_region(
     await db.refresh(region)
     return region
 
-
 @router.get("/regions", response_model=List[RegionResponse])
 async def list_regions(
-    limit: int = 10,
+    limit: int = 100,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
-    current_admin: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin]))
+    current_user: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin, UserRole.unverified]))
 ):
     """
     Returns a paginated list of geographic admin regions.
-    - Accessible by both community_admin and local_admin.
+    - Accessible by both community_admin, local_admin, and onboarding unverified users.
     """
     stmt = select(AdminRegion).order_by(AdminRegion.name).offset(offset).limit(limit)
     res = await db.execute(stmt)
     return res.scalars().all()
+
+
+
+
+
+

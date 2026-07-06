@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,15 @@ export default function CreateAdmin() {
       setForm((f) => ({ ...f, role: "local_admin" }))
     }
   }, [currentUser])
+
+  // Load regions for local_admin assignment
+  const { data: regions } = useQuery<any[]>({
+    queryKey: ["admin-regions-list"],
+    queryFn: async () => {
+      const res = await api.get<any[]>("/admin/regions?limit=100")
+      return res.data
+    },
+  })
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,11 +56,11 @@ export default function CreateAdmin() {
   const mutation = useMutation({
     mutationFn: async () => {
       const payload: Record<string, unknown> = {
-        phone_number: form.phone_number,
+        phone_number: `+91${form.phone_number}`,
         email: form.email || undefined,
         password: form.password,
         full_name: form.full_name,
-        address: form.address || undefined,
+        address: form.address,
         role: form.role,
       }
       if (form.role === "local_admin" && form.region_id) {
@@ -114,14 +123,23 @@ export default function CreateAdmin() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="admin-phone" className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Phone Number *</Label>
-                <Input
-                  id="admin-phone"
-                  type="tel"
-                  placeholder="+91 9876543210"
-                  value={form.phone_number}
-                  onChange={(e) => set("phone_number")(e.target.value)}
-                  className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
-                />
+                <div className="flex rounded-lg overflow-hidden border border-[#e2e8f0] bg-[#f8fafc] focus-within:border-[#0f172a] h-[38px]">
+                  <span className="flex items-center px-3 bg-slate-100 border-r border-[#e2e8f0] text-[#64748b] font-medium text-xs">
+                    +91
+                  </span>
+                  <input
+                    id="admin-phone"
+                    type="tel"
+                    placeholder="9876543210"
+                    maxLength={10}
+                    value={form.phone_number}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "")
+                      set("phone_number")(val.slice(0, 10))
+                    }}
+                    className="flex-1 bg-transparent border-none text-[#0f172a] px-3 focus:outline-none text-sm h-full"
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <Label htmlFor="admin-email" className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Email Address</Label>
@@ -146,7 +164,7 @@ export default function CreateAdmin() {
                 />
               </div>
               <div className="col-span-2 space-y-1">
-                <Label htmlFor="admin-address" className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Address</Label>
+                <Label htmlFor="admin-address" className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Address *</Label>
                 <Input
                   id="admin-address"
                   placeholder="City, State, India"
@@ -161,7 +179,7 @@ export default function CreateAdmin() {
                   <SelectTrigger id="admin-role" className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-[#e2e8f0]">
+                  <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
                     <SelectItem value="local_admin">Local Admin</SelectItem>
                     {currentUser?.role === "community_admin" && (
                       <SelectItem value="community_admin">Community Admin</SelectItem>
@@ -171,14 +189,25 @@ export default function CreateAdmin() {
               </div>
               {form.role === "local_admin" && (
                 <div className="space-y-1">
-                  <Label htmlFor="region-id" className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Region ID</Label>
-                  <Input
-                    id="region-id"
-                    placeholder="UUID of region"
-                    value={form.region_id}
-                    onChange={(e) => set("region_id")(e.target.value)}
-                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
-                  />
+                  <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Assigned Region</Label>
+                  <Select value={form.region_id} onValueChange={set("region_id")}>
+                    <SelectTrigger id="region-id" className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]">
+                      <SelectValue placeholder="Select region" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
+                      {regions && regions.length > 0 ? (
+                        regions.map((reg) => (
+                          <SelectItem key={reg.id} value={reg.id}>
+                            {reg.name} ({reg.pin_code})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          No regions available (Create in Dashboard)
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -197,7 +226,15 @@ export default function CreateAdmin() {
             )}
 
             <Button
-              disabled={mutation.isPending || !form.phone_number || !form.password || !form.full_name}
+              disabled={
+                mutation.isPending || 
+                form.phone_number.length !== 10 || 
+                !form.password || 
+                !form.full_name || 
+                !form.address || 
+                form.address.length < 5 ||
+                (form.role === "local_admin" && (!form.region_id || form.region_id === "none"))
+              }
               onClick={() => mutation.mutate()}
               className="w-full bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-10 rounded-lg flex items-center justify-center gap-1.5"
             >

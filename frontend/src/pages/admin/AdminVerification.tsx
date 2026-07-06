@@ -21,16 +21,23 @@ import {
   XCircle,
   AlertTriangle,
   Loader2,
-  ChevronRight,
-  UserPlus
+  ChevronRight
 } from "lucide-react"
 import { toast } from "sonner"
 
 type Action = "approve" | "reject" | "escalate" | null
 
+type ExtendedRequest = VerificationRequest & {
+  target_role?: string | null
+  approval_count?: number
+  region_name?: string | null
+  escalated?: boolean
+  escalation_reason?: string | null
+}
+
 export default function AdminVerification() {
   const queryClient = useQueryClient()
-  const [activeRequest, setActiveRequest] = useState<VerificationRequest | null>(null)
+  const [activeRequest, setActiveRequest] = useState<ExtendedRequest | null>(null)
   const [action, setAction] = useState<Action>(null)
   const [comments, setComments] = useState("")
 
@@ -38,7 +45,7 @@ export default function AdminVerification() {
   const { data: requests, isLoading } = useQuery({
     queryKey: ["verification-pending-center"],
     queryFn: async () => {
-      const res = await api.get<VerificationRequest[]>("/verification/pending")
+      const res = await api.get<ExtendedRequest[]>("/verification/pending")
       return res.data
     },
     retry: false
@@ -58,27 +65,31 @@ export default function AdminVerification() {
       toast.success("Verification request processed successfully.")
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.detail || "Failed to process request.")
+      const msg = err.response?.data?.detail || "Action failed."
+      toast.error(msg)
     }
   })
 
-
-
-  const openAction = (req: any, act: Action) => {
+  const openAction = (req: ExtendedRequest, act: Action) => {
     setActiveRequest(req)
     setAction(act)
     setComments("")
   }
 
+  // Filter requests dynamically
+  const localAdminRequests = requests?.filter(r => r.target_role === "local_admin") || []
+  const disputeRequests = requests?.filter(r => r.escalated || r.status === "escalated") || []
+  const regularRequests = requests?.filter(r => r.target_role !== "local_admin" && !r.escalated && r.status !== "escalated") || []
+
   return (
     <div className="space-y-8 animate-fade-in text-[#0f172a]">
-      {/* Header and Subtitle */}
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
-          Verification Center
+          Member Verification
         </h1>
         <p className="text-sm text-[#64748b] mt-1">
-          Manage regional network integrity, process local approvals, and monitor peer activations.
+          Review, approve, reject, or escalate pending membership applications.
         </p>
       </div>
 
@@ -86,89 +97,89 @@ export default function AdminVerification() {
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         {/* Left Column: Pending Requests Queue */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4 flex-wrap gap-3">
-            <h2 className="text-base font-bold text-[#0f172a] flex items-center gap-2">
-              <span>Pending Requests Queue</span>
-              <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#10b981]/15 text-[#006c49]">
-                Region: North District
+          <div className="border border-[#e2e8f0] rounded-2xl p-6 bg-white shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
+              <h3 className="font-bold text-sm uppercase tracking-wider text-[#64748b]">
+                Pending Approvals Queue
+              </h3>
+              <span className="px-2.5 py-1 rounded bg-[#f1f5f9] text-[#0f172a] text-xs font-bold">
+                {regularRequests.length} Pending
               </span>
-            </h2>
+            </div>
 
-            <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#f1f5f9] text-[#64748b]">
-              {requests?.length || 0} Awaiting
-            </span>
-          </div>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#0f172a]" />
+                </div>
+              ) : regularRequests.length === 0 ? (
+                <div className="text-center py-10 text-[#64748b] bg-slate-50 rounded-2xl border border-dashed border-[#e2e8f0]">
+                  No pending regular verification requests.
+                </div>
+              ) : (
+                regularRequests.map((req) => {
+                  const prof = req.profile
+                  const initials = prof?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"
 
-          <div className="space-y-4">
+                  return (
+                    <div
+                      key={req.request_id}
+                      className="bg-white border border-[#e2e8f0] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-11 w-11 border border-[#e2e8f0] shadow-sm shrink-0">
+                          <AvatarImage src={prof?.profile_photo_url} />
+                          <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <h4 className="font-bold text-sm text-[#0f172a] leading-none flex items-center gap-2">
+                            <span>{prof?.full_name || "Unknown"}</span>
+                            {req.matrimony?.opted_in && (
+                              <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200 text-[8px] px-1 py-0 h-4 uppercase">
+                                Matrimony
+                              </Badge>
+                            )}
+                          </h4>
+                          <p className="text-xs text-[#64748b]">
+                            {prof?.address || "No region"} • <span className="font-semibold text-[#0f172a]">Step 1/3: Local Verification</span>
+                          </p>
+                          <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#10b981]/10 text-[#10b981]">
+                            Family Vouch: Validated
+                          </span>
+                        </div>
+                      </div>
 
-            {/* 2. Render actual database pending requests (if any) */}
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-[#0f172a]" />
-              </div>
-            ) : (
-              requests?.map((req) => {
-                const prof = req.profile
-                const initials = prof?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"
-
-                return (
-                  <div
-                    key={req.request_id}
-                    className="bg-white border border-[#e2e8f0] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-11 w-11 border border-[#e2e8f0] shadow-sm shrink-0">
-                        <AvatarImage src={prof?.profile_photo_url} />
-                        <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-sm text-[#0f172a] leading-none flex items-center gap-2">
-                          <span>{prof?.full_name || "Unknown"}</span>
-                          {req.matrimony?.opted_in && (
-                            <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200 text-[8px] px-1 py-0 h-4 uppercase">
-                              Matrimony
-                            </Badge>
-                          )}
-                        </h4>
-                        <p className="text-xs text-[#64748b]">
-                          {prof?.address || "No region"} • <span className="font-semibold text-[#0f172a]">Step 1/3: Local Verification</span>
-                        </p>
-                        <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#10b981]/10 text-[#10b981]">
-                          Family Vouch: Validated
-                        </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold h-8"
+                          onClick={() => openAction(req, "escalate")}
+                        >
+                          Escalate
+                        </Button>
+                        <Button
+                          className="bg-[#006c49] text-white hover:bg-[#005236] text-xs font-semibold h-8"
+                          onClick={() => openAction(req, "approve")}
+                        >
+                          Approve
+                        </Button>
                       </div>
                     </div>
+                  )
+                })
+              )}
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="outline"
-                        className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold h-8"
-                        onClick={() => openAction(req, "escalate")}
-                      >
-                        Escalate
-                      </Button>
-                      <Button
-                        className="bg-[#006c49] text-white hover:bg-[#005236] text-xs font-semibold h-8"
-                        onClick={() => openAction(req, "approve")}
-                      >
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-
-            <div className="pt-4 text-center">
-              <Button
-                variant="link"
-                className="text-[#0f172a] hover:text-[#64748b] text-xs font-bold p-0 flex items-center justify-center gap-1 mx-auto"
-              >
-                <span>View All Requests</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <div className="pt-4 text-center">
+                <Button
+                  variant="link"
+                  className="text-[#0f172a] hover:text-[#64748b] text-xs font-bold p-0 flex items-center justify-center gap-1 mx-auto"
+                >
+                  <span>View All Requests</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -176,88 +187,117 @@ export default function AdminVerification() {
         {/* Right Column: Stack of Cards */}
         <div className="space-y-8">
           {/* Card 1: Local Admin Activation */}
-          <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
-            <CardHeader className="border-b border-[#e2e8f0] pb-4 space-y-1">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b] flex items-center gap-2">
-                <CheckSquare className="h-4 w-4 text-[#0f172a]" /> Local Admin Activation
-              </CardTitle>
-              <p className="text-[11px] text-[#64748b] leading-tight font-medium">
-                Requires 4 peer approvals to activate new regional admin.
-              </p>
-            </CardHeader>
-            <CardContent className="p-6 space-y-5">
-              <div className="flex items-center justify-between border border-[#e2e8f0] bg-[#f8fafc] rounded-xl p-4">
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-[#0f172a]">
-                    Zaid Ali (North Region)
-                  </h4>
-                  {/* Peer Approvals List */}
-                  <div className="flex items-center -space-x-1.5 pt-1">
-                    <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
-                      <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde" />
-                    </Avatar>
-                    <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
-                      <AvatarImage src="https://images.unsplash.com/photo-1544005313-94ddf0286df2" />
-                    </Avatar>
-                    <Avatar className="h-6 w-6 border-2 border-white shadow-sm">
-                      <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" />
-                    </Avatar>
-                    <div className="h-6 w-6 rounded-full border-2 border-dashed border-[#c6c6cd] flex items-center justify-center bg-white text-muted-foreground">
-                      <UserPlus className="h-3 w-3" />
+          {localAdminRequests.length > 0 && (
+            <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
+              <CardHeader className="border-b border-[#e2e8f0] pb-4 space-y-1">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b] flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-[#0f172a]" /> Local Admin Activation
+                </CardTitle>
+                <p className="text-[11px] text-[#64748b] leading-tight font-medium">
+                  Requires 4 peer approvals to activate new regional admin.
+                </p>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                {localAdminRequests.map((req) => {
+                  const prof = req.profile
+                  const initials = prof?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"
+                  return (
+                    <div key={req.request_id} className="space-y-3 pb-3 border-b border-[#e2e8f0] last:border-b-0 last:pb-0">
+                      <div className="flex items-center justify-between border border-[#e2e8f0] bg-[#f8fafc] rounded-xl p-4">
+                        <div className="space-y-1 flex items-center gap-3">
+                          <Avatar className="h-8 w-8 border border-[#e2e8f0] shadow-sm shrink-0">
+                            <AvatarImage src={prof?.profile_photo_url} />
+                            <AvatarFallback className="text-[10px] bg-[#f1f5f9] font-bold">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="text-xs font-bold text-[#0f172a]">
+                              {prof?.full_name || "Unknown"}
+                            </h4>
+                            <p className="text-[10px] text-[#64748b]">
+                              {req.region_name || "No Region"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="inline-flex px-2.5 py-1 rounded text-xs font-bold bg-[#dae2fd] text-[#131b2e]">
+                          {req.approval_count || 0}/4 Approvals
+                        </span>
+                      </div>
+
+                      <Button
+                        onClick={() => openAction(req, "approve")}
+                        className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white text-xs font-semibold py-2.5 rounded-lg"
+                      >
+                        Cast Peer Approval
+                      </Button>
                     </div>
-                  </div>
-                </div>
-
-                <span className="inline-flex px-2.5 py-1 rounded text-xs font-bold bg-[#dae2fd] text-[#131b2e]">
-                  3/4 Approvals
-                </span>
-              </div>
-
-              <Button className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white text-xs font-semibold py-2.5 rounded-lg">
-                Cast Peer Approval
-              </Button>
-            </CardContent>
-          </Card>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Card 2: Dispute Resolution */}
-          <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
-            <CardHeader className="border-b border-[#e2e8f0] pb-4 flex flex-row items-center justify-between space-y-0">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-[#ba1a1a]" />
-                <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b]">
-                  Dispute Resolution
-                </CardTitle>
-              </div>
-              <span className="text-[10px] font-bold text-[#64748b]">
-                My Region's Disputes
-              </span>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="border border-[#e2e8f0] rounded-xl p-4 space-y-3 bg-[#f8fafc]">
-                <div className="flex justify-between items-start">
-                  <h4 className="text-xs font-bold text-[#0f172a]">
-                    Identity Flag: Case #4092
-                  </h4>
-                  <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#ffdad6] text-[#ba1a1a]">
-                    Escalated
-                  </span>
+          {disputeRequests.length > 0 && (
+            <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
+              <CardHeader className="border-b border-[#e2e8f0] pb-4 flex flex-row items-center justify-between space-y-0">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-[#ba1a1a]" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b]">
+                    Dispute Resolution
+                  </CardTitle>
                 </div>
+                <span className="text-[10px] font-bold text-[#64748b]">
+                  My Region's Disputes
+                </span>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                {disputeRequests.map((req) => {
+                  const prof = req.profile
+                  return (
+                    <div key={req.request_id} className="border border-[#e2e8f0] rounded-xl p-4 space-y-3 bg-[#f8fafc]">
+                      <div className="flex justify-between items-start">
+                        <h4 className="text-xs font-bold text-[#0f172a]">
+                          Identity Flag: Case #{req.request_id.slice(0, 4)}
+                        </h4>
+                        <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#ffdad6] text-[#ba1a1a]">
+                          Escalated
+                        </span>
+                      </div>
 
-                <p className="text-xs text-[#64748b] leading-relaxed">
-                  Multiple reports regarding inaccurate family lineage claims b...
-                </p>
+                      <p className="text-xs text-[#0f172a] font-semibold">
+                        Target: {prof?.full_name || "Unknown"}
+                      </p>
 
-                <div className="text-right">
-                  <Button
-                    variant="link"
-                    className="text-[#0f172a] hover:text-[#64748b] text-[10px] font-bold p-0"
-                  >
-                    Review Case
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      {req.escalation_reason && (
+                        <p className="text-xs text-[#64748b] leading-relaxed">
+                          Reason: {req.escalation_reason}
+                        </p>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          variant="outline"
+                          className="flex-1 border-[#e2e8f0] text-rose-600 hover:bg-rose-50 text-[10px] font-bold h-7"
+                          onClick={() => openAction(req, "reject")}
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          className="flex-1 bg-[#006c49] text-white hover:bg-[#005236] text-[10px] font-bold h-7"
+                          onClick={() => openAction(req, "approve")}
+                        >
+                          Approve
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

@@ -25,6 +25,7 @@ class Profile(Base):
     profile_photo_url = Column(String(512), nullable=False)
     contact_number = Column(String(15), nullable=True)
     address = Column(Text, nullable=False)
+    region_id = Column(UUID(as_uuid=True), ForeignKey("admin_regions.id", ondelete="SET NULL"), nullable=True)
     occupation = Column(String(100), nullable=True)
     is_memorial = Column(Boolean, nullable=False, default=False)
     social_links = Column(JSONB, nullable=True) # {"linkedin": "...", "instagram": "...", "facebook": "..."}
@@ -34,6 +35,7 @@ class Profile(Base):
     # Relationships
     user = relationship("User", back_populates="profile", foreign_keys=[user_id])
     family_unit = relationship("FamilyUnit", back_populates="members", foreign_keys=[family_unit_id])
+    region = relationship("AdminRegion", back_populates="profiles", foreign_keys=[region_id])
 
     # Matrimony profile
     matrimony_profile = relationship(

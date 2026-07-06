@@ -41,7 +41,12 @@ async def get_pending_verifications(
                 VerificationStatus.local_approved,
                 VerificationStatus.escalated
             ]))
-            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile))
+            .options(
+                selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile),
+                selectinload(VerificationRequest.target_user).selectinload(User.local_admin_regions),
+                selectinload(VerificationRequest.region),
+                selectinload(VerificationRequest.approvals)
+            )
         )
     else:
         # Local Admin: Get their assigned regions
@@ -59,7 +64,12 @@ async def get_pending_verifications(
                 VerificationRequest.status == VerificationStatus.pending,
                 VerificationRequest.region_id.in_(region_ids)
             )
-            .options(selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile))
+            .options(
+                selectinload(VerificationRequest.target_user).selectinload(User.profile).selectinload(Profile.matrimony_profile),
+                selectinload(VerificationRequest.target_user).selectinload(User.local_admin_regions),
+                selectinload(VerificationRequest.region),
+                selectinload(VerificationRequest.approvals)
+            )
         )
 
     result = await db.execute(stmt)
@@ -70,6 +80,15 @@ async def get_pending_verifications(
         user_profile = req.target_user.profile if req.target_user else None
         matrimony = user_profile.matrimony_profile if user_profile else None
         
+        # Calculate approvals count for local admin targets
+        approval_count = len([a for a in req.approvals if a.decision == "approved" and a.approver_role == "local_admin"])
+        
+        # Determine target role based on role or mapping
+        is_ladmin = req.target_user.role == UserRole.local_admin or (
+            req.target_user.role == UserRole.unverified and len(req.target_user.local_admin_regions) > 0
+        )
+        target_role_val = "local_admin" if is_ladmin else req.target_user.role.value
+        
         response_data.append({
             "request_id": str(req.id),
             "user_id": str(req.target_user_id),
@@ -77,6 +96,9 @@ async def get_pending_verifications(
             "escalated": req.escalated,
             "escalation_reason": req.escalation_reason,
             "created_at": req.created_at,
+            "target_role": target_role_val,
+            "approval_count": approval_count,
+            "region_name": req.region.name if req.region else None,
             "profile": {
                 "full_name": user_profile.full_name if user_profile else None,
                 "date_of_birth": user_profile.date_of_birth if user_profile else None,
@@ -114,7 +136,9 @@ async def approve_verification(
     stmt = (
         select(VerificationRequest)
         .where(VerificationRequest.id == request_id)
-        .options(selectinload(VerificationRequest.target_user))
+        .options(
+            selectinload(VerificationRequest.target_user).selectinload(User.local_admin_regions)
+        )
     )
     result = await db.execute(stmt)
     req = result.scalars().first()
@@ -134,10 +158,14 @@ async def approve_verification(
     )
     db.add(approval)
 
-    # Determine final role (Default to verified_adult unless target has higher roles)
-    target_role = UserRole.verified_adult
-    if target_user.role == UserRole.local_admin:
-        target_role = UserRole.local_admin
+    # Determine if target user is a local admin candidate (role local_admin OR unverified with regional mapping)
+    is_local_admin_candidate = (
+        target_user.role == UserRole.local_admin or
+        (target_user.role == UserRole.unverified and len(target_user.local_admin_regions) > 0)
+    )
+
+    # Determine final role
+    target_role = UserRole.local_admin if is_local_admin_candidate else UserRole.verified_adult
 
     if current_user.role == UserRole.community_admin:
         # Super Admin approval is final
@@ -145,7 +173,7 @@ async def approve_verification(
         target_user.role = target_role
     else:
         # Local Admin approval
-        if target_user.role == UserRole.local_admin:
+        if is_local_admin_candidate:
             # Requires peer verification (minimum 4 admins)
             votes_stmt = select(VerificationApproval).where(
                 VerificationApproval.verification_request_id == req.id,

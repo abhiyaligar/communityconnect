@@ -298,7 +298,7 @@ export default function AdminUsers() {
               <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Gender</Label>
               <Select value={editForm.gender} onValueChange={(v) => setEditForm({ ...editForm, gender: v as typeof editForm.gender })}>
                 <SelectTrigger className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border border-[#e2e8f0]">
+                <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
@@ -309,7 +309,7 @@ export default function AdminUsers() {
               <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Marital Status</Label>
               <Select value={editForm.marital_status} onValueChange={(v) => setEditForm({ ...editForm, marital_status: v as typeof editForm.marital_status })}>
                 <SelectTrigger className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border border-[#e2e8f0]">
+                <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
                   <SelectItem value="single">Single</SelectItem>
                   <SelectItem value="married">Married</SelectItem>
                   <SelectItem value="divorced">Divorced</SelectItem>
@@ -321,7 +321,7 @@ export default function AdminUsers() {
               <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Role</Label>
               <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
                 <SelectTrigger className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border border-[#e2e8f0]">
+                <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
                   <SelectItem value="unverified">Unverified</SelectItem>
                   <SelectItem value="verified_adult">Verified Adult</SelectItem>
                   <SelectItem value="minor">Minor</SelectItem>
@@ -358,7 +358,7 @@ export default function AdminUsers() {
               <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Account Status</Label>
               <Select value={editForm.is_active ? "true" : "false"} onValueChange={(v) => setEditForm({ ...editForm, is_active: v === "true" })}>
                 <SelectTrigger className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-white border border-[#e2e8f0]">
+                <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
                   <SelectItem value="true">Active</SelectItem>
                   <SelectItem value="false">Inactive</SelectItem>
                 </SelectContent>

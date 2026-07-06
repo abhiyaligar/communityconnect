@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,7 @@ interface FormData {
   marital_status: string
   phone_number: string
   address: string
+  region_id: string
   profile_photo_url: string
 
   // Matrimony
@@ -61,6 +62,7 @@ export default function Register() {
     marital_status: "single",
     phone_number: "",
     address: "",
+    region_id: "",
     profile_photo_url: "",
     create_matrimony: false,
     height_cm: "",
@@ -76,6 +78,17 @@ export default function Register() {
 
   const setF = (field: keyof FormData) => (val: string | boolean) =>
     setForm((f) => ({ ...f, [field]: val }))
+
+  const [regions, setRegions] = useState<any[]>([])
+
+  // Load regions when on the core onboarding step
+  useEffect(() => {
+    if (step === "core") {
+      api.get("/admin/regions?limit=100")
+        .then((res) => setRegions(res.data))
+        .catch((err) => console.error("Failed to load regions", err))
+    }
+  }, [step])
 
   const startCountdown = () => {
     setCountdown(60)
@@ -128,7 +141,7 @@ export default function Register() {
 
   const handleOnboard = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.full_name || !form.date_of_birth || !form.gender || !form.phone_number) {
+    if (!form.full_name || !form.date_of_birth || !form.gender || !form.phone_number || !form.region_id) {
       setError("Please fill in all required core fields.")
       return
     }
@@ -143,6 +156,7 @@ export default function Register() {
         marital_status: form.marital_status,
         phone_number: form.phone_number,
         address: form.address || "Not provided",
+        region_id: form.region_id || undefined,
         profile_photo_url: form.profile_photo_url || undefined,
         create_matrimony: form.create_matrimony,
         // Optional Matrimony data
@@ -332,9 +346,24 @@ export default function Register() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Current Location / Address *</Label>
-                    <Input placeholder="City, State" value={form.address} onChange={(e) => setF("address")(e.target.value)} required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Region / Area *</Label>
+                      <Select value={form.region_id} onValueChange={setF("region_id")} required>
+                        <SelectTrigger className="w-full bg-background border-border text-foreground"><SelectValue placeholder="Select Area" /></SelectTrigger>
+                        <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
+                          {regions.map((reg) => (
+                            <SelectItem key={reg.id} value={reg.id}>
+                              {reg.name} ({reg.pin_code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Current Location / Address *</Label>
+                      <Input placeholder="City, State" value={form.address} onChange={(e) => setF("address")(e.target.value)} required />
+                    </div>
                   </div>
                   
                   <div className="pt-2">

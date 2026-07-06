@@ -196,6 +196,14 @@ async def onboard_profile(
         if res_u.scalars().first():
             raise HTTPException(status_code=400, detail="Username is already taken.")
 
+    # Validate region if selected
+    if payload.region_id:
+        from app.models.region import AdminRegion
+        reg_stmt = select(AdminRegion).where(AdminRegion.id == payload.region_id)
+        reg_res = await db.execute(reg_stmt)
+        if not reg_res.scalars().first():
+            raise HTTPException(status_code=400, detail="Invalid Region ID selected.")
+
     # 3. Create Core Profile
     new_profile = Profile(
         user_id=current_user.id,
@@ -206,6 +214,7 @@ async def onboard_profile(
         marital_status=marital_val,
         contact_number=payload.phone_number,
         address=payload.address,
+        region_id=payload.region_id,
         profile_photo_url=payload.profile_photo_url,
         is_memorial=False,
         social_links=payload.social_links,
@@ -279,6 +288,7 @@ async def onboard_profile(
     from app.models.enums import VerificationStatus
     ver_req = VerificationRequest(
         target_user_id=current_user.id,
+        region_id=payload.region_id,
         status=VerificationStatus.pending,
         escalated=False
     )

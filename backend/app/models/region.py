@@ -35,6 +35,7 @@ class AdminRegion(Base):
     # Relationships
     local_admins = relationship("LocalAdminRegion", back_populates="region", cascade="all, delete-orphan")
     verification_requests = relationship("VerificationRequest", back_populates="region")
+    profiles = relationship("Profile", back_populates="region")
 
     def __repr__(self):
         return f"<AdminRegion(id={self.id}, name={self.name})>"
