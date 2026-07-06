@@ -30,6 +30,7 @@ COPY ./alembic.ini /app/alembic.ini
 # Python environment configurations
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 # Create a non-privileged system user for container security
 RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
