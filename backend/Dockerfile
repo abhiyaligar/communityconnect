@@ -41,7 +41,4 @@ RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-# Expose port and configure entrypoint
-# GCP Cloud Run injects the PORT env variable (usually 8080).
-EXPOSE 8000
-CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4
+CMD python -c "import os, sys; print('=== CONTAINER DEBUG START ==='); print('CWD:', os.getcwd()); print('PYTHONPATH:', os.environ.get('PYTHONPATH')); print('sys.path:', sys.path); print('Files in /app:', os.listdir('/app') if os.path.exists('/app') else 'Not Found'); print('Files in /app/app:', os.listdir('/app/app') if os.path.exists('/app/app') else 'Not Found'); print('=== CONTAINER DEBUG END ==='"

@@ -102,7 +102,6 @@ jobs:
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPO }}/backend:${{ github.sha }}
           flags: |
             --allow-unauthenticated
-            --set-secrets=/app/.env=community-backend-env:latest
-
+            --set-secrets="/app/.env=community-backend-env:latest"
       - name: Show Deploy URL
         run: echo "Backend deployed successfully to ${{ steps.deploy.outputs.url }}"
