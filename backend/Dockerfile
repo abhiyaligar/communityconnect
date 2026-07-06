@@ -41,4 +41,4 @@ RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-CMD python -c "import os, sys; print('=== CONTAINER DEBUG START ==='); print('CWD:', os.getcwd()); print('PYTHONPATH:', os.environ.get('PYTHONPATH')); print('sys.path:', sys.path); print('Files in /app:', os.listdir('/app') if os.path.exists('/app') else 'Not Found'); print('Files in /app/app:', os.listdir('/app/app') if os.path.exists('/app/app') else 'Not Found'); print('=== CONTAINER DEBUG END ==='"
+CMD python -c "import os, sys; print('=== CONTAINER DEBUG START ==='); print('CWD:', os.getcwd()); print('PYTHONPATH:', os.environ.get('PYTHONPATH')); print('sys.path:', sys.path); print('Files in /app:', os.listdir('/app') if os.path.exists('/app') else 'Not Found'); print('Files in /app/app:', os.listdir('/app/app') if os.path.exists('/app/app') else 'Not Found'); print('=== CONTAINER DEBUG END ===')"
