@@ -63,9 +63,9 @@ export default function EditMatrimony() {
     }
   }
 
-  const handleDeleteGalleryPhoto = (indexToDelete: number) => {
-    setAdditionalPhotos((prev) => prev.filter((_, i) => i !== indexToDelete))
-  }
+  // const handleDeleteGalleryPhoto = (indexToDelete: number) => {
+  //   setAdditionalPhotos((prev) => prev.filter((_, i) => i !== indexToDelete))
+  // }
 
   // Form State
   const [formData, setFormData] = useState<any>({
@@ -189,7 +189,7 @@ export default function EditMatrimony() {
     }
     setLoading(true)
     setError("")
-    
+
     try {
       await api.put("/profiles/me/matrimony", getPayload())
       await refreshUser()
@@ -216,494 +216,494 @@ export default function EditMatrimony() {
   return (
     <>
       <div className="space-y-8 animate-fade-in text-[#0f172a] max-w-4xl mx-auto pb-12">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
-              Matrimonial Profile
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
-              <Heart className="h-3 w-3" /> Setup
-            </span>
+        {/* Header Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
+                Matrimonial Profile
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
+                <Heart className="h-3 w-3" /> Setup
+              </span>
+            </div>
+            <p className="text-sm text-[#64748b] mt-1">
+              Complete your preferences, physical attributes, background, and gallery to get verified matches.
+            </p>
           </div>
-          <p className="text-sm text-[#64748b] mt-1">
-            Complete your preferences, physical attributes, background, and gallery to get verified matches.
-          </p>
+
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 h-9 gap-1.5 shrink-0 self-start sm:self-auto"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Matches</span>
+          </Button>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={() => navigate(-1)}
-          className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 h-9 gap-1.5 shrink-0 self-start sm:self-auto"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Matches</span>
-        </Button>
-      </div>
+        {error && (
+          <div className="bg-destructive/5 text-destructive text-xs p-4 rounded-xl text-center border border-destructive/20 font-medium">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="bg-destructive/5 text-destructive text-xs p-4 rounded-xl text-center border border-destructive/20 font-medium">
-          {error}
-        </div>
-      )}
+        <form onSubmit={handleSubmit} className="space-y-6">
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* SECTION: ABOUT ME */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <User className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">About Candidate</h3>
-          </div>
-          <div className="space-y-2 pt-1">
-            <Label htmlFor="about_me" className="text-xs text-[#0f172a] font-medium">Describe yourself, your outlook, and what you are looking for in a partner</Label>
-            <textarea
-              id="about_me"
-              name="about_me"
-              rows={4}
-              placeholder="E.g. I am family-oriented, working in tech..."
-              value={formData.about_me || ""}
-              onChange={handleChange}
-              className="w-full border-b border-[#e2e8f0] bg-transparent px-0 py-2 text-xs text-[#0f172a] placeholder-[#64748b] focus:outline-none resize-none"
-            />
-          </div>
-        </section>
-
-        {/* SECTION: PHYSICAL */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <User className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Physical Attributes</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Height (cm)</Label>
-              <Input name="height_cm" type="number" placeholder="e.g. 175" value={formData.height_cm || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Body Type</Label>
-              <Select value={formData.body_type || ""} onValueChange={(v) => handleSelect("body_type", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="slim">Slim</SelectItem>
-                  <SelectItem value="average">Average</SelectItem>
-                  <SelectItem value="athletic">Athletic</SelectItem>
-                  <SelectItem value="heavy">Heavy</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Complexion</Label>
-              <Select value={formData.complexion || ""} onValueChange={(v) => handleSelect("complexion", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fair">Fair</SelectItem>
-                  <SelectItem value="wheatish">Wheatish</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: PROFESSIONAL */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Briefcase className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Education & Career</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Highest Qualification</Label>
-              <Select value={formData.highest_qualification || ""} onValueChange={(v) => handleSelect("highest_qualification", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10th">10th Pass</SelectItem>
-                  <SelectItem value="12th">12th Pass</SelectItem>
-                  <SelectItem value="diploma">Diploma</SelectItem>
-                  <SelectItem value="bachelors">Bachelor's</SelectItem>
-                  <SelectItem value="masters">Master's</SelectItem>
-                  <SelectItem value="phd">PhD</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Field of Study</Label>
-              <Input name="field_of_study" placeholder="e.g. Computer Science" value={formData.field_of_study || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Institution</Label>
-              <Input name="institution" placeholder="e.g. IIT Bangalore" value={formData.institution || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Employment Type</Label>
-              <Select value={formData.employment_type || ""} onValueChange={(v) => handleSelect("employment_type", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="employed">Employed</SelectItem>
-                  <SelectItem value="self_employed">Self Employed</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="not_working">Not Working</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Job Title / Designation</Label>
-              <Input name="job_title" placeholder="e.g. Software Engineer" value={formData.job_title || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Income Range</Label>
-              <Select value={formData.income_range || ""} onValueChange={(v) => handleSelect("income_range", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="below_2l">Below 2 Lakhs</SelectItem>
-                  <SelectItem value="2_5l">2 - 5 Lakhs</SelectItem>
-                  <SelectItem value="5_10l">5 - 10 Lakhs</SelectItem>
-                  <SelectItem value="10_20l">10 - 20 Lakhs</SelectItem>
-                  <SelectItem value="above_20l">Above 20 Lakhs</SelectItem>
-                  <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 sm:col-span-3">
-              <Label className="text-xs font-semibold text-[#0f172a]">Work Location / City</Label>
-              <Input name="work_location" placeholder="e.g. Bengaluru, Karnataka" value={formData.work_location || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: HOROSCOPE */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Star className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Horoscope & Astro</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Gotra</Label>
-              <Input name="gotra" placeholder="Your gotra" value={formData.gotra || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Rashi / Zodiac</Label>
-              <Input name="rashi" placeholder="e.g. Leo" value={formData.rashi || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Nakshatra</Label>
-              <Input name="nakshatra" placeholder="e.g. Rohini" value={formData.nakshatra || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Manglik Status</Label>
-              <Select value={formData.manglik_status || ""} onValueChange={(v) => handleSelect("manglik_status", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="partial">Partial / Anshik</SelectItem>
-                  <SelectItem value="dont_know">Don't Know</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Birth Time</Label>
-              <Input name="birth_time" placeholder="e.g. 05:45 PM" value={formData.birth_time || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Birth Place</Label>
-              <Input name="birth_place" placeholder="e.g. Mysuru, Karnataka" value={formData.birth_place || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: FAMILY */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Users className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Family Background</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Father's Name</Label>
-              <Input name="father_name" placeholder="Father's full name" value={formData.father_name || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Father's Occupation</Label>
-              <Input name="father_occupation" placeholder="e.g. Retired Engineer" value={formData.father_occupation || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Mother's Name</Label>
-              <Input name="mother_name" placeholder="Mother's full name" value={formData.mother_name || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Mother's Occupation</Label>
-              <Input name="mother_occupation" placeholder="e.g. Teacher" value={formData.mother_occupation || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Brothers (Count / Marital status)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Input name="brothers_count" placeholder="Count" type="number" value={formData.brothers_count || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-                <Input name="brothers_marital_status" placeholder="e.g. Married / Single" value={formData.brothers_marital_status || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+          {/* SECTION: ABOUT ME */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <User className="h-4 w-4" />
               </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">About Candidate</h3>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Sisters (Count / Marital status)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Input name="sisters_count" placeholder="Count" type="number" value={formData.sisters_count || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-                <Input name="sisters_marital_status" placeholder="e.g. Married / Single" value={formData.sisters_marital_status || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Family Type</Label>
-              <Select value={formData.family_type || ""} onValueChange={(v) => handleSelect("family_type", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nuclear">Nuclear</SelectItem>
-                  <SelectItem value="joint">Joint</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Family Values</Label>
-              <Select value={formData.family_values || ""} onValueChange={(v) => handleSelect("family_values", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="traditional">Traditional</SelectItem>
-                  <SelectItem value="moderate">Moderate</SelectItem>
-                  <SelectItem value="liberal">Liberal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Family Financial Status</Label>
-              <Select value={formData.family_financial_status || ""} onValueChange={(v) => handleSelect("family_financial_status", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rich">Rich</SelectItem>
-                  <SelectItem value="upper_middle">Upper Middle Class</SelectItem>
-                  <SelectItem value="middle">Middle Class</SelectItem>
-                  <SelectItem value="lower_middle">Lower Middle Class</SelectItem>
-                  <SelectItem value="poor">Lower Class</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: LIFESTYLE */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Coffee className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Lifestyle</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Diet</Label>
-              <Select value={formData.diet || ""} onValueChange={(v) => handleSelect("diet", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                  <SelectItem value="eggetarian">Eggetarian</SelectItem>
-                  <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Smoking</Label>
-              <Select value={formData.smoking || ""} onValueChange={(v) => handleSelect("smoking", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="occasionally">Occasionally</SelectItem>
-                  <SelectItem value="yes">Yes</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Drinking</Label>
-              <Select value={formData.drinking || ""} onValueChange={(v) => handleSelect("drinking", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no">No</SelectItem>
-                  <SelectItem value="occasionally">Occasionally</SelectItem>
-                  <SelectItem value="yes">Yes</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-[#0f172a]">Physical Activity</Label>
-              <Select value={formData.physical_activity || ""} onValueChange={(v) => handleSelect("physical_activity", v)}>
-                <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="no">No / Low</SelectItem>
-                  <SelectItem value="occasionally">Occasionally</SelectItem>
-                  <SelectItem value="yes">Regular / Active</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: HOBBIES & LANGUAGES */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Heart className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Hobbies & Languages</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
-            <div className="space-y-2">
-              <Label htmlFor="hobbies" className="text-xs font-semibold text-[#0f172a]">Hobbies (comma-separated)</Label>
-              <Input id="hobbies" name="hobbies" placeholder="e.g. Reading, Hiking, Cooking" value={formData.hobbies || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="languages" className="text-xs font-semibold text-[#0f172a]">Languages spoken (comma-separated)</Label>
-              <Input id="languages" name="languages" placeholder="e.g. English, Hindi, Kannada" value={formData.languages || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION: DOUBLE APPROVAL */}
-        <section className="space-y-4 pt-2">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
-            <div className="text-rose-500">
-              <Shield className="h-4 w-4" />
-            </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Double Approval Settings</h3>
-          </div>
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5 pr-4">
-                <Label htmlFor="double_approval" className="text-xs font-bold text-[#0f172a] cursor-pointer">Require Family Member Approval</Label>
-                <p className="text-[11px] text-[#64748b] leading-normal font-medium">
-                  If enabled, requests to connect will require approval from both you and a designated family member.
-                </p>
-              </div>
-              <input
-                id="double_approval"
-                type="checkbox"
-                checked={doubleApprovalRequired}
-                onChange={(e) => {
-                  setDoubleApprovalRequired(e.target.checked)
-                  if (!e.target.checked) {
-                    setCoApproverUsername("")
-                    setCoApproverProfileId(null)
-                    setCoApproverName(null)
-                    setVerifyError("")
-                  }
-                }}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-foreground shrink-0"
+            <div className="space-y-2 pt-1">
+              <Label htmlFor="about_me" className="text-xs text-[#0f172a] font-medium">Describe yourself, your outlook, and what you are looking for in a partner</Label>
+              <textarea
+                id="about_me"
+                name="about_me"
+                rows={4}
+                placeholder="E.g. I am family-oriented, working in tech..."
+                value={formData.about_me || ""}
+                onChange={handleChange}
+                className="w-full border-b border-[#e2e8f0] bg-transparent px-0 py-2 text-xs text-[#0f172a] placeholder-[#64748b] focus:outline-none resize-none"
               />
             </div>
+          </section>
 
-            {doubleApprovalRequired && (
-              <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
-                <Label htmlFor="co_approver" className="text-xs font-semibold text-[#0f172a]">Family Co-approver Username</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">@</span>
-                    <Input
-                      id="co_approver"
-                      value={coApproverUsername}
-                      onChange={(e) => {
-                        setCoApproverUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
-                        setCoApproverProfileId(null)
-                        setCoApproverName(null)
-                        setCoApproverApproved(false)
-                        setVerifyError("")
-                      }}
-                      className="pl-7 font-mono text-xs rounded-xl border-[#e2e8f0] h-10"
-                      placeholder="username"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleVerifyUsername}
-                    disabled={verifying || !coApproverUsername.trim()}
-                    className="text-xs rounded-xl h-10 px-4"
-                  >
-                    {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Verify"}
-                  </Button>
-                </div>
-                
-                {coApproverName && (
-                  <div className="space-y-1.5 mt-1">
-                    <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                      <span>✓ Verified:</span> <span className="font-semibold text-emerald-700">{coApproverName}</span>
-                    </p>
-                    {coApproverApproved ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold py-0.5 rounded px-2">
-                        Verified & Confirmed ✓
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-bold py-0.5 rounded px-2">
-                        Pending Guardian Confirmation ⏳
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                {verifyError && (
-                  <p className="text-xs text-destructive font-medium">{verifyError}</p>
-                )}
-                {!coApproverProfileId && !verifyError && (
-                  <p className="text-xs text-amber-500 font-medium">
-                    * Please verify the co-approver username to save.
-                  </p>
-                )}
+          {/* SECTION: PHYSICAL */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <User className="h-4 w-4" />
               </div>
-            )}
-          </div>
-        </section>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Physical Attributes</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Height (cm)</Label>
+                <Input name="height_cm" type="number" placeholder="e.g. 175" value={formData.height_cm || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Body Type</Label>
+                <Select value={formData.body_type || ""} onValueChange={(v) => handleSelect("body_type", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slim">Slim</SelectItem>
+                    <SelectItem value="average">Average</SelectItem>
+                    <SelectItem value="athletic">Athletic</SelectItem>
+                    <SelectItem value="heavy">Heavy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Complexion</Label>
+                <Select value={formData.complexion || ""} onValueChange={(v) => handleSelect("complexion", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fair">Fair</SelectItem>
+                    <SelectItem value="wheatish">Wheatish</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
 
-        {/* Photo Gallery has been relocated to its own dedicated page at /matrimony/gallery */}
+          {/* SECTION: PROFESSIONAL */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Briefcase className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Education & Career</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Highest Qualification</Label>
+                <Select value={formData.highest_qualification || ""} onValueChange={(v) => handleSelect("highest_qualification", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10th">10th Pass</SelectItem>
+                    <SelectItem value="12th">12th Pass</SelectItem>
+                    <SelectItem value="diploma">Diploma</SelectItem>
+                    <SelectItem value="bachelors">Bachelor's</SelectItem>
+                    <SelectItem value="masters">Master's</SelectItem>
+                    <SelectItem value="phd">PhD</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Field of Study</Label>
+                <Input name="field_of_study" placeholder="e.g. Computer Science" value={formData.field_of_study || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Institution</Label>
+                <Input name="institution" placeholder="e.g. IIT Bangalore" value={formData.institution || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Employment Type</Label>
+                <Select value={formData.employment_type || ""} onValueChange={(v) => handleSelect("employment_type", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="employed">Employed</SelectItem>
+                    <SelectItem value="self_employed">Self Employed</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="not_working">Not Working</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Job Title / Designation</Label>
+                <Input name="job_title" placeholder="e.g. Software Engineer" value={formData.job_title || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Income Range</Label>
+                <Select value={formData.income_range || ""} onValueChange={(v) => handleSelect("income_range", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="below_2l">Below 2 Lakhs</SelectItem>
+                    <SelectItem value="2_5l">2 - 5 Lakhs</SelectItem>
+                    <SelectItem value="5_10l">5 - 10 Lakhs</SelectItem>
+                    <SelectItem value="10_20l">10 - 20 Lakhs</SelectItem>
+                    <SelectItem value="above_20l">Above 20 Lakhs</SelectItem>
+                    <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 sm:col-span-3">
+                <Label className="text-xs font-semibold text-[#0f172a]">Work Location / City</Label>
+                <Input name="work_location" placeholder="e.g. Bengaluru, Karnataka" value={formData.work_location || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+            </div>
+          </section>
 
-        <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-10 px-4 rounded-xl"
-            onClick={() => setShowPreview(true)}
-          >
-            <Eye className="mr-2 h-4 w-4" /> Preview Profile
-          </Button>
-          <div className="flex justify-end gap-3 w-full sm:w-auto">
+          {/* SECTION: HOROSCOPE */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Star className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Horoscope & Astro</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Gotra</Label>
+                <Input name="gotra" placeholder="Your gotra" value={formData.gotra || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Rashi / Zodiac</Label>
+                <Input name="rashi" placeholder="e.g. Leo" value={formData.rashi || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Nakshatra</Label>
+                <Input name="nakshatra" placeholder="e.g. Rohini" value={formData.nakshatra || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Manglik Status</Label>
+                <Select value={formData.manglik_status || ""} onValueChange={(v) => handleSelect("manglik_status", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="partial">Partial / Anshik</SelectItem>
+                    <SelectItem value="dont_know">Don't Know</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Birth Time</Label>
+                <Input name="birth_time" placeholder="e.g. 05:45 PM" value={formData.birth_time || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Birth Place</Label>
+                <Input name="birth_place" placeholder="e.g. Mysuru, Karnataka" value={formData.birth_place || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: FAMILY */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Users className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Family Background</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Father's Name</Label>
+                <Input name="father_name" placeholder="Father's full name" value={formData.father_name || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Father's Occupation</Label>
+                <Input name="father_occupation" placeholder="e.g. Retired Engineer" value={formData.father_occupation || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Mother's Name</Label>
+                <Input name="mother_name" placeholder="Mother's full name" value={formData.mother_name || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Mother's Occupation</Label>
+                <Input name="mother_occupation" placeholder="e.g. Teacher" value={formData.mother_occupation || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Brothers (Count / Marital status)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input name="brothers_count" placeholder="Count" type="number" value={formData.brothers_count || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+                  <Input name="brothers_marital_status" placeholder="e.g. Married / Single" value={formData.brothers_marital_status || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Sisters (Count / Marital status)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input name="sisters_count" placeholder="Count" type="number" value={formData.sisters_count || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+                  <Input name="sisters_marital_status" placeholder="e.g. Married / Single" value={formData.sisters_marital_status || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Family Type</Label>
+                <Select value={formData.family_type || ""} onValueChange={(v) => handleSelect("family_type", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nuclear">Nuclear</SelectItem>
+                    <SelectItem value="joint">Joint</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Family Values</Label>
+                <Select value={formData.family_values || ""} onValueChange={(v) => handleSelect("family_values", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="traditional">Traditional</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="liberal">Liberal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Family Financial Status</Label>
+                <Select value={formData.family_financial_status || ""} onValueChange={(v) => handleSelect("family_financial_status", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rich">Rich</SelectItem>
+                    <SelectItem value="upper_middle">Upper Middle Class</SelectItem>
+                    <SelectItem value="middle">Middle Class</SelectItem>
+                    <SelectItem value="lower_middle">Lower Middle Class</SelectItem>
+                    <SelectItem value="poor">Lower Class</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: LIFESTYLE */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Coffee className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Lifestyle</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Diet</Label>
+                <Select value={formData.diet || ""} onValueChange={(v) => handleSelect("diet", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                    <SelectItem value="eggetarian">Eggetarian</SelectItem>
+                    <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Smoking</Label>
+                <Select value={formData.smoking || ""} onValueChange={(v) => handleSelect("smoking", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="occasionally">Occasionally</SelectItem>
+                    <SelectItem value="yes">Yes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Drinking</Label>
+                <Select value={formData.drinking || ""} onValueChange={(v) => handleSelect("drinking", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="occasionally">Occasionally</SelectItem>
+                    <SelectItem value="yes">Yes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-[#0f172a]">Physical Activity</Label>
+                <Select value={formData.physical_activity || ""} onValueChange={(v) => handleSelect("physical_activity", v)}>
+                  <SelectTrigger className="rounded-xl border-[#e2e8f0] text-xs h-10"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">No / Low</SelectItem>
+                    <SelectItem value="occasionally">Occasionally</SelectItem>
+                    <SelectItem value="yes">Regular / Active</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: HOBBIES & LANGUAGES */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Heart className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Hobbies & Languages</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-1">
+              <div className="space-y-2">
+                <Label htmlFor="hobbies" className="text-xs font-semibold text-[#0f172a]">Hobbies (comma-separated)</Label>
+                <Input id="hobbies" name="hobbies" placeholder="e.g. Reading, Hiking, Cooking" value={formData.hobbies || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="languages" className="text-xs font-semibold text-[#0f172a]">Languages spoken (comma-separated)</Label>
+                <Input id="languages" name="languages" placeholder="e.g. English, Hindi, Kannada" value={formData.languages || ""} onChange={handleChange} className="rounded-xl border-[#e2e8f0] text-xs h-10" />
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: DOUBLE APPROVAL */}
+          <section className="space-y-4 pt-2">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+              <div className="text-rose-500">
+                <Shield className="h-4 w-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Double Approval Settings</h3>
+            </div>
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5 pr-4">
+                  <Label htmlFor="double_approval" className="text-xs font-bold text-[#0f172a] cursor-pointer">Require Family Member Approval</Label>
+                  <p className="text-[11px] text-[#64748b] leading-normal font-medium">
+                    If enabled, requests to connect will require approval from both you and a designated family member.
+                  </p>
+                </div>
+                <input
+                  id="double_approval"
+                  type="checkbox"
+                  checked={doubleApprovalRequired}
+                  onChange={(e) => {
+                    setDoubleApprovalRequired(e.target.checked)
+                    if (!e.target.checked) {
+                      setCoApproverUsername("")
+                      setCoApproverProfileId(null)
+                      setCoApproverName(null)
+                      setVerifyError("")
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-foreground shrink-0"
+                />
+              </div>
+
+              {doubleApprovalRequired && (
+                <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
+                  <Label htmlFor="co_approver" className="text-xs font-semibold text-[#0f172a]">Family Co-approver Username</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">@</span>
+                      <Input
+                        id="co_approver"
+                        value={coApproverUsername}
+                        onChange={(e) => {
+                          setCoApproverUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))
+                          setCoApproverProfileId(null)
+                          setCoApproverName(null)
+                          setCoApproverApproved(false)
+                          setVerifyError("")
+                        }}
+                        className="pl-7 font-mono text-xs rounded-xl border-[#e2e8f0] h-10"
+                        placeholder="username"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleVerifyUsername}
+                      disabled={verifying || !coApproverUsername.trim()}
+                      className="text-xs rounded-xl h-10 px-4"
+                    >
+                      {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Verify"}
+                    </Button>
+                  </div>
+
+                  {coApproverName && (
+                    <div className="space-y-1.5 mt-1">
+                      <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                        <span>✓ Verified:</span> <span className="font-semibold text-emerald-700">{coApproverName}</span>
+                      </p>
+                      {coApproverApproved ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold py-0.5 rounded px-2">
+                          Verified & Confirmed ✓
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-bold py-0.5 rounded px-2">
+                          Pending Guardian Confirmation ⏳
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  {verifyError && (
+                    <p className="text-xs text-destructive font-medium">{verifyError}</p>
+                  )}
+                  {!coApproverProfileId && !verifyError && (
+                    <p className="text-xs text-amber-500 font-medium">
+                      * Please verify the co-approver username to save.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Photo Gallery has been relocated to its own dedicated page at /matrimony/gallery */}
+
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
             <Button
               type="button"
               variant="outline"
-              className="flex-1 sm:flex-none border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-10 px-4 rounded-xl"
-              onClick={() => navigate(-1)}
+              className="w-full sm:w-auto border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-10 px-4 rounded-xl"
+              onClick={() => setShowPreview(true)}
             >
-              Cancel
+              <Eye className="mr-2 h-4 w-4" /> Preview Profile
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-40 flex-1 sm:flex-none bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold h-10 rounded-xl"
-            >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Save Profile
-            </Button>
+            <div className="flex justify-end gap-3 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 sm:flex-none border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-10 px-4 rounded-xl"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-40 flex-1 sm:flex-none bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold h-10 rounded-xl"
+              >
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Profile
+              </Button>
+            </div>
           </div>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -711,7 +711,7 @@ export default function EditMatrimony() {
           <DialogHeader className="pb-4 border-b border-border">
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
               <Avatar className="h-16 w-16 border border-border">
-              <AvatarImage src={getImageUrl(user.profile_photo_url)} />
+                <AvatarImage src={getImageUrl(user.profile_photo_url)} />
                 <AvatarFallback className="text-xl font-bold bg-muted text-foreground">
                   {initials}
                 </AvatarFallback>
@@ -855,7 +855,7 @@ export default function EditMatrimony() {
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase font-bold">Siblings</p>
                   <p className="font-semibold text-xs mt-0.5">
-                    Brothers: {previewPayload.brothers_count || "0"} ({previewPayload.brothers_marital_status || "—"}), 
+                    Brothers: {previewPayload.brothers_count || "0"} ({previewPayload.brothers_marital_status || "—"}),
                     Sisters: {previewPayload.sisters_count || "0"} ({previewPayload.sisters_marital_status || "—"})
                   </p>
                 </div>

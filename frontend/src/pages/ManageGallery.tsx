@@ -12,7 +12,7 @@ import { toast } from "sonner"
 export default function ManageGallery() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user, refreshUser } = useAuth()
+  const { refreshUser } = useAuth()
   const [uploading, setUploading] = useState(false)
 
   // Fetch matrimonial profile details
