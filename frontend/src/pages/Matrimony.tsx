@@ -18,7 +18,6 @@ import {
   Phone,
   Shield,
   Lock,
-  Sparkles,
   ArrowRight,
   BookOpen
 } from "lucide-react"

@@ -3,8 +3,6 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { toast } from "sonner"
 import {
   LayoutDashboard,
   Users,
@@ -15,16 +13,13 @@ import {
   Shield,
   Settings,
   HelpCircle,
-  Menu,
   X,
   Bell,
   Lock,
   LogOut,
   Plus,
   Camera,
-  Home,
-  BookOpen,
-  Download
+  Home
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -87,14 +82,14 @@ export function MainLayout({ children }: MainLayoutProps) {
     { to: isAdmin ? "/admin/dashboard" : "/dashboard", label: "Home", icon: Home },
     ...(isAdmin
       ? [
-          { to: "/admin/matrimony", label: "Matrimonial", icon: Heart },
-          { to: "/admin/verification", label: "Manage Gallery", icon: Camera }
-        ]
+        { to: "/admin/matrimony", label: "Matrimonial", icon: Heart },
+        { to: "/admin/verification", label: "Manage Gallery", icon: Camera }
+      ]
       : !isUnverified && isVerifiedAdult
         ? [
-            { to: "/matrimony", label: "Matrimonial", icon: Heart },
-            { to: "/matrimony/gallery", label: "Manage Gallery", icon: Camera }
-          ]
+          { to: "/matrimony", label: "Matrimonial", icon: Heart },
+          { to: "/matrimony/gallery", label: "Manage Gallery", icon: Camera }
+        ]
         : []
     ),
     { to: "/profile", label: "Profile", icon: User }
@@ -156,7 +151,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {/* Action Button (only for unverified users) */}
         {user?.role === "unverified" && (
           <div className="pt-2 px-1">
-            <Button 
+            <Button
               className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white flex items-center justify-center gap-2 text-xs font-semibold py-5 rounded-lg"
               onClick={() => navigate("/profile")}
             >
@@ -232,7 +227,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           {/* Overlay */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
           />
@@ -323,7 +318,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <Lock className="h-5 w-5" />
               </Button>
 
-              <Avatar 
+              <Avatar
                 className="h-8 w-8 border-2 border-[#e2e8f0] cursor-pointer hover:border-[#0f172a] transition-colors"
                 onClick={() => navigate("/profile")}
               >

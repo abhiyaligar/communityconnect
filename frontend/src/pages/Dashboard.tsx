@@ -9,11 +9,8 @@ import {
   Users,
   Heart,
   Clock,
-  Landmark,
   Shield,
   Loader2,
-  ArrowRight,
-  Camera
 } from "lucide-react"
 import api from "@/lib/api"
 import { toast } from "sonner"
