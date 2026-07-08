@@ -18,7 +18,8 @@ import {
   Bell,
   Lock,
   LogOut,
-  Plus
+  Plus,
+  Camera
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -60,6 +61,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       : !isUnverified && isVerifiedAdult
         ? [{ to: "/matrimony", label: "Matrimonial", icon: Heart }]
         : []
+    ),
+    ...(!isAdmin && !isUnverified && isVerifiedAdult && user?.matrimony?.opted_in
+      ? [{ to: "/matrimony/gallery", label: "Manage Gallery", icon: Camera }]
+      : []
     ),
     ...(isVerifiedAdult ? [{ to: "/matrimony/requests", label: "Requests", icon: MessageSquare }] : []),
     ...(isAdmin ? [{ to: "/admin/create-admin", label: "Operators", icon: Plus }] : [])

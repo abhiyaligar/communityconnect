@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
+import { cn, getImageUrl, handleApiError } from "@/lib/utils"
 import {
   Download,
   Edit,
@@ -15,11 +16,15 @@ import {
   Plus,
   MoreVertical,
   Check,
-  Loader2
+  Loader2,
+  Heart,
+  User,
+  Camera
 } from "lucide-react"
 import { toast } from "sonner"
 
 export default function Profile() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user, refreshUser } = useAuth()
 
@@ -30,6 +35,7 @@ export default function Profile() {
 
   // Dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("details")
 
   // Profile Edit fields state
   const [phone, setPhone] = useState("")
@@ -42,6 +48,33 @@ export default function Profile() {
   const [instagram, setInstagram] = useState("")
   const [facebook, setFacebook] = useState("")
   const [twitter, setTwitter] = useState("")
+  const [uploading, setUploading] = useState(false)
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Image file is too large. Maximum size is 15MB.")
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    setUploading(true)
+    try {
+      const res = await api.post("/uploads/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+      setPhotoUrl(res.data.url)
+      toast.success("Image uploaded successfully!")
+    } catch (err: any) {
+      toast.error(handleApiError(err, "Failed to upload image."))
+    } finally {
+      setUploading(false)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -146,7 +179,25 @@ export default function Profile() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-[#e2e8f0] text-[#0f172a] gap-2 text-xs font-semibold px-4 py-2">
+          {user?.matrimony?.opted_in ? (
+            <Button
+              variant="outline"
+              className="border-[#e2e8f0] text-foreground hover:bg-muted gap-2 text-xs font-semibold px-4 py-2"
+              onClick={() => navigate("/matrimony/edit")}
+            >
+              <Heart className="h-4 w-4 text-rose-500" />
+              <span>Edit Matrimony</span>
+            </Button>
+          ) : (
+            <Button
+              className="bg-rose-600 text-white hover:bg-rose-700 gap-2 text-xs font-semibold px-4 py-2"
+              onClick={() => navigate("/matrimony/edit")}
+            >
+              <Heart className="h-4 w-4" />
+              <span>Opt-in to Matrimony</span>
+            </Button>
+          )}
+          <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted gap-2 text-xs font-semibold px-4 py-2">
             <Download className="h-4 w-4" />
             <span>Export Data</span>
           </Button>
@@ -165,7 +216,7 @@ export default function Profile() {
         {/* Left Column: Profile Summary Card */}
         <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col items-center text-center space-y-6">
           <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
-            <AvatarImage src={profileData.profile_photo_url} />
+            <AvatarImage src={getImageUrl(profileData.profile_photo_url)} />
             <AvatarFallback className="text-3xl bg-[#f1f5f9] text-[#0f172a] font-bold">
               {initials}
             </AvatarFallback>
@@ -212,7 +263,7 @@ export default function Profile() {
         </div>
 
         {/* Right Column: Stack of Cards */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-8 animate-fade-in">
           {/* Card 1: Contact Information */}
           <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
             <CardHeader className="border-b border-[#e2e8f0] pb-4 flex flex-row items-center justify-between space-y-0">
@@ -335,7 +386,7 @@ export default function Profile() {
               <div className="p-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
-                    <AvatarImage src={profileData.profile_photo_url} />
+                    <AvatarImage src={getImageUrl(profileData.profile_photo_url)} />
                     <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
                       {initials}
                     </AvatarFallback>
@@ -366,7 +417,7 @@ export default function Profile() {
                     <div key={ward.profile_id} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9 border border-[#e2e8f0] shadow-sm shrink-0">
-                          <AvatarImage src={ward.profile_photo_url} />
+                          <AvatarImage src={getImageUrl(ward.profile_photo_url)} />
                           <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
                             {wardInitials}
                           </AvatarFallback>
@@ -501,15 +552,31 @@ export default function Profile() {
               />
             </div>
 
-            <div>
-              <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Profile Photo URL</label>
-              <input
-                type="text"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="https://example.com/avatar.jpg"
-                className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg focus:outline-none focus:border-[#0f172a]"
-              />
+            <div className="space-y-2">
+              <label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Profile Photo</label>
+              <div className="flex items-center gap-4">
+                {photoUrl ? (
+                  <img
+                    src={getImageUrl(photoUrl)}
+                    alt="Profile Preview"
+                    className="w-12 h-12 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
+                    No Photo
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    onChange={handlePhotoUpload}
+                    disabled={uploading}
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2 rounded-lg focus:outline-none focus:border-[#0f172a] cursor-pointer text-xs"
+                  />
+                </div>
+              </div>
+              {uploading && <p className="text-[10px] text-muted-foreground animate-pulse">Uploading photo...</p>}
             </div>
 
             {/* Social Links Sub-block */}
@@ -565,7 +632,7 @@ export default function Profile() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold px-4 h-9 rounded-lg"
+                className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 h-9 rounded-lg"
               >
                 Cancel
               </Button>

@@ -27,6 +27,7 @@ import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { getImageUrl } from "@/lib/utils"
 
 export default function Matrimony() {
   const { user } = useAuth()
@@ -144,11 +145,18 @@ export default function Matrimony() {
           </p>
         </div>
 
-        <Link to="/matrimony/requests">
-          <Button variant="outline" className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold px-4 py-2">
-            Manage Requests
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/matrimony/edit">
+            <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 py-2">
+              Edit Profile
+            </Button>
+          </Link>
+          <Link to="/matrimony/requests">
+            <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 py-2">
+              Manage Requests
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Guardian Mode Alert */}
@@ -216,7 +224,7 @@ export default function Matrimony() {
                   <div className="space-y-4">
                     <div className="flex gap-4 items-start">
                       <Avatar className="h-14 w-14 border-2 border-white shadow-md shrink-0">
-                        <AvatarImage src={prof?.profile_photo_url} />
+                        <AvatarImage src={getImageUrl(prof?.profile_photo_url)} />
                         <AvatarFallback className="bg-[#f1f5f9] text-[#0f172a] font-bold">
                           {initials}
                         </AvatarFallback>
@@ -326,7 +334,7 @@ export default function Matrimony() {
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
-                      <AvatarImage src={selectedMatch.profile?.profile_photo_url} />
+                      <AvatarImage src={getImageUrl(selectedMatch.profile?.profile_photo_url)} />
                       <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
                         {selectedMatch.profile?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                       </AvatarFallback>
@@ -594,7 +602,7 @@ export default function Matrimony() {
                       {selectedMatch.matrimony_details.additional_photos.map((photo: string, i: number) => (
                         <img
                           key={i}
-                          src={photo}
+                          src={getImageUrl(photo)}
                           alt={`Candidate ${i}`}
                           className="w-full h-24 object-cover rounded-xl border border-[#e2e8f0] shadow-sm hover:scale-105 transition-transform cursor-pointer"
                         />

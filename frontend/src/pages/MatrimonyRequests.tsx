@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
@@ -17,6 +18,7 @@ import {
 import { toast } from "sonner"
 
 export default function MatrimonyRequests() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<"inbox" | "pending_approvals" | "guardian_view">("inbox")
@@ -233,7 +235,10 @@ export default function MatrimonyRequests() {
               </div>
 
               {/* Add Guardian Button */}
-              <button className="w-full py-2.5 rounded-xl border border-dashed border-[#c6c6cd] hover:bg-[#f8fafc] text-xs font-bold text-[#64748b] flex items-center justify-center gap-1.5 transition-colors">
+              <button 
+                onClick={() => navigate("/matrimony/edit")}
+                className="w-full py-2.5 rounded-xl border border-dashed border-[#c6c6cd] hover:bg-[#f8fafc] text-xs font-bold text-[#64748b] flex items-center justify-center gap-1.5 transition-colors"
+              >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Guardian</span>
               </button>

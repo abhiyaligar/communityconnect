@@ -204,6 +204,20 @@ async def onboard_profile(
         if not reg_res.scalars().first():
             raise HTTPException(status_code=400, detail="Invalid Region ID selected.")
 
+    # Validate photo count based on role/type
+    if payload.create_matrimony:
+        if len(payload.additional_photos or []) > 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Matrimony profiles are limited to at most 6 photos in total (1 profile photo + 5 additional photos)."
+            )
+    else:
+        if payload.additional_photos and len(payload.additional_photos) > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Normal profiles are limited to exactly 1 photo (profile photo) and cannot have additional photos."
+            )
+
     # 3. Create Core Profile
     new_profile = Profile(
         user_id=current_user.id,
@@ -384,6 +398,13 @@ async def update_matrimony_profile(
 
     # 3. Update fields if provided in payload
     update_data = payload.model_dump(exclude_unset=True)
+
+    if "additional_photos" in update_data and update_data["additional_photos"] is not None:
+        if len(update_data["additional_photos"]) > 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Matrimony profiles are limited to at most 6 photos in total (1 profile photo + 5 additional photos)."
+            )
 
     if "family_co_approver_profile_id" in update_data:
         co_id = update_data["family_co_approver_profile_id"]

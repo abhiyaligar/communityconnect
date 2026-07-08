@@ -146,9 +146,8 @@ export default function Registry() {
           </p>
         </div>
 
-        {/* Top Actions */}
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-[#e2e8f0] text-[#0f172a] gap-2 text-xs font-semibold px-4 py-2">
+          <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted gap-2 text-xs font-semibold px-4 py-2">
             <Download className="h-4 w-4" />
             <span>Export</span>
           </Button>
@@ -226,7 +225,7 @@ export default function Registry() {
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="border-[#e2e8f0] text-xs font-semibold text-[#0f172a] gap-1.5"
+                  className="border-[#e2e8f0] text-xs font-semibold text-foreground hover:bg-muted gap-1.5"
                 >
                   <Filter className="h-3.5 w-3.5" />
                   <span>More Filters</span>
@@ -362,7 +361,7 @@ export default function Registry() {
                         {profile.show_connect && (
                           <Button
                             variant="outline"
-                            className="w-full border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold py-2.5 rounded-lg"
+                            className="w-full border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold py-2.5 rounded-lg"
                           >
                             Request Connection
                           </Button>
@@ -380,7 +379,7 @@ export default function Registry() {
                         <div className="flex justify-start">
                           <Button
                             variant="link"
-                            className="text-[#0f172a] hover:text-[#64748b] font-bold text-xs p-0 flex items-center gap-1.5"
+                            className="text-foreground hover:text-rose-500 font-bold text-xs p-0 flex items-center gap-1.5"
                           >
                             <span>View Full Tribute</span>
                             <ArrowRight className="h-3.5 w-3.5" />

@@ -50,6 +50,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Ensure local upload directory exists
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
+# Mount uploads static folder
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
 # Include API v1 routes
 app.include_router(api_router, prefix="/api/v1")
 

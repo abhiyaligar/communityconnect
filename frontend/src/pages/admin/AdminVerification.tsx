@@ -24,6 +24,7 @@ import {
   ChevronRight
 } from "lucide-react"
 import { toast } from "sonner"
+import { getImageUrl } from "@/lib/utils"
 
 type Action = "approve" | "reject" | "escalate" | null
 
@@ -40,6 +41,7 @@ export default function AdminVerification() {
   const [activeRequest, setActiveRequest] = useState<ExtendedRequest | null>(null)
   const [action, setAction] = useState<Action>(null)
   const [comments, setComments] = useState("")
+  const [selectedProfileRequest, setSelectedProfileRequest] = useState<ExtendedRequest | null>(null)
 
   // Fetch actual pending requests
   const { data: requests, isLoading } = useQuery({
@@ -124,11 +126,12 @@ export default function AdminVerification() {
                   return (
                     <div
                       key={req.request_id}
-                      className="bg-white border border-[#e2e8f0] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm"
+                      className="bg-white border border-[#e2e8f0] rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm hover:border-[#a0aec0] transition-colors cursor-pointer"
+                      onClick={() => setSelectedProfileRequest(req)}
                     >
                       <div className="flex items-center gap-4">
                         <Avatar className="h-11 w-11 border border-[#e2e8f0] shadow-sm shrink-0">
-                          <AvatarImage src={prof?.profile_photo_url} />
+                          <AvatarImage src={getImageUrl(prof?.profile_photo_url)} />
                           <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">
                             {initials}
                           </AvatarFallback>
@@ -154,14 +157,20 @@ export default function AdminVerification() {
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
                           variant="outline"
-                          className="border-[#e2e8f0] text-[#0f172a] hover:bg-[#f1f5f9] text-xs font-semibold h-8"
-                          onClick={() => openAction(req, "escalate")}
+                          className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openAction(req, "escalate")
+                          }}
                         >
                           Escalate
                         </Button>
                         <Button
                           className="bg-[#006c49] text-white hover:bg-[#005236] text-xs font-semibold h-8"
-                          onClick={() => openAction(req, "approve")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openAction(req, "approve")
+                          }}
                         >
                           Approve
                         </Button>
@@ -206,7 +215,7 @@ export default function AdminVerification() {
                       <div className="flex items-center justify-between border border-[#e2e8f0] bg-[#f8fafc] rounded-xl p-4">
                         <div className="space-y-1 flex items-center gap-3">
                           <Avatar className="h-8 w-8 border border-[#e2e8f0] shadow-sm shrink-0">
-                            <AvatarImage src={prof?.profile_photo_url} />
+                            <AvatarImage src={getImageUrl(prof?.profile_photo_url)} />
                             <AvatarFallback className="text-[10px] bg-[#f1f5f9] font-bold">
                               {initials}
                             </AvatarFallback>
@@ -257,7 +266,11 @@ export default function AdminVerification() {
                 {disputeRequests.map((req) => {
                   const prof = req.profile
                   return (
-                    <div key={req.request_id} className="border border-[#e2e8f0] rounded-xl p-4 space-y-3 bg-[#f8fafc]">
+                    <div
+                      key={req.request_id}
+                      className="border border-[#e2e8f0] rounded-xl p-4 space-y-3 bg-[#f8fafc] hover:border-[#a0aec0] transition-colors cursor-pointer"
+                      onClick={() => setSelectedProfileRequest(req)}
+                    >
                       <div className="flex justify-between items-start">
                         <h4 className="text-xs font-bold text-[#0f172a]">
                           Identity Flag: Case #{req.request_id.slice(0, 4)}
@@ -281,13 +294,19 @@ export default function AdminVerification() {
                         <Button
                           variant="outline"
                           className="flex-1 border-[#e2e8f0] text-rose-600 hover:bg-rose-50 text-[10px] font-bold h-7"
-                          onClick={() => openAction(req, "reject")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openAction(req, "reject")
+                          }}
                         >
                           Reject
                         </Button>
                         <Button
                           className="flex-1 bg-[#006c49] text-white hover:bg-[#005236] text-[10px] font-bold h-7"
-                          onClick={() => openAction(req, "approve")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openAction(req, "approve")
+                          }}
                         >
                           Approve
                         </Button>
@@ -329,7 +348,7 @@ export default function AdminVerification() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" className="border-[#e2e8f0] text-[#0f172a]" onClick={() => { setActiveRequest(null); setAction(null) }}>
+            <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted" onClick={() => { setActiveRequest(null); setAction(null) }}>
               Cancel
             </Button>
             <Button
@@ -341,6 +360,127 @@ export default function AdminVerification() {
               Confirm {action === "approve" ? "Approval" : action === "reject" ? "Rejection" : "Escalation"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Details Dialog */}
+      <Dialog open={!!selectedProfileRequest} onOpenChange={(open) => !open && setSelectedProfileRequest(null)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto border border-[#e2e8f0] bg-white p-6 rounded-2xl text-[#0f172a]">
+          {selectedProfileRequest && (
+            <div className="space-y-6">
+              <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-sm">
+                    <AvatarImage src={getImageUrl(selectedProfileRequest.profile?.profile_photo_url)} />
+                    <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold">
+                      {selectedProfileRequest.profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <DialogTitle className="text-lg font-bold text-[#0f172a]">
+                      {selectedProfileRequest.profile?.full_name || "Unknown Member"}
+                    </DialogTitle>
+                    <p className="text-xs text-[#64748b] mt-0.5">
+                      Pending Identity Verification
+                    </p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                {/* Core Details */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Personal Information</h4>
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-[#64748b]">Phone Number</span>
+                      <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.profile?.contact_number || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748b]">Date of Birth</span>
+                      <span className="font-semibold text-[#0f172a]">
+                        {selectedProfileRequest.profile?.date_of_birth
+                          ? new Date(selectedProfileRequest.profile.date_of_birth).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748b]">Gender</span>
+                      <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.profile?.gender || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748b]">Occupation</span>
+                      <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.profile?.occupation || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748b]">Residential Address</span>
+                      <span className="font-semibold text-[#0f172a] text-right max-w-[200px] truncate" title={selectedProfileRequest.profile?.address}>
+                        {selectedProfileRequest.profile?.address || "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Matrimony Details */}
+                {selectedProfileRequest.matrimony?.opted_in && (
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Matrimony Opt-In Details</h4>
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b]">Height</span>
+                        <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.height_cm ? `${selectedProfileRequest.matrimony.height_cm} cm` : "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b]">Gotra</span>
+                        <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.gotra || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b]">Qualification</span>
+                        <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.highest_qualification || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b]">Employment</span>
+                        <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.employment_type || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons inside Details Modal */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-[#e2e8f0]">
+                <Button
+                  variant="outline"
+                  className="border-[#e2e8f0] text-rose-600 hover:bg-rose-50 text-xs font-semibold h-9 px-4 rounded-lg"
+                  onClick={() => {
+                    setSelectedProfileRequest(null)
+                    openAction(selectedProfileRequest, "reject")
+                  }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-[#e2e8f0] text-[#f59e0b] hover:bg-amber-50 text-xs font-semibold h-9 px-4 rounded-lg"
+                  onClick={() => {
+                    setSelectedProfileRequest(null)
+                    openAction(selectedProfileRequest, "escalate")
+                  }}
+                >
+                  Escalate
+                </Button>
+                <Button
+                  className="bg-[#006c49] text-white hover:bg-[#005236] text-xs font-semibold h-9 px-4 rounded-lg"
+                  onClick={() => {
+                    setSelectedProfileRequest(null)
+                    openAction(selectedProfileRequest, "approve")
+                  }}
+                >
+                  Approve
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

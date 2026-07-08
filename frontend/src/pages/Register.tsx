@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import api from "@/lib/api"
-import { handleApiError } from "@/lib/utils"
+import { handleApiError, getImageUrl } from "@/lib/utils"
 import { Users, Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart } from "lucide-react"
 import { TokenResponse } from "@/types"
 
@@ -78,6 +78,32 @@ export default function Register() {
 
   const setF = (field: keyof FormData) => (val: string | boolean) =>
     setForm((f) => ({ ...f, [field]: val }))
+
+  const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Image file is too large. Maximum size is 15MB.")
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("file", file)
+    
+    setError("")
+    setLoading(true)
+    try {
+      const res = await api.post("/uploads/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+      setForm((f) => ({ ...f, profile_photo_url: res.data.url }))
+    } catch (err: any) {
+      setError(handleApiError(err, "Failed to upload image."))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const [regions, setRegions] = useState<any[]>([])
 
@@ -363,6 +389,32 @@ export default function Register() {
                     <div className="space-y-2">
                       <Label>Current Location / Address *</Label>
                       <Input placeholder="City, State" value={form.address} onChange={(e) => setF("address")(e.target.value)} required />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Profile Photo (Optional)</Label>
+                    <div className="flex items-center gap-4">
+                      {form.profile_photo_url ? (
+                        <img
+                          src={getImageUrl(form.profile_photo_url)}
+                          alt="Profile Preview"
+                          className="w-12 h-12 rounded-full object-cover border border-border"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
+                          No Photo
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
+                          onChange={handleProfilePhotoUpload}
+                          className="h-10 bg-background border-border cursor-pointer text-xs"
+                          disabled={loading}
+                        />
+                      </div>
                     </div>
                   </div>
                   

@@ -12,7 +12,8 @@ import {
   Landmark,
   Shield,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Camera
 } from "lucide-react"
 import api from "@/lib/api"
 import { toast } from "sonner"
@@ -246,7 +247,7 @@ export default function Dashboard() {
             Quick Access Modules
           </h2>
 
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
             {/* Module 1: Community Registry */}
             <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-64">
               <div className="space-y-3">
@@ -283,15 +284,52 @@ export default function Dashboard() {
                   Navigate the confidential matrimonial network. Strictly restricted to verified adults.
                 </p>
               </div>
-              <Button
-                variant="link"
-                className="text-[#00714d] hover:text-[#006c49] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
-                onClick={() => navigate("/matrimony")}
-              >
-                <span>Open Module</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="link"
+                  className="text-[#00714d] hover:text-[#006c49] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
+                  onClick={() => navigate("/matrimony")}
+                >
+                  <span>Open Module</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                {user?.matrimony?.opted_in && (
+                  <Button
+                    variant="link"
+                    className="text-[#00714d] hover:text-[#006c49] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
+                    onClick={() => navigate("/matrimony/edit")}
+                  >
+                    <span>Edit Profile</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {/* Module 3: Photo Gallery Manager (Opted-in only) */}
+            {user?.matrimony?.opted_in && (
+              <div className="bg-[#fff5f5] border border-[#ffe3e3] rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-64">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#ffd0d0] flex items-center justify-center text-[#ba1a1a]">
+                    <Camera className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#ba1a1a]">
+                    Photo Gallery
+                  </h3>
+                  <p className="text-xs text-[#c92a2a] leading-relaxed">
+                    Upload and manage additional candidate photos. You can upload up to 5 gallery images (6 total).
+                  </p>
+                </div>
+                <Button
+                  variant="link"
+                  className="text-[#c92a2a] hover:text-[#ba1a1a] font-bold text-xs p-0 flex items-center justify-start gap-1.5"
+                  onClick={() => navigate("/matrimony/gallery")}
+                >
+                  <span>Upload Images</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
