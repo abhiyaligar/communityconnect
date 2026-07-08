@@ -51,8 +51,8 @@ export default function ManageGallery() {
       return
     }
 
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Image file is too large. Maximum size is 15MB.")
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image file is too large. Maximum size is 20MB.")
       return
     }
 
@@ -107,23 +107,9 @@ export default function ManageGallery() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 text-[#0f172a]">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="border-[#e2e8f0] text-foreground hover:bg-muted h-9 w-9 p-0 rounded-xl"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Manage Matrimonial Gallery</h1>
-            <p className="text-xs text-muted-foreground">Upload and manage candidate photos for your matrimonial matching card.</p>
-          </div>
-        </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
+    <div className="max-w-3xl mx-auto py-4 md:py-8 px-3 md:px-4 space-y-4 md:space-y-6 text-[#0f172a]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <span className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
           {additionalPhotos.length} / 5 Photos
         </span>
       </div>

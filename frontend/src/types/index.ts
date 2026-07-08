@@ -20,6 +20,7 @@ export interface AuthUser {
   role: UserRole
   full_name: string
   username?: string
+  email?: string
   date_of_birth: string
   gender: Gender
   marital_status: MaritalStatus

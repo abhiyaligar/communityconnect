@@ -13,7 +13,9 @@ import Register from "@/pages/Register"
 import PendingVerification from "@/pages/PendingVerification"
 import Dashboard from "@/pages/Dashboard"
 import Profile from "@/pages/Profile"
+import EditProfile from "@/pages/EditProfile"
 import ManageGallery from "@/pages/ManageGallery"
+import Settings from "@/pages/Settings"
 import Matrimony from "@/pages/Matrimony"
 import EditMatrimony from "@/pages/EditMatrimony"
 import MatrimonyRequests from "@/pages/MatrimonyRequests"
@@ -93,6 +95,26 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={["verified_adult", "minor", "unverified", "local_admin", "community_admin"]}>
               <MainLayout>
                 <Profile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "unverified", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <EditProfile />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "unverified", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Settings />
               </MainLayout>
             </ProtectedRoute>
           }

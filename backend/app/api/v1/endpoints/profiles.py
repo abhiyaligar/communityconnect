@@ -96,6 +96,7 @@ async def get_my_profile(
         "role": current_user.role.value,
         "full_name": profile.full_name,
         "username": profile.username,
+        "email": current_user.email,
         "date_of_birth": profile.date_of_birth,
         "gender": profile.gender.value,
         "marital_status": profile.marital_status.value,

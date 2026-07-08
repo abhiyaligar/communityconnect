@@ -14,7 +14,7 @@ from app.services.storage import StorageService
 router = APIRouter()
 
 # Max file size limit: 15MB (in bytes)
-MAX_FILE_SIZE = 15 * 1024 * 1024
+MAX_FILE_SIZE = 20 * 1024 * 1024
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 SUPPORTED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 

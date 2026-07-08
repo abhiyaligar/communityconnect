@@ -129,36 +129,6 @@ export default function Matrimony() {
 
   return (
     <div className="space-y-8 animate-fade-in text-[#0f172a]">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
-              Matrimonial Portal
-            </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
-              <Sparkles className="h-3 w-3" /> Matches
-            </span>
-          </div>
-          <p className="text-sm text-[#64748b] mt-1 max-w-2xl">
-            Browse verified members who have opted in for confidential matrimonial connections within the community network.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link to="/matrimony/edit">
-            <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 py-2">
-              Edit Profile
-            </Button>
-          </Link>
-          <Link to="/matrimony/requests">
-            <Button variant="outline" className="border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold px-4 py-2">
-              Manage Requests
-            </Button>
-          </Link>
-        </div>
-      </div>
-
       {/* Guardian Mode Alert */}
       {!isOptedIn && hasWards && (
         <div className="bg-purple-500/5 border border-purple-500/20 rounded-2xl p-4 flex items-center gap-3.5">

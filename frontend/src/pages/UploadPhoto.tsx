@@ -18,8 +18,8 @@ export default function UploadPhoto() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Image file is too large. Maximum size is 15MB.")
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Image file is too large. Maximum size is 20MB.")
       return
     }
 

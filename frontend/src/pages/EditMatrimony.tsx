@@ -41,8 +41,8 @@ export default function EditMatrimony() {
       return
     }
 
-    if (file.size > 15 * 1024 * 1024) {
-      setError("Image file is too large. Maximum size is 15MB.")
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Image file is too large. Maximum size is 20MB.")
       return
     }
 
@@ -251,9 +251,9 @@ export default function EditMatrimony() {
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* SECTION: ABOUT ME */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <User className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">About Candidate</h3>
@@ -267,15 +267,15 @@ export default function EditMatrimony() {
               placeholder="E.g. I am family-oriented, working in tech..."
               value={formData.about_me || ""}
               onChange={handleChange}
-              className="w-full rounded-xl border border-[#e2e8f0] bg-white px-3.5 py-2.5 text-xs text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:border-[#0f172a] resize-none"
+              className="w-full border-b border-[#e2e8f0] bg-transparent px-0 py-2 text-xs text-[#0f172a] placeholder-[#64748b] focus:outline-none resize-none"
             />
           </div>
         </section>
 
         {/* SECTION: PHYSICAL */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <User className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Physical Attributes</h3>
@@ -312,9 +312,9 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: PROFESSIONAL */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Briefcase className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Education & Career</h3>
@@ -382,9 +382,9 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: HOROSCOPE */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Star className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Horoscope & Astro</h3>
@@ -426,9 +426,9 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: FAMILY */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Users className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Family Background</h3>
@@ -504,9 +504,9 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: LIFESTYLE */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Coffee className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Lifestyle</h3>
@@ -560,9 +560,9 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: HOBBIES & LANGUAGES */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Heart className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Hobbies & Languages</h3>
@@ -580,14 +580,14 @@ export default function EditMatrimony() {
         </section>
 
         {/* SECTION: DOUBLE APPROVAL */}
-        <section className="bg-white border border-[#e2e8f0] p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-3">
-            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500">
+        <section className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#e2e8f0]">
+            <div className="text-rose-500">
               <Shield className="h-4 w-4" />
             </div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Double Approval Settings</h3>
           </div>
-          <div className="space-y-4 bg-[#f8fafc] p-5 rounded-2xl border border-[#e2e8f0] pt-1">
+          <div className="space-y-4 pt-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label htmlFor="double_approval" className="text-xs font-bold text-[#0f172a] cursor-pointer">Require Family Member Approval</Label>
