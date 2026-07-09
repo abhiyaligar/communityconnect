@@ -20,6 +20,10 @@ import Matrimony from "@/pages/Matrimony"
 import EditMatrimony from "@/pages/EditMatrimony"
 import MatrimonyRequests from "@/pages/MatrimonyRequests"
 import NotFound from "@/pages/NotFound"
+import GoogleCallback from "@/pages/GoogleCallback"
+import ForgotPassword from "@/pages/ForgotPassword"
+
+
 
 // Admin Pages
 import AdminShell from "@/pages/admin/AdminShell"
@@ -57,6 +61,10 @@ function AppRoutes() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+
 
         {/* Unverified Members */}
         <Route

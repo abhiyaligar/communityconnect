@@ -117,10 +117,13 @@ export default function Registry() {
 
   // Apply filters
   const filteredProfiles = allProfiles.filter((p) => {
+    const fullName = p.full_name || ""
+    const username = p.username || ""
+    const idLabel = p.id_label || ""
     const matchesSearch =
-      p.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.id_label.toLowerCase().includes(searchQuery.toLowerCase())
+      fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      idLabel.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus =
       statusFilter === "all" || p.status === statusFilter

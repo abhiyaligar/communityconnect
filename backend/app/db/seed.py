@@ -206,8 +206,11 @@ async def seed_data():
             opted_in=True,
             double_approval_required=False,
             about_me="Passionate about local community work, looking for someone with values.",
-            education="B.Com, CA",
-            family_background="Father is retired bank manager, mother is homemaker.",
+            highest_qualification="B.Com, CA",
+            father_name="Retired Bank Manager",
+            father_occupation="Service",
+            mother_name="Homemaker",
+            mother_occupation="Homemaker",
             hobbies="Trekking, Reading novels",
             preferences={"min_age": 24, "max_age": 29, "location": "Bengaluru"}
         )

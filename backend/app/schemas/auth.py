@@ -28,3 +28,14 @@ class TokenResponse(BaseModel):
     registered: bool = True
     role: Optional[str] = None
     user_id: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr = Field(..., description="Registered user email address")
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr = Field(..., description="Registered user email address")
+    code: str = Field(..., min_length=6, max_length=6, description="6-digit password reset verification code")
+    new_password: str = Field(..., min_length=8, description="New strong password")
+

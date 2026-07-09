@@ -220,7 +220,7 @@ async def get_matrimony_matches(
                 "family_type": mat.family_type,
                 "family_values": mat.family_values,
                 "family_financial_status": mat.family_financial_status,
-                "family_background": mat.family_background,
+                "family_background": f"Father: {mat.father_name or '—'} ({mat.father_occupation or '—'}), Mother: {mat.mother_name or '—'} ({mat.mother_occupation or '—'})",
                 "additional_photos": additional_photos
             }
         })

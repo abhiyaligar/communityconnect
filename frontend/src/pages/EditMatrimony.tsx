@@ -4,15 +4,13 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import api from "@/lib/api"
 import { handleApiError, getImageUrl } from "@/lib/utils"
-import { ArrowLeft, Loader2, Save, Heart, User, Briefcase, Star, Users, Coffee, Eye, Camera, Trash, Plus, Shield } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Heart, User, Briefcase, Star, Users, Coffee, Eye, Camera, Shield } from "lucide-react"
 
 export default function EditMatrimony() {
   const { user, refreshUser } = useAuth()
@@ -30,38 +28,6 @@ export default function EditMatrimony() {
   const [verifyError, setVerifyError] = useState("")
   const [coApproverApproved, setCoApproverApproved] = useState(false)
   const [additionalPhotos, setAdditionalPhotos] = useState<string[]>([])
-  const [uploadingGallery, setUploadingGallery] = useState(false)
-
-  const handleGalleryPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (additionalPhotos.length >= 5) {
-      setError("You can only upload up to 5 additional photos (6 photos total).")
-      return
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      setError("Image file is too large. Maximum size is 20MB.")
-      return
-    }
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    setUploadingGallery(true)
-    setError("")
-    try {
-      const res = await api.post("/uploads/image", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      })
-      setAdditionalPhotos((prev) => [...prev, res.data.url])
-    } catch (err: any) {
-      setError(handleApiError(err, "Failed to upload gallery image."))
-    } finally {
-      setUploadingGallery(false)
-    }
-  }
 
   // const handleDeleteGalleryPhoto = (indexToDelete: number) => {
   //   setAdditionalPhotos((prev) => prev.filter((_, i) => i !== indexToDelete))

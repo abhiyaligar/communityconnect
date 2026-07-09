@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+
     # SMS OTP
     SMS_PROVIDER: str = "mock"
     TWILIO_ACCOUNT_SID: Optional[str] = None

@@ -15,10 +15,12 @@ from app.core.security import create_jwt_token, decode_jwt_token, verify_passwor
 from app.db.session import get_db
 from app.models.user import User
 from app.models.email_verification import EmailVerification
-from app.schemas.auth import TokenResponse, UserLogin
+from app.models.profile import Profile
+import httpx
+from app.schemas.auth import TokenResponse, UserLogin, ForgotPasswordRequest, ResetPasswordRequest
 from app.schemas.user import UserCreate
 from pydantic import BaseModel, EmailStr
-from app.utils.email import send_verification_email
+from app.utils.email import send_verification_email, send_reset_password_email
 
 router = APIRouter()
 
@@ -263,3 +265,253 @@ async def logout(response: Response):
     """
     response.delete_cookie(key="refresh_token")
     return {"detail": "Logged out successfully."}
+
+
+class GoogleCallbackRequest(BaseModel):
+    code: str
+
+
+@router.get("/google/url")
+async def get_google_auth_url():
+    """
+    Returns the Google OAuth authorization URL.
+    """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_REDIRECT_URI:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth is not configured on the server."
+        )
+    
+    url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?response_type=code"
+        f"&client_id={settings.GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={settings.GOOGLE_REDIRECT_URI}"
+        f"&scope=openid%20email%20profile"
+        f"&access_type=offline"
+        f"&prompt=select_account"
+    )
+    return {"url": url}
+
+
+@router.post("/google/callback", response_model=TokenResponse)
+async def google_callback(
+    request: GoogleCallbackRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Handles the Google OAuth authorization code exchange, logs in existing users,
+    or registers new users automatically.
+    """
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET or not settings.GOOGLE_REDIRECT_URI:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth is not configured on the server."
+        )
+
+    # 1. Exchange authorization code for tokens
+    async with httpx.AsyncClient() as client:
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "code": request.code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code"
+        }
+        try:
+            token_res = await client.post(token_url, data=data)
+            token_res.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to exchange Google authorization code: {e.response.text}"
+            )
+        
+        token_data = token_res.json()
+        google_access_token = token_data.get("access_token")
+        if not google_access_token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Google access token not found in response."
+            )
+        
+        # 2. Fetch user profile information from Google
+        userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+        headers = {"Authorization": f"Bearer {google_access_token}"}
+        try:
+            userinfo_res = await client.get(userinfo_url, headers=headers)
+            userinfo_res.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to retrieve user information from Google."
+            )
+        user_info = userinfo_res.json()
+        
+    email = user_info.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not provided by Google account."
+        )
+    email = email.lower()
+
+    # 3. Authenticate or register the user
+    stmt = select(User).where(User.email == email)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    
+    if not user:
+        # Create a new user with verified email role and random secure password hash
+        random_password = secrets.token_urlsafe(32)
+        from app.models.enums import UserRole
+        user = User(
+            email=email,
+            password_hash=hash_password(random_password),
+            role=UserRole.unverified,
+            is_active=True
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is inactive."
+        )
+
+    # Check if this user already completed profile onboarding
+    stmt_p = select(Profile).where(Profile.user_id == user.id)
+    res_p = await db.execute(stmt_p)
+    has_profile = res_p.scalars().first() is not None
+
+    # 4. Generate system access and refresh tokens
+    access_token = create_jwt_token(
+        {"sub": str(user.id), "role": user.role.value}
+    )
+    refresh_token = create_jwt_token(
+        {"sub": str(user.id), "type": "refresh"},
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        samesite="lax",
+        secure=True if settings.ENVIRONMENT == "production" else False
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        registered=has_profile,
+        role=user.role.value,
+        user_id=str(user.id)
+    )
+
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Step 1 of password reset: validates email and sends a 6-digit OTP code to email.
+    """
+    email = request.email.lower()
+    
+    # 1. Verify user exists
+    stmt = select(User).where(User.email == email)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account associated with this email address was found."
+        )
+        
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account is currently inactive."
+        )
+
+    # 2. Generate 6-digit OTP code
+    code = "".join(str(secrets.randbelow(10)) for _ in range(6))
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    # 3. Store code in EmailVerification table (upsert)
+    stmt_v = select(EmailVerification).where(EmailVerification.email == email)
+    result_v = await db.execute(stmt_v)
+    existing_verification = result_v.scalars().first()
+
+    if existing_verification:
+        existing_verification.code = code
+        existing_verification.expires_at = expires_at
+    else:
+        new_verification = EmailVerification(
+            email=email,
+            code=code,
+            expires_at=expires_at
+        )
+        db.add(new_verification)
+        
+    await db.commit()
+
+    # 4. Send email containing OTP
+    await send_reset_password_email(email, code)
+
+    return {"message": "A password reset code has been sent successfully to your email."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Step 2 of password reset: validates OTP and sets the new password.
+    """
+    email = request.email.lower()
+    
+    # 1. Verify the OTP code is valid and has not expired
+    stmt_v = select(EmailVerification).where(EmailVerification.email == email)
+    result_v = await db.execute(stmt_v)
+    verification = result_v.scalars().first()
+
+    if not verification or verification.code != request.code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification code."
+        )
+        
+    if verification.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification code has expired."
+        )
+
+    # 2. Fetch the user
+    stmt_u = select(User).where(User.email == email)
+    result_u = await db.execute(stmt_u)
+    user = result_u.scalars().first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    # 3. Reset the password and clean up verification OTP code
+    user.password_hash = hash_password(request.new_password)
+    await db.delete(verification)
+    await db.commit()
+
+    return {"message": "Your password has been successfully reset. Please log in with your new password."}
+
+

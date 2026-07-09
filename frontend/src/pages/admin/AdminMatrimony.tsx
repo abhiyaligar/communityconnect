@@ -19,10 +19,14 @@ export default function AdminMatrimony() {
     },
   })
 
-  const filtered = profiles?.filter((p) =>
-    p.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.profile?.address?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = profiles?.filter((p) => {
+    const fullName = p.profile?.full_name || ""
+    const address = p.profile?.address || ""
+    return (
+      fullName.toLowerCase().includes(search.toLowerCase()) ||
+      address.toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   return (
     <div className="p-8">

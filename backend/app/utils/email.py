@@ -46,3 +46,38 @@ async def send_verification_email(to_email: str, code: str) -> None:
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
             logger.info(f"SIMULATION FALLBACK: Code is {code}")
+
+
+async def send_reset_password_email(to_email: str, code: str) -> None:
+    subject = "CommunityConnect - Reset Your Password"
+    body = f"You requested to reset your password. Your password reset verification code is: {code}\n\nThis code will expire in 10 minutes."
+
+    if settings.EMAIL_PROVIDER.lower() == "mock":
+        logger.info(f"========== EMAIL SIMULATION ==========")
+        logger.info(f"To: {to_email}")
+        logger.info(f"Subject: {subject}")
+        logger.info(f"Body:\n{body}")
+        logger.info(f"======================================")
+        return
+
+    if settings.EMAIL_PROVIDER.lower() == "smtp":
+        message = EmailMessage()
+        message["From"] = settings.FROM_EMAIL
+        message["To"] = to_email
+        message["Subject"] = subject
+        message.set_content(body)
+
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                start_tls=True,
+                username=settings.SMTP_USER,
+                password=settings.SMTP_PASSWORD,
+            )
+            logger.info(f"Password reset email sent successfully to {to_email}")
+        except Exception as e:
+            logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
+            logger.info(f"SIMULATION FALLBACK: Password reset code is {code}")
+

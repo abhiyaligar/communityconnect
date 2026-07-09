@@ -42,10 +42,14 @@ export default function Matrimony() {
     },
   })
 
-  const filtered = profiles?.filter((p) =>
-    p.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.profile?.occupation?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = profiles?.filter((p) => {
+    const fullName = p.profile?.full_name || ""
+    const occupation = p.profile?.occupation || ""
+    return (
+      fullName.toLowerCase().includes(search.toLowerCase()) ||
+      occupation.toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   const handleConnect = async (profileId: string) => {
     setConnectingId(profileId)

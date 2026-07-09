@@ -100,11 +100,16 @@ export default function AdminUsers() {
   // Flatten paginated pages into single array for filtering
   const allUsers = data?.pages.flatMap((page) => page) || []
 
-  const filtered = allUsers.filter((u) =>
-    u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.user?.phone_number?.includes(search) ||
-    u.address?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = allUsers.filter((u) => {
+    const fullName = u.full_name || ""
+    const phoneNumber = u.user?.phone_number || ""
+    const address = u.address || ""
+    return (
+      fullName.toLowerCase().includes(search.toLowerCase()) ||
+      phoneNumber.includes(search) ||
+      address.toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   const openEdit = (u: UserProfile) => {
     setEditTarget(u)
