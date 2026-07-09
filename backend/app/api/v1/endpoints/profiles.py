@@ -444,19 +444,89 @@ async def get_profile_by_username(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Looks up a profile by username. Useful for adding co-approvers.
+    Looks up a profile by username.
     """
-    stmt = select(Profile).where(Profile.username == username.lower().strip())
+    stmt = (
+        select(Profile)
+        .where(Profile.username == username.lower().strip())
+        .options(
+            selectinload(Profile.matrimony_profile).selectinload(MatrimonyProfile.family_co_approver)
+        )
+    )
     result = await db.execute(stmt)
     profile = result.scalars().first()
     
     if not profile:
         raise HTTPException(status_code=404, detail="Username not found.")
         
-    return {
+    from app.models.matrimony import MatrimonyRequest
+    connection_status = "none"
+    connection_request_id = None
+    
+    my_profile_stmt = select(Profile).where(Profile.user_id == current_user.id)
+    my_profile_res = await db.execute(my_profile_stmt)
+    my_profile = my_profile_res.scalars().first()
+    
+    if my_profile:
+        req_stmt = select(MatrimonyRequest).where(
+            ((MatrimonyRequest.sender_profile_id == my_profile.id) & (MatrimonyRequest.receiver_profile_id == profile.id)) |
+            ((MatrimonyRequest.sender_profile_id == profile.id) & (MatrimonyRequest.receiver_profile_id == my_profile.id))
+        )
+        req_res = await db.execute(req_stmt)
+        req = req_res.scalars().first()
+        if req:
+            connection_request_id = str(req.id)
+            connection_status = req.status.value
+            
+    res = {
         "profile_id": str(profile.id),
-        "full_name": profile.full_name
+        "full_name": profile.full_name,
+        "username": profile.username,
+        "date_of_birth": profile.date_of_birth.isoformat() if profile.date_of_birth else None,
+        "gender": profile.gender.value if profile.gender else None,
+        "marital_status": profile.marital_status.value if profile.marital_status else None,
+        "profile_photo_url": profile.profile_photo_url,
+        "contact_number": profile.contact_number if (connection_status == "approved" or current_user.id == profile.user_id) else None,
+        "address": profile.address if (connection_status == "approved" or current_user.id == profile.user_id) else None,
+        "occupation": profile.occupation,
+        "connection_status": connection_status,
+        "connection_request_id": connection_request_id,
     }
+    
+    if profile.matrimony_profile:
+        res["about_me"] = profile.matrimony_profile.about_me
+        res["hobbies"] = profile.matrimony_profile.hobbies
+        res["languages"] = profile.matrimony_profile.languages
+        res["matrimony_details"] = {
+            "height_cm": profile.matrimony_profile.height_cm,
+            "body_type": profile.matrimony_profile.body_type,
+            "complexion": profile.matrimony_profile.complexion,
+            "highest_qualification": profile.matrimony_profile.highest_qualification,
+            "field_of_study": profile.matrimony_profile.field_of_study,
+            "institution": profile.matrimony_profile.institution,
+            "employment_type": profile.matrimony_profile.employment_type,
+            "job_title": profile.matrimony_profile.job_title,
+            "income_range": profile.matrimony_profile.income_range,
+            "work_location": profile.matrimony_profile.work_location,
+            "gotra": profile.matrimony_profile.gotra,
+            "rashi": profile.matrimony_profile.rashi,
+            "nakshatra": profile.matrimony_profile.nakshatra,
+            "manglik_status": profile.matrimony_profile.manglik_status,
+            "diet": profile.matrimony_profile.diet,
+            "smoking": profile.matrimony_profile.smoking,
+            "drinking": profile.matrimony_profile.drinking,
+            "physical_activity": profile.matrimony_profile.physical_activity,
+            "father_name": profile.matrimony_profile.father_name,
+            "father_occupation": profile.matrimony_profile.father_occupation,
+            "mother_name": profile.matrimony_profile.mother_name,
+            "mother_occupation": profile.matrimony_profile.mother_occupation,
+            "family_type": profile.matrimony_profile.family_type,
+            "family_values": profile.matrimony_profile.family_values,
+            "family_financial_status": profile.matrimony_profile.family_financial_status,
+            "family_background": f"Father: {profile.matrimony_profile.father_name} ({profile.matrimony_profile.father_occupation}). Mother: {profile.matrimony_profile.mother_name} ({profile.matrimony_profile.mother_occupation})."
+        }
+        
+    return res
 
 
 @router.put("/me/username", status_code=status.HTTP_200_OK)

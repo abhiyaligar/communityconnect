@@ -22,6 +22,7 @@ import MatrimonyRequests from "@/pages/MatrimonyRequests"
 import NotFound from "@/pages/NotFound"
 import GoogleCallback from "@/pages/GoogleCallback"
 import ForgotPassword from "@/pages/ForgotPassword"
+import UsernameProfileView from "@/pages/UsernameProfileView"
 
 
 
@@ -201,6 +202,17 @@ function AppRoutes() {
             }
           />
         </Route>
+
+        <Route
+          path="/:username"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult", "minor", "local_admin", "community_admin", "unverified"]}>
+              <MainLayout>
+                <UsernameProfileView />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />

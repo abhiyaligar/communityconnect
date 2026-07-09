@@ -104,7 +104,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Brand Header */}
       <div className="p-6 pb-4 border-b border-[#e2e8f0]">
         <NavLink to="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded bg-[#0f172a] flex items-center justify-center text-white font-bold">
+          <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center text-white font-extrabold text-xs tracking-tighter shadow-sm">
             CC
           </div>
           <span className="font-bold text-lg tracking-tight text-[#0f172a]">
@@ -258,7 +258,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center gap-4 flex-1">
             {/* Mobile/Tablet App Brand Header */}
             <NavLink to="/dashboard" className="flex lg:hidden items-center gap-2 group">
-              <div className="w-7 h-7 rounded bg-[#0f172a] flex items-center justify-center text-white font-bold text-sm shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center text-white font-extrabold text-xs tracking-tighter shrink-0 shadow-sm">
                 CC
               </div>
               <span className="font-bold text-base tracking-tight text-[#0f172a]">
@@ -332,7 +332,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </header>
 
         {/* Main Content Body */}
-        <main className="flex-1 overflow-x-hidden p-6 md:p-8 pb-24 lg:pb-8 max-w-[1280px] w-full mx-auto">
+        <main className="flex-1 overflow-x-hidden p-3 md:p-8 pb-24 lg:pb-8 max-w-[1280px] w-full mx-auto">
           {children}
         </main>
       </div>

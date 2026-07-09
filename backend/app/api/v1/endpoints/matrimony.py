@@ -38,6 +38,8 @@ router = APIRouter()
 
 @router.get("/matches", status_code=status.HTTP_200_OK)
 async def get_matrimony_matches(
+    page: int = 1,
+    limit: int = 10,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(RoleChecker([UserRole.community_admin, UserRole.local_admin, UserRole.verified_adult]))
 ):
@@ -106,6 +108,9 @@ async def get_matrimony_matches(
 
     if target_genders:
         query = query.where(Profile.gender.in_(target_genders))
+
+    offset_val = (page - 1) * limit
+    query = query.offset(offset_val).limit(limit)
 
     stmt = query.options(selectinload(MatrimonyProfile.profile))
     
@@ -471,6 +476,44 @@ async def action_connection_request(
 
     await db.commit()
     return {"message": f"Request has been {action}d successfully.", "status": req.status.value}
+
+
+@router.delete("/requests/{request_id}", status_code=status.HTTP_200_OK)
+async def cancel_connection_request(
+    request_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Cancels / withdraws an outgoing connection request.
+    Only the original sender can cancel their own request.
+    """
+    stmt = select(ConnectionRequest).where(ConnectionRequest.id == request_id)
+    result = await db.execute(stmt)
+    req = result.scalars().first()
+
+    if not req:
+        raise HTTPException(status_code=404, detail="Connection request not found.")
+
+    stmt_me = select(Profile).where(Profile.user_id == current_user.id)
+    result_me = await db.execute(stmt_me)
+    profile = result_me.scalars().first()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    if req.sender_profile_id != profile.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the sender can cancel a connection request."
+        )
+
+    if req.status == ConnectionRequestStatus.approved:
+        raise HTTPException(status_code=400, detail="Cannot cancel an already approved request.")
+
+    await db.delete(req)
+    await db.commit()
+    return {"message": "Connection request cancelled successfully."}
 
 
 @router.get("/co-approver-invitations", response_model=List[dict])
