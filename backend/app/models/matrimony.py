@@ -107,3 +107,30 @@ class ConnectionRequest(Base):
         UniqueConstraint("sender_profile_id", "receiver_profile_id", name="unique_sender_receiver"),
         CheckConstraint("sender_profile_id <> receiver_profile_id", name="chk_different_parties"),
     )
+
+
+class GuardianRecommendation(Base):
+    """
+    Tracks profiles a guardian has recommended for their ward.
+    A guardian can recommend profiles on behalf of one or more wards.
+    """
+    __tablename__ = "guardian_recommendations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    guardian_profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    ward_profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    recommended_profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    guardian = relationship("Profile", foreign_keys=[guardian_profile_id])
+    ward = relationship("Profile", foreign_keys=[ward_profile_id])
+    candidate = relationship("Profile", foreign_keys=[recommended_profile_id])
+
+    __table_args__ = (
+        UniqueConstraint(
+            "guardian_profile_id", "ward_profile_id", "recommended_profile_id",
+            name="uq_guardian_ward_candidate"
+        ),
+    )
+

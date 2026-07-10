@@ -153,6 +153,8 @@ export interface MatrimonyEntry {
   about_me?: string
   hobbies?: string[]
   languages?: string[]
+  is_recommended_by_guardian?: boolean
+  recommended_for_ward_ids?: string[]
   connection_status?: string
   connection_request_id?: string | null
   profile?: {
@@ -199,4 +201,17 @@ export interface MatrimonyEntry {
     family_background?: string
     additional_photos?: string[]
   }
+}
+
+export interface GuardianRecommendation {
+  recommendation_id: string
+  recommended_by: {
+    guardian_name: string | null
+    guardian_photo: string | null
+  }
+  profile_id: string
+  connection_status?: string
+  connection_request_id?: string | null
+  profile?: MatrimonyEntry["profile"]
+  matrimony_details?: MatrimonyEntry["matrimony_details"]
 }

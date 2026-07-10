@@ -9,6 +9,10 @@ Routes (prefix: /api/v1/matrimony):
   POST   /requests/{request_id}/action               Approve or reject an incoming connection request
   GET    /co-approver-invitations                    List pending guardian co-approver invitations
   POST   /co-approver-invitations/{profile_id}/action  Accept or decline a guardian invitation
+  POST   /guardian-recommendations                   Guardian recommends a profile for a ward
+  DELETE /guardian-recommendations                   Guardian removes a recommendation
+  GET    /guardian-recommendations                   List all recommendations made by this guardian
+  GET    /my-recommendations                         List all recommendations received by this ward
 
 Access:
   All routes require Bearer JWT authentication.
@@ -27,7 +31,7 @@ from app.db.session import get_db
 from app.api.deps import get_current_user, RoleChecker
 from app.models.user import User
 from app.models.profile import Profile
-from app.models.matrimony import MatrimonyProfile, ConnectionRequest
+from app.models.matrimony import MatrimonyProfile, ConnectionRequest, GuardianRecommendation
 from app.models.enums import UserRole, Gender, ConnectionRequestStatus
 from sqlalchemy import or_, and_, select
 from sqlalchemy.sql import func
@@ -130,6 +134,15 @@ async def get_matrimony_matches(
     result_reqs = await db.execute(stmt_reqs)
     reqs = result_reqs.scalars().all()
 
+    # 4.6. Fetch guardian recommendations if caller is a guardian
+    my_recs = []
+    if approved_wards:
+        rec_stmt = select(GuardianRecommendation).where(
+            GuardianRecommendation.guardian_profile_id == my_profile.id
+        )
+        rec_res = await db.execute(rec_stmt)
+        my_recs = rec_res.scalars().all()
+
     response_data = []
     for mat in matches:
         prof = mat.profile
@@ -177,8 +190,16 @@ async def get_matrimony_matches(
         address = prof.address if is_connected else "Hidden until connected"
         additional_photos = mat.additional_photos if is_connected else []
 
+        # Guardian recommendation info
+        recommended_for_ward_ids = [
+            str(r.ward_profile_id) for r in my_recs if r.recommended_profile_id == prof.id
+        ]
+        is_recommended_by_guardian = len(recommended_for_ward_ids) > 0
+
         response_data.append({
             "profile_id": str(mat.profile_id),
+            "is_recommended_by_guardian": is_recommended_by_guardian,
+            "recommended_for_ward_ids": recommended_for_ward_ids,
             "about_me": mat.about_me,
             "hobbies": mat.hobbies,
             "languages": mat.languages,
@@ -591,3 +612,245 @@ async def action_co_approver_invitation(
 
     await db.commit()
     return {"message": message}
+
+
+# ─────────────────────────────────────────────────
+#  GUARDIAN RECOMMENDATIONS
+# ─────────────────────────────────────────────────
+
+from pydantic import BaseModel as BaseModel
+
+class GuardianRecommendationCreate(BaseModel):
+    ward_profile_id: UUID
+    recommended_profile_id: UUID
+
+class GuardianRecommendationRemove(BaseModel):
+    ward_profile_id: UUID
+    recommended_profile_id: UUID
+
+
+@router.post("/guardian-recommendations", status_code=status.HTTP_201_CREATED)
+async def add_guardian_recommendation(
+    payload: GuardianRecommendationCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Guardian recommends a matrimony profile for one of their wards.
+    Validates that the caller is an approved co-approver for the given ward.
+    """
+    # 1. Fetch caller profile
+    stmt_me = select(Profile).where(Profile.user_id == current_user.id)
+    result_me = await db.execute(stmt_me)
+    my_profile = result_me.scalars().first()
+    if not my_profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    # 2. Confirm caller is approved guardian for this ward
+    ward_mat_stmt = select(MatrimonyProfile).where(
+        MatrimonyProfile.profile_id == payload.ward_profile_id,
+        MatrimonyProfile.family_co_approver_profile_id == my_profile.id,
+        MatrimonyProfile.family_co_approver_approved == True
+    )
+    ward_mat_res = await db.execute(ward_mat_stmt)
+    ward_mat = ward_mat_res.scalars().first()
+    if not ward_mat:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not an approved guardian for this ward."
+        )
+
+    # 3. Prevent self-recommendation
+    if payload.recommended_profile_id == payload.ward_profile_id:
+        raise HTTPException(status_code=400, detail="Cannot recommend the ward for themselves.")
+
+    # 4. Check duplicate
+    dup_stmt = select(GuardianRecommendation).where(
+        GuardianRecommendation.guardian_profile_id == my_profile.id,
+        GuardianRecommendation.ward_profile_id == payload.ward_profile_id,
+        GuardianRecommendation.recommended_profile_id == payload.recommended_profile_id
+    )
+    dup_res = await db.execute(dup_stmt)
+    if dup_res.scalars().first():
+        raise HTTPException(status_code=400, detail="You have already recommended this profile for this ward.")
+
+    # 5. Create recommendation
+    rec = GuardianRecommendation(
+        guardian_profile_id=my_profile.id,
+        ward_profile_id=payload.ward_profile_id,
+        recommended_profile_id=payload.recommended_profile_id
+    )
+    db.add(rec)
+    await db.commit()
+    return {"message": "Profile recommended successfully."}
+
+
+@router.delete("/guardian-recommendations", status_code=status.HTTP_200_OK)
+async def remove_guardian_recommendation(
+    payload: GuardianRecommendationRemove,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Guardian removes a previously made recommendation.
+    """
+    stmt_me = select(Profile).where(Profile.user_id == current_user.id)
+    result_me = await db.execute(stmt_me)
+    my_profile = result_me.scalars().first()
+    if not my_profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    stmt = select(GuardianRecommendation).where(
+        GuardianRecommendation.guardian_profile_id == my_profile.id,
+        GuardianRecommendation.ward_profile_id == payload.ward_profile_id,
+        GuardianRecommendation.recommended_profile_id == payload.recommended_profile_id
+    )
+    result = await db.execute(stmt)
+    rec = result.scalars().first()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Recommendation not found.")
+
+    await db.delete(rec)
+    await db.commit()
+    return {"message": "Recommendation removed."}
+
+
+@router.get("/guardian-recommendations", status_code=status.HTTP_200_OK)
+async def get_my_guardian_recommendations(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns all recommendations this user (as guardian) has made for their wards.
+    Grouped with full candidate profile details.
+    """
+    stmt_me = select(Profile).where(Profile.user_id == current_user.id)
+    result_me = await db.execute(stmt_me)
+    my_profile = result_me.scalars().first()
+    if not my_profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    stmt = (
+        select(GuardianRecommendation)
+        .where(GuardianRecommendation.guardian_profile_id == my_profile.id)
+        .options(
+            selectinload(GuardianRecommendation.ward),
+            selectinload(GuardianRecommendation.candidate)
+        )
+        .order_by(GuardianRecommendation.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    recs = result.scalars().all()
+
+    out = []
+    for r in recs:
+        out.append({
+            "id": str(r.id),
+            "ward_profile_id": str(r.ward_profile_id),
+            "ward_name": r.ward.full_name if r.ward else None,
+            "ward_photo": r.ward.profile_photo_url if r.ward else None,
+            "recommended_profile_id": str(r.recommended_profile_id),
+            "candidate": {
+                "full_name": r.candidate.full_name if r.candidate else None,
+                "username": r.candidate.username if r.candidate else None,
+                "profile_photo_url": r.candidate.profile_photo_url if r.candidate else None,
+                "gender": r.candidate.gender.value if r.candidate else None,
+                "occupation": r.candidate.occupation if r.candidate else None,
+            } if r.candidate else None,
+            "created_at": r.created_at.isoformat()
+        })
+    return out
+
+
+@router.get("/my-recommendations", status_code=status.HTTP_200_OK)
+async def get_recommendations_for_me(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns all profiles recommended for this user (as ward) by their guardian.
+    Includes full matrimony profile details + connection status.
+    """
+    stmt_me = (
+        select(Profile)
+        .where(Profile.user_id == current_user.id)
+        .options(selectinload(Profile.matrimony_profile))
+    )
+    result_me = await db.execute(stmt_me)
+    my_profile = result_me.scalars().first()
+    if not my_profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    # Fetch all recommendations for me
+    stmt = (
+        select(GuardianRecommendation)
+        .where(GuardianRecommendation.ward_profile_id == my_profile.id)
+        .options(
+            selectinload(GuardianRecommendation.guardian),
+            selectinload(GuardianRecommendation.candidate).selectinload(Profile.matrimony_profile)
+        )
+        .order_by(GuardianRecommendation.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    recs = result.scalars().all()
+
+    # Fetch my existing connection requests to compute connection_status
+    req_stmt = select(ConnectionRequest).where(
+        or_(
+            ConnectionRequest.sender_profile_id == my_profile.id,
+            ConnectionRequest.receiver_profile_id == my_profile.id
+        )
+    )
+    req_res = await db.execute(req_stmt)
+    my_reqs = req_res.scalars().all()
+
+    out = []
+    for r in recs:
+        cand = r.candidate
+        if not cand:
+            continue
+
+        # Compute connection status
+        req = next(
+            (rq for rq in my_reqs if rq.sender_profile_id == cand.id or rq.receiver_profile_id == cand.id),
+            None
+        )
+        connection_status = req.status.value if req else "none"
+        connection_request_id = str(req.id) if req else None
+
+        mat = cand.matrimony_profile
+        entry = {
+            "recommendation_id": str(r.id),
+            "recommended_by": {
+                "guardian_name": r.guardian.full_name if r.guardian else None,
+                "guardian_photo": r.guardian.profile_photo_url if r.guardian else None,
+            },
+            "profile_id": str(cand.id),
+            "connection_status": connection_status,
+            "connection_request_id": connection_request_id,
+            "profile": {
+                "full_name": cand.full_name,
+                "date_of_birth": cand.date_of_birth.isoformat() if cand.date_of_birth else None,
+                "gender": cand.gender.value if cand.gender else None,
+                "marital_status": cand.marital_status.value if cand.marital_status else None,
+                "profile_photo_url": cand.profile_photo_url,
+                "occupation": cand.occupation,
+                "username": cand.username,
+            },
+            "matrimony_details": {
+                "height_cm": mat.height_cm,
+                "body_type": mat.body_type,
+                "complexion": mat.complexion,
+                "highest_qualification": mat.highest_qualification,
+                "employment_type": mat.employment_type,
+                "income_range": mat.income_range,
+                "gotra": mat.gotra,
+                "rashi": mat.rashi,
+                "nakshatra": mat.nakshatra,
+                "manglik_status": mat.manglik_status,
+                "about_me": mat.about_me,
+            } if mat else None,
+        }
+        out.append(entry)
+
+    return out

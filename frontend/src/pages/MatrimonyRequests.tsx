@@ -44,12 +44,22 @@ export default function MatrimonyRequests() {
   const [isSendingInvite, setIsSendingInvite] = useState(false)
   const [searchError, setSearchError] = useState("")
 
-  const { data, isLoading } = useQuery<any>({
+  const { data, isLoading, refetch } = useQuery<any>({
     queryKey: ["connection-requests-center"],
     queryFn: async () => {
       const res = await api.get("/matrimony/requests")
       return res.data
     },
+    retry: false
+  })
+
+  const { data: guardianRecs, isLoading: isLoadingRecs, refetch: refetchRecs } = useQuery<any[]>({
+    queryKey: ["guardian-recommendations-list"],
+    queryFn: async () => {
+      const res = await api.get("/matrimony/my-recommendations")
+      return res.data
+    },
+    enabled: activeTab === "guardian_view",
     retry: false
   })
 
@@ -82,6 +92,21 @@ export default function MatrimonyRequests() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.detail || "Failed to process request.")
+    }
+  })
+
+  const removeRecMutation = useMutation({
+    mutationFn: async ({ wardProfileId, recommendedProfileId }: { wardProfileId: string, recommendedProfileId: string }) => {
+      return api.delete("/matrimony/guardian-recommendations", {
+        data: { ward_profile_id: wardProfileId, recommended_profile_id: recommendedProfileId }
+      })
+    },
+    onSuccess: () => {
+      toast.success("Recommendation removed.")
+      refetchRecs()
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || "Failed to remove recommendation.")
     }
   })
 
@@ -196,9 +221,8 @@ export default function MatrimonyRequests() {
         <button
           onClick={() => { setActiveTab("inbox"); setSelectedRequest(null) }}
           title="Inbox"
-          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${
-            activeTab === "inbox" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
-          }`}
+          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${activeTab === "inbox" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
+            }`}
         >
           <Inbox className="h-5 w-5" />
           {incomingList.length > 0 && (
@@ -210,9 +234,8 @@ export default function MatrimonyRequests() {
         <button
           onClick={() => { setActiveTab("outgoing"); setSelectedRequest(null) }}
           title="Sent"
-          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${
-            activeTab === "outgoing" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
-          }`}
+          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${activeTab === "outgoing" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
+            }`}
         >
           <Send className="h-5 w-5" />
           {outgoingPending > 0 && (
@@ -224,9 +247,8 @@ export default function MatrimonyRequests() {
         <button
           onClick={() => { setActiveTab("pending_approvals"); setSelectedRequest(null) }}
           title="Awaiting Approval"
-          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${
-            activeTab === "pending_approvals" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
-          }`}
+          className={`relative px-4 py-2.5 border-b-2 transition-all flex items-center gap-1.5 ${activeTab === "pending_approvals" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
+            }`}
         >
           <Clock className="h-5 w-5" />
           {newInterestsCount > 0 && (
@@ -238,9 +260,8 @@ export default function MatrimonyRequests() {
         <button
           onClick={() => { setActiveTab("guardian_view"); setSelectedRequest(null) }}
           title="Guardian View"
-          className={`px-4 py-2.5 border-b-2 transition-all flex items-center ${
-            activeTab === "guardian_view" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
-          }`}
+          className={`px-4 py-2.5 border-b-2 transition-all flex items-center ${activeTab === "guardian_view" ? "border-[#0f172a] text-[#0f172a]" : "border-transparent text-[#64748b] hover:text-[#0f172a]"
+            }`}
         >
           <Shield className="h-5 w-5" />
         </button>
@@ -267,7 +288,7 @@ export default function MatrimonyRequests() {
                           {req.status?.replace(/_/g, " ")}
                         </span>
                       </div>
-                      <div 
+                      <div
                         className="flex gap-4 items-start cursor-pointer group/item hover:opacity-95 transition-opacity"
                         onClick={() => setSelectedRequest(req)}
                       >
@@ -328,7 +349,7 @@ export default function MatrimonyRequests() {
                           {req.status?.replace(/_/g, " ")}
                         </span>
                       </div>
-                      <div 
+                      <div
                         className="flex gap-4 items-start cursor-pointer group/item hover:opacity-95 transition-opacity"
                         onClick={() => setSelectedRequest(req)}
                       >
@@ -384,7 +405,7 @@ export default function MatrimonyRequests() {
                             {req.status?.replace(/_/g, " ")}
                           </span>
                         </div>
-                        <div 
+                        <div
                           className="flex gap-4 items-start cursor-pointer group/item hover:opacity-95 transition-opacity"
                           onClick={() => setSelectedRequest(req)}
                         >
@@ -428,8 +449,59 @@ export default function MatrimonyRequests() {
 
           {/* ── GUARDIAN VIEW ── */}
           {activeTab === "guardian_view" && (
-            <div className="text-center py-20 bg-white border border-[#e2e8f0] rounded-2xl shadow-sm text-[#64748b] text-xs font-medium">
-              Guardian approval workflow is managed through your profile settings.
+            <div className="space-y-6">
+              {isLoadingRecs ? (
+                <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-[#0f172a]" /></div>
+              ) : guardianRecs && guardianRecs.length > 0 ? (
+                guardianRecs.map((rec: any) => {
+                  const initials = rec.profile?.full_name?.split(" ").map((n: string) => n[0]).join("")
+                  return (
+                    <div key={rec.recommendation_id} className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm relative overflow-hidden space-y-4">
+                      <div className="flex gap-4 items-start cursor-pointer group/item hover:opacity-95 transition-opacity">
+                        <Avatar className="h-12 w-12 border border-[#e2e8f0] shadow-sm shrink-0">
+                          <AvatarImage src={rec.profile?.profile_photo_url} />
+                          <AvatarFallback className="text-xs bg-[#f1f5f9] font-bold">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-0.5">
+                          <h4 className="font-bold text-sm text-[#0f172a] group-hover/item:text-[#64748b] transition-colors">
+                            {rec.profile?.full_name}
+                          </h4>
+                          <p className="text-xs text-[#64748b] leading-tight font-medium">
+                            Recommended by your guardian <span className="font-bold text-[#0f172a]">{rec.recommended_by?.guardian_name}</span>
+                          </p>
+                          {rec.profile?.username && <p className="text-[10px] text-[#94a3b8] font-mono">@{rec.profile.username}</p>}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        {rec.connection_status === "none" ? (
+                          <Button
+                            className="bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-9 gap-1.5 rounded-lg w-full"
+                            onClick={() => {
+                              api.post("/matrimony/requests", { receiver_profile_id: rec.profile_id })
+                                .then(() => {
+                                  toast.success("Connection request sent.")
+                                  refetchRecs()
+                                })
+                                .catch((err) => toast.error(err.response?.data?.detail || "Action failed."))
+                            }}
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                            <span>Request Connection</span>
+                          </Button>
+                        ) : (
+                          <div className="w-full text-center p-2 rounded-lg bg-[#f8fafc] text-xs font-bold text-[#64748b] uppercase tracking-wider border border-[#e2e8f0]">
+                            {rec.connection_status.replace(/_/g, " ")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="text-center py-20 bg-white border border-[#e2e8f0] rounded-2xl shadow-sm text-[#64748b] text-xs font-medium">
+                  You have no recommendations by guardian
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -750,8 +822,8 @@ export default function MatrimonyRequests() {
                     required
                   />
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-[#0f172a] hover:bg-[#1e293b] text-white h-10 text-xs font-semibold px-4 rounded-xl"
                   disabled={isSearching}
                 >
