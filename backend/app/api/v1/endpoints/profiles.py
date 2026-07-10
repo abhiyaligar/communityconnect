@@ -486,7 +486,7 @@ async def get_profile_by_username(
     if not profile:
         raise HTTPException(status_code=404, detail="Username not found.")
         
-    from app.models.matrimony import MatrimonyRequest
+    from app.models.matrimony import ConnectionRequest
     connection_status = "none"
     connection_request_id = None
     
@@ -495,15 +495,16 @@ async def get_profile_by_username(
     my_profile = my_profile_res.scalars().first()
     
     if my_profile:
-        req_stmt = select(MatrimonyRequest).where(
-            ((MatrimonyRequest.sender_profile_id == my_profile.id) & (MatrimonyRequest.receiver_profile_id == profile.id)) |
-            ((MatrimonyRequest.sender_profile_id == profile.id) & (MatrimonyRequest.receiver_profile_id == my_profile.id))
+        req_stmt = select(ConnectionRequest).where(
+            ((ConnectionRequest.sender_profile_id == my_profile.id) & (ConnectionRequest.receiver_profile_id == profile.id)) |
+            ((ConnectionRequest.sender_profile_id == profile.id) & (ConnectionRequest.receiver_profile_id == my_profile.id))
         )
         req_res = await db.execute(req_stmt)
         req = req_res.scalars().first()
         if req:
             connection_request_id = str(req.id)
             connection_status = req.status.value
+
             
     res = {
         "profile_id": str(profile.id),
