@@ -6,7 +6,7 @@ This document outlines the backend architecture, module breakdown, system design
 
 ## 1. System Architecture Overview
 
-The backend uses a standard three-tier architecture: Presentation (API Routes), Business Logic (Services), and Data Access (SQLAlchemy ORM + asyncpg). It leverages Redis for rate limiting and cache management, and GCP Cloud Storage for storing user media.
+The backend uses a standard three-tier architecture: Presentation (API Routes), Business Logic (Services), and Data Access (SQLAlchemy ORM + asyncpg). It leverages Redis for rate limiting (via `slowapi`) and cache management, and GCP Cloud Storage for storing user media.
 
 ### 1.1 Architecture Components Diagram
 
@@ -23,7 +23,7 @@ graph TD
     Services --> Transactions[SQLAlchemy AsyncSession / Unit of Work]
     Transactions --> Database[(PostgreSQL Database)]
     Services --> GCPStorage[GCP Cloud Storage Client]
-    Services --> SMSService[SMS Gateway MSG91/Twilio]
+    Services --> EmailService[SMTP / Email Delivery Service]
     Services --> TaskQueue[FastAPI BackgroundTasks / Celery Worker]
     TaskQueue --> Database
 ```
@@ -39,7 +39,7 @@ graph TD
 7. **Service Layer**: House of all transactional business logic, preventing routes from executing ORM queries or direct mutations.
 8. **SQLAlchemy & asyncpg**: The asynchronous Object Relational Mapper and database driver communicating with the PostgreSQL database.
 9. **GCP Cloud Storage**: Offloads media file serving and ensures security through public/private bucket layouts and time-limited signed URLs.
-10. **SMS Gateway (MSG91/Twilio)**: Handles outbound delivery of one-time password messages to mobile numbers.
+10. **Email Delivery Service**: Handles outbound delivery of one-time passwords (OTP) and password reset links to email addresses.
 11. **Background Tasks**: Offloads long-running procedures (e.g., cron jobs, notification triggers, dual-access unlocking) to avoid blocking the HTTP request thread.
 
 ---
@@ -118,32 +118,29 @@ backend/
 
 ## 3. Authentication & Authorization Flow
 
-### 3.1 OTP Phone Verification Workflow
+### 3.1 Email OTP Verification Workflow
 
-Authentication is entirely passwordless via OTP-based SMS verification. Password authentication can be optionally set up for admins or claimed adult profiles, but phone verification remains the primary identity verification channel.
+Authentication uses password-based login, backed by an initial Email OTP verification step during registration. Users can also reset their passwords using an Email OTP flow.
 
 #### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     autonumber
-    ClientApp ->> FastAPI: POST /auth/otp/send { phone_number, action_type }
+    ClientApp ->> FastAPI: POST /auth/register/email { email, password }
     FastAPI ->> RateLimiter: Check throttling limit
     RateLimiter -->> FastAPI: Allow / Deny
-    FastAPI ->> Database: Check active OTP for phone_number
     FastAPI ->> Security: Generate random 6-digit code
-    FastAPI ->> Database: Save hashed OTP code (expires in 5 minutes)
-    FastAPI ->> SMS Gateway: Dispatch code via SMS
-    SMS Gateway -->> ClientApp: Deliver SMS OTP code
-    ClientApp ->> FastAPI: POST /auth/otp/verify { phone_number, code }
+    FastAPI ->> Database: Save OTP code (expires in 10 minutes)
+    FastAPI ->> EmailService: Dispatch code via Email
+    EmailService -->> ClientApp: Deliver Email OTP code
+    ClientApp ->> FastAPI: POST /auth/verify/email { email, code, password }
     FastAPI ->> Database: Retrieve active OTP record
-    Note over FastAPI, Database: Hash inputs to compare
     alt Code matches & Expire > now
         FastAPI ->> Database: Mark OTP as verified
-        FastAPI ->> Database: Find or Create User by phone_number
+        FastAPI ->> Database: Create User account
         FastAPI ->> Security: Sign Access Token (30m) & Refresh Token (30d)
-        FastAPI ->> Database: Save Refresh Token JTI
-        FastAPI -->> ClientApp: HTTP 200 { access_token, refresh_token, role, user_status }
+        FastAPI -->> ClientApp: HTTP 200 { access_token, refresh_token }
     else Code mismatch / Expired / Attempts >= 5
         FastAPI ->> Database: Increment attempts / Invalidate OTP if attempts limit met
         FastAPI -->> ClientApp: HTTP 400 Validation/OTP Error
@@ -151,17 +148,22 @@ sequenceDiagram
 ```
 
 #### OTP Rules and Throttling
-1. **Window limit**: Max 3 OTP requests per phone number within a rolling 15-minute window.
+1. **Window limit**: Strict rate limits (e.g., 5 requests/minute) applied via `slowapi` on the registration endpoint.
 2. **Attempt limit**: Max 5 incorrect code verification attempts per OTP. On the 5th incorrect attempt, the OTP token record is immediately set to expired (`expires_at = current_timestamp`).
-3. **Expiry duration**: OTPs are valid for exactly 5 minutes (300 seconds) from generation.
-4. **Hashing**: OTP codes are hashed via SHA-256 before storage to protect against DB leaks.
-5. **Simulated Mode / Mock Bypass Code**: When `SMS_PROVIDER` is set to `mock` in `backend/.env`, OTP dispatches are printed to the server terminal/console. Additionally, a master bypass code of `123456` is automatically accepted for any phone number to simplify manual testing and verification.
+3. **Expiry duration**: OTPs are valid for 10 minutes from generation.
+4. **Mock Bypass Code**: When `EMAIL_PROVIDER` is set to `mock` in `backend/.env`, OTP dispatches are printed to the server terminal/console.
 
-### 3.2 JWT Token Architecture
-Upon verification, the system returns two JWT tokens:
+### 3.2 Password Reset Workflow
+1. User requests password reset via `/auth/forgot-password`.
+2. Backend generates a 6-digit OTP, stores it in `email_verifications`, and sends it via email.
+3. User submits the OTP alongside their new password to `/auth/reset-password`.
+4. Backend verifies the code, updates the hashed password, and clears the OTP.
+
+### 3.3 JWT Token Architecture
+Upon verification or login, the system returns two JWT tokens:
 
 *   **Access Token**: Short-lived (30 minutes) used for API authorization. Passed via HTTP `Authorization: Bearer <access_token>` headers.
-*   **Refresh Token**: Long-lived (30 days) used to fetch new access tokens without re-verifying phone numbers. Stored in database (`refresh_tokens` or registered in token table) for auditability and revocation. On token reuse detection, all tokens derived from that family are revoked immediately (Token Rotation).
+*   **Refresh Token**: Long-lived (30 days) used to fetch new access tokens without re-authenticating.
 
 #### JWT Payload Claims (Claims Schema)
 ```json
@@ -240,10 +242,7 @@ The FastAPI middleware stack runs on every request in the following order:
 ```
 
 1.  **CORS Middleware**: Native FastAPI `CORSMiddleware` injected during app initialization. Restricts request origins, headers, and HTTP methods based on values configured in `.env`.
-2.  **Rate Limiting Middleware**: Implemented using `slowapi` with Redis backing. Protects `/auth/otp/send` from SMS exhaustion attacks. Scoped dynamically:
-    *   General registry browsing: 60 requests/minute per authenticated user.
-    *   Matrimonial profiles search: 30 requests/minute per authenticated user.
-    *   OTP Send: 3 requests per 15 minutes per phone number.
+2.  **Rate Limiting Middleware**: Implemented using `slowapi` with Redis backing. Protects `/auth/register/email` and `/auth/login` from brute-force and exhaustion attacks. Scoped dynamically based on client IP.
 3.  **Auth Context Middleware**: Custom middleware intercepting requests to inject user authentication state. Parses token headers, performs DB active-checks, and maps ORM models to `request.state.user`.
 4.  **Audit Log Middleware**: Logs structural changes made to registry records, state transitions on verification requests, or changes to admin permissions. Catches requests, records payload metadata, and saves results asynchronously to the `audit_logs` table.
 
@@ -299,28 +298,28 @@ All schemas are mapped to SQLAlchemy ORM models inheriting from `Base`.
 
 ### 6.1 Authentication & Authorization Module
 
-Manages passwordless verification tokens and user authentication states.
+Manages password verification tokens and user authentication states.
 
-#### Database Table: `otp_tokens`
+#### Database Table: `email_verifications`
 ```sql
-CREATE TABLE otp_tokens (
-    id SERIAL PRIMARY KEY,
-    phone_number VARCHAR(15) NOT NULL,
-    otp_hash VARCHAR(64) NOT NULL,
-    action_type VARCHAR(20) NOT NULL, -- 'LOGIN', 'SIGNUP', 'UPDATE_PHONE'
-    attempts INTEGER DEFAULT 0 NOT NULL,
+CREATE TABLE email_verifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(6) NOT NULL,
+    purpose VARCHAR(50) NOT NULL, -- 'registration', 'password_reset'
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_verified BOOLEAN DEFAULT FALSE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-CREATE INDEX idx_otp_phone ON otp_tokens(phone_number, is_verified, expires_at);
+CREATE INDEX idx_email_verifications_email ON email_verifications(email);
 ```
 
 #### API Endpoints
-*   `POST /api/v1/auth/otp/send`: Generates 6-digit random code, hashes it, stores in DB, sends SMS via gateway.
-*   `POST /api/v1/auth/otp/verify`: Validates code. If matching and valid, issues access/refresh tokens. Creates shell `User` record if signup.
-*   `POST /api/v1/auth/token/refresh`: Accepts valid refresh token, rotates tokens, invalidates old refresh token.
-*   `POST /api/v1/auth/logout`: Blacklists current JWT JTI in Redis or database table.
+*   `POST /api/v1/auth/register/email`: Generates 6-digit random code, stores in DB, sends via Email.
+*   `POST /api/v1/auth/verify/email`: Validates code. If matching and valid, issues access/refresh tokens.
+*   `POST /api/v1/auth/forgot-password`: Generates OTP and sends via Email for password reset.
+*   `POST /api/v1/auth/reset-password`: Validates OTP and updates password.
+*   `POST /api/v1/auth/refresh`: Accepts valid refresh token, issues new access token.
+*   `POST /api/v1/auth/logout`: Invalidates session.
 
 ---
 
@@ -417,9 +416,12 @@ stateDiagram-v2
 Defines regional assignments for Local Admins.
 ```sql
 CREATE TABLE admin_regions (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL,
-    description VARCHAR(255) NULL
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) UNIQUE NOT NULL,
+    pin_code VARCHAR(20) UNIQUE NOT NULL,
+    description TEXT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 ```
 
@@ -519,6 +521,29 @@ CREATE TABLE connection_requests (
     *   If approved, status transitions to `APPROVED`. Access is granted.
     *   If declined, status transitions to `DECLINED`.
 
+#### Interaction Profiles (Swiping)
+Swiping is tracked via `profile_likes` and `profile_dislikes` tables.
+
+```sql
+CREATE TABLE profile_likes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    liked_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+);
+```
+
+#### Guardian Recommendations
+Guardians can actively recommend candidates for their wards via `guardian_recommendations`.
+
+```sql
+CREATE TABLE guardian_recommendations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    guardian_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    ward_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    recommended_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+);
+```
+
 ---
 
 ### 6.6 Admin Module
@@ -543,6 +568,7 @@ CREATE TABLE audit_logs (
 *   `GET /api/v1/admin/dashboard`: Returns aggregate reporting metrics.
     *   *Metrics details*: Total registry count, verification turnaround average, matching connection success rates, pending requests count, distribution map by regions.
 *   `POST /api/v1/admin/regions`: Allocates new region bounds.
+*   `GET /api/v1/admin/regions`: Returns all defined regions.
 *   `POST /api/v1/admin/local-admins/{admin_id}/peer-verify`: Submits a verification review for a proposed Local Admin.
 *   `GET /api/v1/admin/audit-logs`: Retrieves database audit logs.
 

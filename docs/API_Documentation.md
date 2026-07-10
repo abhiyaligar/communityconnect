@@ -62,6 +62,7 @@ When request payload validation fails (e.g., invalid phone format), the API retu
 | **404** | Not Found | The requested resource does not exist. |
 | **409** | Conflict | The resource state conflicts with request (e.g., profile already verified or duplicate registration). |
 | **422** | Unprocessable Entity | Input data failed schema validation checks. |
+| **429** | Too Many Requests | Rate limit exceeded. |
 | **500** | Internal Error | Server encountered an unexpected error. |
 
 ---
@@ -258,6 +259,39 @@ sequenceDiagram
 *   **Status Codes:**
     *   `200 OK`: Successfully logged out.
     *   `401 Unauthorized`: Missing or invalid token.
+
+#### 4.1.6 Forgot Password
+*   **Method:** `POST`
+*   **Path:** `/api/v1/auth/forgot-password`
+*   **Description:** Generates a secure OTP for password reset and sends it to the user's email.
+*   **Auth Required:** None (Public)
+*   **Request Body (JSON):**
+    ```json
+    {
+      "email": "user@example.com"
+    }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Reset email sent.
+    *   `404 Not Found`: Email not registered.
+    *   `429 Too Many Requests`: Rate limit exceeded.
+
+#### 4.1.7 Reset Password
+*   **Method:** `POST`
+*   **Path:** `/api/v1/auth/reset-password`
+*   **Description:** Consumes the OTP and assigns a new password to the user.
+*   **Auth Required:** None (Public)
+*   **Request Body (JSON):**
+    ```json
+    {
+      "email": "user@example.com",
+      "code": "123456",
+      "new_password": "NewSecurePassword123!"
+    }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Password reset successfully.
+    *   `400 Bad Request`: Invalid or expired reset code.
 
 ---
 
@@ -846,7 +880,9 @@ sequenceDiagram
           "hobbies": "Painting"
         },
         "connection_status": "none",
-        "connection_request_id": null
+        "connection_request_id": null,
+        "is_recommended_by_guardian": true,
+        "recommended_for_ward_ids": ["uuid-of-ward"]
       }
     ]
     ```
@@ -930,6 +966,54 @@ sequenceDiagram
     *   `200 OK`: Invitation accepted/declined.
     *   `404 Not Found`: Invitation not found.
 
+#### 4.5.9 Recommend Profile (Guardian)
+*   **Method:** `POST`
+*   **Path:** `/api/v1/matrimony/guardian-recommendations`
+*   **Description:** A guardian recommends a target profile for their ward.
+*   **Auth Required:** `verified_adult` (Guardian)
+*   **Request Body (JSON):**
+    ```json
+    {
+      "ward_profile_id": "uuid-of-ward",
+      "recommended_profile_id": "uuid-of-target"
+    }
+    ```
+*   **Status Codes:**
+    *   `201 Created`: Recommendation added.
+    *   `403 Forbidden`: Caller is not a guardian for this ward.
+    *   `409 Conflict`: Recommendation already exists.
+
+#### 4.5.10 Remove Recommendation (Guardian)
+*   **Method:** `DELETE`
+*   **Path:** `/api/v1/matrimony/guardian-recommendations`
+*   **Description:** A guardian removes a recommendation they previously made.
+*   **Auth Required:** `verified_adult` (Guardian)
+*   **Request Body (JSON):**
+    ```json
+    {
+      "ward_profile_id": "uuid-of-ward",
+      "recommended_profile_id": "uuid-of-target"
+    }
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Recommendation removed.
+
+#### 4.5.11 List Guardian's Recommendations
+*   **Method:** `GET`
+*   **Path:** `/api/v1/matrimony/guardian-recommendations`
+*   **Description:** Returns all recommendations made by the calling guardian, optionally filtered by ward.
+*   **Auth Required:** `verified_adult` (Guardian)
+*   **Status Codes:**
+    *   `200 OK`: Returns list of recommendations.
+
+#### 4.5.12 List Recommendations Received (Ward)
+*   **Method:** `GET`
+*   **Path:** `/api/v1/matrimony/my-recommendations`
+*   **Description:** Returns all incoming recommendations given to the calling ward by their guardian(s).
+*   **Auth Required:** `verified_adult` (Ward)
+*   **Status Codes:**
+    *   `200 OK`: Returns list of recommendations.
+
 ---
 
 ### 4.6 Connection Requests
@@ -947,20 +1031,24 @@ sequenceDiagram
 #### 4.7.1 Create Admin Account
 *   **Method:** `POST`
 *   **Path:** `/api/v1/admin/create-admin`
-*   **Description:** Creates a new `local_admin` or `community_admin` account. No authentication required for initial bootstrapping.
-*   **Auth Required:** None (bootstrapping)
+*   **Description:** Creates a new administrator account (either `community_admin` or `local_admin`). Automatically creates an associated verified Profile. A `local_admin` can create another `local_admin` but is strictly forbidden from creating a `community_admin`.
+*   **Auth Required:** `community_admin` | `local_admin`
 *   **Request Body (JSON):**
     ```json
     {
+      "phone_number": "+919999999999",
       "email": "admin@example.com",
-      "password": "adminpass",
+      "password": "adminpass123",
       "role": "local_admin",
-      "full_name": "Ramesh Gowda"
+      "full_name": "Ramesh Gowda",
+      "address": "123 Street Name, Bengaluru",
+      "region_id": "optional-uuid"
     }
     ```
 *   **Status Codes:**
     *   `201 Created`: Admin created.
-    *   `409 Conflict`: Email already in use.
+    *   `400 Bad Request`: User already exists or invalid region ID.
+    *   `403 Forbidden`: Local admin attempting to create a community admin or insufficient permissions.
 
 #### 4.7.2 List All Users
 *   **Method:** `GET`
@@ -988,6 +1076,53 @@ sequenceDiagram
 *   **Auth Required:** `community_admin` | `local_admin`
 *   **Status Codes:**
     *   `200 OK`: Stats returned.
+
+#### 4.7.5 Create Region
+*   **Method:** `POST`
+*   **Path:** `/api/v1/admin/regions`
+*   **Description:** Creates a new geographic admin region. Only Community Admins can create regions.
+*   **Auth Required:** `community_admin`
+*   **Request Body (JSON):**
+    ```json
+    {
+      "name": "Bengaluru North",
+      "pin_code": "560001",
+      "description": "Covering the northern tech corridor and central business districts."
+    }
+    ```
+*   **Response Body (JSON):**
+    ```json
+    {
+      "id": "uuid",
+      "name": "Bengaluru North",
+      "pin_code": "560001",
+      "description": "Covering the northern tech corridor and central business districts."
+    }
+    ```
+*   **Status Codes:**
+    *   `201 Created`: Region created successfully.
+    *   `400 Bad Request`: Region name or PIN code already exists.
+    *   `403 Forbidden`: Not a Community Admin.
+
+#### 4.7.6 List Regions
+*   **Method:** `GET`
+*   **Path:** `/api/v1/admin/regions`
+*   **Description:** Returns a list of all defined geographic admin regions.
+*   **Auth Required:** `community_admin` | `local_admin` | `unverified`
+*   **Response Body (JSON):**
+    ```json
+    [
+      {
+        "id": "uuid",
+        "name": "Bengaluru North",
+        "pin_code": "560001",
+        "description": "Covering the northern tech corridor and central business districts."
+      }
+    ]
+    ```
+*   **Status Codes:**
+    *   `200 OK`: Regions returned.
+
 
 
 ## 4.8 Search & Browse

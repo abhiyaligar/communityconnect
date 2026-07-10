@@ -9,7 +9,7 @@
 
 ## 1. Architecture Overview
 
-The CommunityConnect frontend is structured as a single-page application (SPA) built on React 19. It uses context-based state management, route-based code splitting, and strict role/status guards to enforce privacy tiers.
+The CommunityConnect frontend is structured as a single-page application (SPA) built on React 19. It uses context-based auth management, React Query (TanStack Query) for remote data fetching/caching, route-based code splitting, and strict role/status guards to enforce privacy tiers.
 
 ### 1.1 Component Tree & Hierarchy
 
@@ -108,11 +108,10 @@ frontend/src/
 ├── hooks/
 │   ├── useAuth.js             # Syntactic sugar hook for AuthContext
 │   ├── useLanguage.js         # Syntactic sugar hook for LanguageContext
-│   ├── useFetch.js            # Async request helper (loading, error, response state)
-│   └── useForm.js             # Minimal custom form validation/handlers helper
+│   ├── useForm.js             # Minimal custom form validation/handlers helper
 ├── pages/
 │   ├── Home.jsx               # Landing page with Trust backing information
-│   ├── Login.jsx              # Phone entry & OTP flow
+│   ├── Login.jsx              # Email entry & OTP flow
 │   ├── Register.jsx           # Initial profile registration form
 │   ├── Dashboard.jsx          # User overview screen (family, status, alerts)
 │   ├── Profile.jsx            # Detailed view and self-management area
@@ -212,7 +211,7 @@ export default function RequireAdmin({ children }) {
 
 ## 4. State Management Approach
 
-State management relies on native React Contexts, localized state, and custom hooks. This eliminates extra state-management libraries (e.g. Redux) to keep the initial bundle small (~10,000 users MVP scope).
+State management relies on native React Contexts for global states (Auth, Language), custom hooks, and **React Query** for server-state caching, fetching, and pagination. This eliminates extra boilerplate while providing excellent UX with background refetching and prefetching (e.g. prefetching matrimony profile stacks).
 
 ### 4.1 AuthContext Schema
 
@@ -261,12 +260,12 @@ To minimize unnecessary re-renders across the component tree:
 
 ## 5. Authentication Flow
 
-Authentication uses SMS OTP tokens. JWTs are returned after validation and managed securely in the browser.
+Authentication uses Email OTP tokens. JWTs are returned after validation and managed securely in the browser.
 
 ```
-[ User Phone Entry ] ──(Submit Phone)──> [ POST /auth/otp/send ]
+[ User Email Entry ] ──(Submit Email)──> [ POST /auth/register/email ]
                                                     │
-                                           (Backend Sends SMS)
+                                           (Backend Sends Email)
                                                     │
                                                     ▼
 [ 6-Digit OTP Screen ] <─(Enter OTP)─── [ Verify Code & Session ]
@@ -274,7 +273,7 @@ Authentication uses SMS OTP tokens. JWTs are returned after validation and manag
     (Submit OTP)
          │
          ▼
-[ POST /auth/otp/verify ] ───────> [ Returns JWT & Profile Status ]
+[ POST /auth/verify/email ] ───────> [ Returns JWT & Profile Status ]
                                                     │
                                            (Store JWT in Storage)
                                                     │
@@ -287,9 +286,9 @@ Authentication uses SMS OTP tokens. JWTs are returned after validation and manag
 
 ### 5.1 Step-by-Step UI Transitions
 
-1. **Step 1: Mobile Input UI:**
-   - Input field limited to numeric digits, with length validations matching the target country (e.g., 10 digits for Indian mobile numbers).
-   - "Send OTP" button contains throttle controls (disabled for 60 seconds after execution to prevent SMS provider spam).
+1. **Step 1: Email Input UI:**
+   - Input field with standard email format validation.
+   - "Send OTP" button contains throttle controls (disabled for 60 seconds after execution).
 
 2. **Step 2: OTP Verification UI:**
    - Screen locks and focuses on a 6-field single-character input box structure.
@@ -361,12 +360,13 @@ Authentication uses SMS OTP tokens. JWTs are returned after validation and manag
 - **UI/UX & Layout:** Clean centered column layout. Completed steps on the timeline are highlighted in emerald, pending steps in indigo, and issues in amber.
 
 ### 6.8 Matrimony Page (`Matrimony.jsx`)
-- **Purpose:** Search and filter matches. Enable or disable matrimonial visibility.
+- **Purpose:** Search and filter matches. Swipe through match stack. Enable or disable matrimonial visibility. Guardians can recommend profiles.
 - **Key Components:**
   - `OptInControl`: Matrimonial module visibility toggle.
-  - `SearchFilterBar`: Filter inputs for age range, location, and occupation.
+  - `SwipeStack`: Tinder-like card swiper for matching, with keyboard support and React Query prefetching (fetches next 10 items).
+  - `GuardianView`: A dedicated tab showing wards and a list of profiles recommended to the ward by the guardian.
   - `MatchGrid`: Grid of member cards. Unconnected profiles show only registry-compliant basic details (photo, name, age).
-- **UI/UX & Layout:** Three-column view. Left: sticky search/filter panel; Right: grid of matching profiles. Mobile views add a sliding filter drawer.
+- **UI/UX & Layout:** Three-column view or Card Stack. Left: sticky search/filter panel; Right: grid of matching profiles or swiper UI. Mobile views add a sliding filter drawer. Pinned guardian recommendations are visible.
 
 ### 6.9 Connection Requests Page (`ConnectionRequests.jsx`)
 - **Purpose:** Manage matchmaking connection requests.
@@ -656,9 +656,10 @@ export default function App() {
 }
 ```
 
-### 10.2 Asset Optimization
+### 10.2 Asset and List Optimization
 
 - **Image Management:** Profile images are compressed and served in WebP format. Standard icons are loaded as inline SVG elements to reduce HTTP requests.
+- **On-Scroll Infinite Pagination:** Dense admin queues, regional scopes, and matching feeds utilize TanStack Query's `useInfiniteQuery` coupled with the browser's `IntersectionObserver` API to lazily request and append paginated page blocks as the user scrolls, minimizing redundant network requests and rendering latency.
 - **Rendering Optimization:** Complex listings and lists (such as the Matrimony matching queue or registry index page) use virtualization techniques to render only the visible cards on the screen.
 
 ---

@@ -27,16 +27,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="1.1.0",
+    version="1.2.0",
     description=(
-        "CommunityConnect — A platform to connect and empower local communities.\n\n"
-        "## Features\n"
-        "- **Community Profiles** — Member registration, admin verification, and profile management.\n"
-        "- **Matrimony** — Opt-in matrimonial profiles with double-approval co-guardian system.\n"
-        "- **Connection Requests** — Request-based matching with self & family approval workflow.\n"
-        "- **Guardian System** — Non-matrimony users can browse matches as confirmed guardians.\n"
-        "- **File Uploads** — Profile photo and document storage.\n"
-        "- **Admin Panel** — User verification, escalation, and management.\n"
+        "CommunityConnect — A premium platform to connect and empower local communities.\n\n"
+        "## Core Features\n"
+        "- **Identity & Verification** — OTP Email registration, Password Recovery, and Admin verification workflows.\n"
+        "- **Matrimony Network** — Detailed opt-in matrimonial profiles with dynamic swiper-based matchmaking.\n"
+        "- **Connection Requests** — Two-way connection approvals with family co-guardian signoffs.\n"
+        "- **Guardian Recommends** — Guardians can browse matches and shortlist recommendations for their wards.\n"
+        "- **Profile Interactions** — Swipe tracking for likes and dislikes.\n"
+        "- **Admin Panel** — Comprehensive user escalation, moderation, and verification management.\n"
+        "- **Infrastructure** — Global rate-limiting backed by Redis and fully tracked Alembic migrations.\n"
     ),
     docs_url="/docs",
     redoc_url="/redoc",

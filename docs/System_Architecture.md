@@ -25,7 +25,7 @@ graph TB
     CloudSQL[(Cloud SQL PostgreSQL<br/>Managed DB)]:::secureGcp
     Memorystore[(Cloud Memorystore Redis<br/>Cache & Rate Limiting)]:::secureGcp
     CloudStorage[(Cloud Storage Bucket<br/>Profile Photos)]:::secureGcp
-    Twilio[Twilio / MSG91 API<br/>OTP Service]:::external
+    EmailAPI[Email Delivery API<br/>OTP Service]:::external
     Sentry[Sentry.io<br/>Error Tracking]:::external
 
     %% Routing Flow
@@ -43,7 +43,7 @@ graph TB
     end
 
     %% Outbound Connections
-    FastAPI -->|HTTPS Request| Twilio
+    FastAPI -->|HTTPS Request| EmailAPI
     FastAPI -->|HTTPS Request| Sentry
 ```
 
@@ -104,7 +104,7 @@ graph TD
 ### 3.1 Network Topology & Cloud SQL Access
 * **VPC Network**: A single Virtual Private Cloud (VPC) with a dedicated subnetwork for database services.
 * **Serverless VPC Access Connector**: Used to bridge serverless Cloud Run instances to the VPC network. Cloud Run has no public interface inside the database subnet; communication occurs via private IPs (`10.x.x.x`).
-* **Cloud NAT & Cloud Router**: Configured so that Cloud Run instances can securely send outbound HTTPS requests (e.g., to Twilio and Sentry) without exposing public IP addresses.
+* **Cloud NAT & Cloud Router**: Configured so that Cloud Run instances can securely send outbound HTTPS requests (e.g., to Email APIs and Sentry) without exposing public IP addresses.
 * **Database Isolation**: The Cloud SQL instance is configured with **Private IP only**. All public access paths are disabled.
 
 ### 3.2 Compute (Cloud Run)
@@ -127,11 +127,11 @@ graph TD
 The platform relies on passwordless, verification-first OTP entry.
 1. **Request**: The user enters their phone number (`+91XXXXXXXXXX`).
 2. **Generation**: The backend generates a cryptographically secure 6-digit numeric code.
-3. **Storage**: The hash of the OTP, along with request metadata (retry count, expiration timestamp set to `now + 5 minutes`), is stored in Redis.
-4. **Rate Limiting**: To prevent SMS flooding, a phone number is restricted to:
+3. **Storage**: The hash of the OTP, along with request metadata (retry count, expiration timestamp set to `now + 10 minutes`), is stored in Redis (or PostgreSQL).
+4. **Rate Limiting**: To prevent email flooding, an email address is restricted to:
    * Max 1 OTP request per 2 minutes.
    * Max 3 OTP requests per 1 hour.
-5. **Cooldown**: Exceeding the limits locks the phone number for 15 minutes.
+5. **Cooldown**: Exceeding the limits locks the email address for 15 minutes.
 
 ### 4.2 JWT Authentication Model
 Upon successful OTP validation, the backend generates a secure token pair:
@@ -221,15 +221,15 @@ sequenceDiagram
     actor LA as Local Admin
     actor CA as Community Admin
 
-    User->>FE: Input Phone Number & Sign Up
-    FE->>BE: POST /api/v1/auth/signup (phone)
+    User->>FE: Input Email Address & Sign Up
+    FE->>BE: POST /api/v1/auth/register/email (email)
     BE->>BE: Generate 6-Digit OTP & Hash
-    BE->>SMS: Send SMS with OTP code
-    BE->>User: Return OTP Session ID
-    User->>FE: Input OTP Code
-    FE->>BE: POST /api/v1/auth/verify-otp (code, session_id)
+    BE->>SMS: Send Email with OTP code
+    BE->>User: Return Success Message
+    User->>FE: Input OTP Code & Password
+    FE->>BE: POST /api/v1/auth/verify/email (email, code, password)
     BE->>DB: Create User record (Status: LOCKED)
-    BE->>FE: Return Temporary JWT (Locked Mode)
+    BE->>FE: Return JWT Tokens
     
     User->>FE: Submit Profile Data, Family Association & Photo
     FE->>BE: POST /api/v1/profile/register
@@ -254,7 +254,7 @@ sequenceDiagram
     end
 
     BE->>DB: Update User Status to VERIFIED, unlock Registry Access
-    BE->>User: Notify User via SMS (Status: Verified)
+    BE->>User: Notify User via Email (Status: Verified)
 ```
 
 ### 5.2 Connection Request Flow (Matrimonial Module)
@@ -293,7 +293,7 @@ sequenceDiagram
     end
     
     BE->>DB: Save Connection State
-    BE->>UserA: Notify via System Notification / SMS
+    BE->>UserA: Notify via System Notification / Email
     Note over UserA, UserB: User A can now view User B's Full Restricted Profile fields.
 ```
 
@@ -370,7 +370,7 @@ The system is designed to handle **10k to 50k users** without architectural modi
 * **Audit Trail Requirements**:
   * Every verification approval/rejection must log the admin user ID, targeted profile ID, action, timestamp, and reasoning.
   * Profile modifications on behalf of minor accounts must log the parent/family head user ID.
-* **Error Tracking**: Integration of Sentry SDK on both the React frontend and FastAPI backend, filtering out sensitive PII (phone numbers, addresses) from stack traces.
+* **Error Tracking**: Integration of Sentry SDK on both the React frontend and FastAPI backend, filtering out sensitive PII (emails, addresses) from stack traces.
 
 ### 7.2 Backup & Disaster Recovery (DR)
 * **Recovery Objectives**:
@@ -430,9 +430,9 @@ Estimations are calculated for two milestones (10,000 users and 50,000 users) as
 | **Cloud Memorystore** | Basic Tier (1GB capacity). | **$16.00** | Standard HA Tier (1GB capacity, replicated). | **$32.00** |
 | **Cloud Storage** | 20GB storage + network egress traffic. | **$3.00** | 120GB storage + network egress traffic. | **$12.00** |
 | **Cloud CDN & Bandwidth** | 100GB egress + CDN Cache requests. | **$8.00** | 500GB egress + CDN Cache requests. | **$30.00** |
-| **SMS OTP Services** | ~1.5 messages per user registration/login. (Twilio/MSG91). | **$25.00** | Scale login volumes (OTP verify optimizations). | **$90.00** |
+| **Email Delivery Services** | ~1.5 messages per user registration/login. (Resend/SendGrid). | **$5.00** | Scale login volumes (OTP verify optimizations). | **$15.00** |
 | **Sentry / Monitoring** | Developer Free Tier. | **$0.00** | Team Tier (increased throughput limits). | **$29.00** |
-| **Total Estimated Cost**| — | **$74.00 / month** | — | **$323.00 / month** |
+| **Total Estimated Cost**| — | **$54.00 / month** | — | **$248.00 / month** |
 
 ---
 

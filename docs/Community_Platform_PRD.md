@@ -135,7 +135,11 @@ A new account is created in a **locked state**: the user can sign up but **canno
 3. **Optional double approval:** If User B has enabled this setting, the request also requires approval from a **specific family member User B has designated** (selected by username/photo at setup — not required to be the Family Head specifically).
 4. Upon all required approvals, **access is granted** (richer profile + contact details revealed, per agreed terms).
 
-#### 4.3.4 Configuration
+#### 4.3.4 Guardian Recommendations
+- A designated family guardian (co-approver) can browse eligible profiles and actively "recommend" candidates for their ward.
+- These recommendations appear prominently pinned to the top of the ward's matrimonial feed, facilitating guided matches.
+
+#### 4.3.5 Configuration
 - Each user independently chooses:
   - Whether to opt into the matrimony module at all.
   - Whether double approval (family co-approval) is required for their connection requests.
@@ -169,10 +173,10 @@ A new account is created in a **locked state**: the user can sign up but **canno
 
 ### 6.1 Stack
 - **Backend:** FastAPI (Python)
-- **Frontend:** React
-- **Database:** PostgreSQL
+- **Frontend:** React (with React Query)
+- **Database:** PostgreSQL (with Alembic for migrations)
 - **Hosting:** GCP (Cloud Run + Cloud SQL), leveraging existing GCP credits through August 2026
-- **Auth:** OTP-based phone verification (e.g., MSG91/Twilio)
+- **Auth:** OTP-based email verification (e.g., Resend/SendGrid) with password login.
 - **Storage:** Cloud Storage for profile photos
 
 ### 6.2 Core Data Entities (high-level)
@@ -183,6 +187,8 @@ A new account is created in a **locked state**: the user can sign up but **canno
 - `AdminRegion` — maps Local Admins to geographic scope
 - `MatrimonyProfile` — opt-in extension of Profile, approver configuration
 - `ConnectionRequest` — tracks self-approval + optional family-approval state machine
+- `ProfileLikes` / `ProfileDislikes` — tracks user swiping interactions
+- `GuardianRecommendation` — tracks profiles suggested to wards by their guardians
 - `MemorialRecord` — archived state of a deactivated Profile
 
 ### 6.3 Access Control

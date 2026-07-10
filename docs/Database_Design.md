@@ -52,6 +52,10 @@ erDiagram
     connection_requests }|--|| profiles : "received by (receiver)"
     connection_requests }|--o| profiles : "co-approved by"
 
+    profile_likes }|--|| profiles : "liked"
+    profile_dislikes }|--|| profiles : "disliked"
+    guardian_recommendations }|--|| profiles : "recommends"
+
     memorial_records }|--o| profiles : "reported by"
     memorial_records }|--o| users : "verified by"
 ```
@@ -122,6 +126,8 @@ Stores authentication credentials, security status, and core platform roles.
 | `password_hash` | `VARCHAR(255)` | `NULLABLE` | *None* | Bcrypt password hash. |
 | `role` | `user_role` | `NOT NULL` | `'unverified'` | Application level role. |
 | `is_active` | `BOOLEAN` | `NOT NULL` | `TRUE` | False if user account is deactivated/deceased. |
+| `preferred_language` | `VARCHAR(10)` | `NOT NULL` | `'en'` | UI language preference. |
+| `verified_at` | `TIMESTAMPTZ` | `NULLABLE` | *None* | Timestamp of admin verification approval. |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Signup timestamp. |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Row modification timestamp. |
 
@@ -133,6 +139,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255),
     role user_role NOT NULL DEFAULT 'unverified',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    preferred_language VARCHAR(10) DEFAULT 'en',
+    verified_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -145,6 +153,7 @@ Defines regional/geographical scopes governed by Local Admins.
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY` | `gen_random_uuid()` | Unique region identifier. |
 | `name` | `VARCHAR(100)` | `UNIQUE`, `NOT NULL` | *None* | Region name (e.g. 'Bengaluru North'). |
+| `pin_code` | `VARCHAR(20)` | `UNIQUE`, `NOT NULL` | *None* | Region PIN code. |
 | `description` | `TEXT` | `NULLABLE` | *None* | Description of geographic boundaries. |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Record creation timestamp. |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL` | `CURRENT_TIMESTAMP` | Row modification timestamp. |
@@ -153,6 +162,7 @@ Defines regional/geographical scopes governed by Local Admins.
 CREATE TABLE admin_regions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) UNIQUE NOT NULL,
+    pin_code VARCHAR(20) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -371,7 +381,42 @@ CREATE TABLE connection_requests (
 );
 ```
 
-### 4.10 `memorial_records`
+### 4.10 `profile_likes` & `profile_dislikes`
+Interaction mapping tables for the swiping functionality on matrimonial profiles.
+
+```sql
+CREATE TABLE profile_likes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    liked_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_user_liked_profile UNIQUE (user_profile_id, liked_profile_id)
+);
+
+CREATE TABLE profile_dislikes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    disliked_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_user_disliked_profile UNIQUE (user_profile_id, disliked_profile_id)
+);
+```
+
+### 4.11 `guardian_recommendations`
+Stores mapping between a guardian, their ward, and a recommended target profile.
+
+```sql
+CREATE TABLE guardian_recommendations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    guardian_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    ward_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    recommended_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_guardian_ward_candidate UNIQUE (guardian_profile_id, ward_profile_id, recommended_profile_id)
+);
+```
+
+### 4.12 `memorial_records`
 Archived snapshot records for deceased profile accounts.
 
 | Column Name | Data Type | Constraints | Default | Description |
@@ -396,7 +441,7 @@ CREATE TABLE memorial_records (
 );
 ```
 
-### 4.11 `audit_logs`
+### 4.13 `audit_logs`
 Tracks modifications, role adjustments, and administrative overrides.
 
 | Column Name | Data Type | Constraints | Default | Description |
