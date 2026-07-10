@@ -5,7 +5,7 @@ import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/c
 import { Button } from "@/components/ui/button"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { Loader2, AlertCircle, CheckCircle, Users } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle } from "lucide-react"
 
 export default function GoogleCallback() {
   const { login } = useAuth()
@@ -66,14 +66,21 @@ export default function GoogleCallback() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
-      {/* Background gradients */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl -z-10" />
+      {/* Simple Background */}
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center">
-              <Users className="h-4 w-4 text-primary-foreground" />
+            <div className="w-8 h-8 rounded border border-border/80 bg-card/60 flex items-center justify-center shadow-sm">
+              <svg className="h-4.5 w-4.5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
+                <circle cx="12" cy="4.5" r="2" />
+                <circle cx="5" cy="9.5" r="2" />
+                <circle cx="19" cy="9.5" r="2" />
+                <circle cx="8" cy="18.5" r="2" />
+                <circle cx="16" cy="18.5" r="2" />
+                <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+              </svg>
             </div>
             <span className="font-semibold text-lg tracking-tight text-foreground">CommunityConnect</span>
           </div>

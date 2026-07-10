@@ -76,10 +76,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">
-      {/* Background gradients */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-secondary/30 -z-10" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8 sm:px-6 sm:py-12 relative overflow-hidden transition-colors duration-300">
+      {/* Simple Background */}
+      <div className="absolute inset-0 bg-background -z-10" />
 
       {/* Floating Theme Toggle */}
       <button
@@ -97,9 +96,11 @@ export default function Login() {
 
       <div className="w-full max-w-[420px] relative z-10 flex flex-col items-center">
         {/* App Logo */}
-        <div className="flex flex-col items-center mb-8 text-center">
+        <div className="flex flex-col items-center mb-8 sm:mb-10 text-center stagger-fade-in-1">
           <Link to="/" className="flex flex-col items-center group">
-            <div className="w-14 h-14 rounded-2xl border border-border/80 bg-card/60 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 backdrop-blur-md">
+            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md ${
+              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
+            }`}>
               <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
                 <circle cx="12" cy="4.5" r="2" />
@@ -116,34 +117,32 @@ export default function Login() {
           </Link>
         </div>
 
-
-        {/* Form Container */}
-        <div className="w-full border border-border/80 bg-card/45 backdrop-blur-xl shadow-xl rounded-[24px] p-8 transition-all duration-300">
-          <div className="space-y-1.5 pb-6">
+        {/* Form Container: Borderless & Transparent on Mobile, Glassmorphic Container on Desktop */}
+        <div className="w-full border-0 bg-transparent shadow-none p-0 sm:border sm:border-border/80 sm:bg-card/45 sm:backdrop-blur-xl sm:shadow-xl sm:rounded-[24px] sm:p-8 transition-all duration-300 stagger-fade-in-2">
+          <div className="space-y-1.5 pb-6 text-left sm:text-center">
             <h2 className="text-2xl font-bold tracking-tight text-foreground">{t("welcome")}</h2>
           </div>
 
-
           <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-2">
+            <div className="space-y-2 stagger-fade-in-3">
               <Label htmlFor="email" className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
                 {t("email_label")}
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85" />
+                <Mail className="absolute left-0 sm:left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-12 pr-4 h-11 bg-background/50 border-border rounded-xl text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
+                  className="pl-10 pr-0 h-11 bg-transparent border-0 border-b border-border rounded-none text-xs placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 transition-all duration-200 sm:pl-12 sm:pr-4 sm:h-11 sm:bg-background/50 sm:border sm:border-border sm:rounded-xl"
                   required
                 />
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 stagger-fade-in-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
                   {t("password_label")}
@@ -153,26 +152,26 @@ export default function Login() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85" />
+                <Lock className="absolute left-0 sm:left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85" />
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-12 pr-4 h-11 bg-background/50 border-border rounded-xl text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/30"
+                  className="pl-10 pr-0 h-11 bg-transparent border-0 border-b border-border rounded-none text-xs placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 transition-all duration-200 sm:pl-12 sm:pr-4 sm:h-11 sm:bg-background/50 sm:border sm:border-border sm:rounded-xl"
                   required
                 />
               </div>
             </div>
 
             {/* Custom Checkbox stay signed in */}
-            <div className="flex items-center space-x-2 pt-1 select-none">
+            <div className="flex items-center space-x-2 pt-1 select-none stagger-fade-in-3">
               <button
                 type="button"
                 id="staySignedIn"
                 onClick={() => setStaySignedIn(!staySignedIn)}
-                className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 ${
                   staySignedIn
                     ? "bg-primary border-primary text-primary-foreground"
                     : "border-border bg-background/50 hover:border-muted-foreground"
@@ -199,64 +198,66 @@ export default function Login() {
               </div>
             )}
 
-            <Button 
-              type="submit" 
-              size="lg" 
-              className="w-full h-11 text-xs font-bold mt-2 shadow-md hover:opacity-95 rounded-xl gap-2 flex items-center justify-center transition-all duration-300 cursor-pointer" 
-              disabled={loading || googleLoading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Shield className="h-4 w-4 fill-primary-foreground/10" />
-              )}
-              {loading ? "..." : t("login")}
-            </Button>
+            <div className="stagger-fade-in-4 space-y-4">
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="w-full h-11 text-xs font-bold mt-2 shadow-md rounded-xl gap-2 flex items-center justify-center hover-scale cursor-pointer" 
+                disabled={loading || googleLoading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Shield className="h-4 w-4 fill-primary-foreground/10" />
+                )}
+                {loading ? "..." : t("login")}
+              </Button>
 
-            <div className="relative flex py-2.5 items-center">
-              <div className="flex-grow border-t border-border/60"></div>
-              <span className="flex-shrink mx-4 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
-                or continue with
-              </span>
-              <div className="flex-grow border-t border-border/60"></div>
+              <div className="relative flex py-2.5 items-center">
+                <div className="flex-grow border-t border-border/60"></div>
+                <span className="flex-shrink mx-4 text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+                  or continue with
+                </span>
+                <div className="flex-grow border-t border-border/60"></div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full h-11 text-xs font-bold border border-border bg-card/30 hover:bg-secondary/80 hover:text-foreground text-foreground rounded-xl flex items-center justify-center gap-2.5 hover-scale cursor-pointer"
+                onClick={handleGoogleLogin}
+                disabled={loading || googleLoading}
+              >
+                {googleLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                )}
+                {googleLoading ? "Connecting to Google..." : "Google"}
+              </Button>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full h-11 text-xs font-bold border border-border bg-card/30 hover:bg-secondary/80 hover:text-foreground text-foreground rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer"
-              onClick={handleGoogleLogin}
-              disabled={loading || googleLoading}
-            >
-              {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <svg className="h-4 w-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-              )}
-              {googleLoading ? "Connecting to Google..." : "Google"}
-            </Button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-8 select-none font-medium">
+        <p className="text-center text-xs text-muted-foreground mt-8 select-none font-medium stagger-fade-in-4">
           New here?{" "}
           <Link to="/register" className="text-primary hover:underline font-bold transition-all">
             Create Account

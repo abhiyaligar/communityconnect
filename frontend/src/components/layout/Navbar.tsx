@@ -3,7 +3,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-  Users,
   LogOut,
   Menu,
   X,
@@ -42,10 +41,17 @@ export function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded bg-primary flex items-center justify-center group-hover:opacity-90 transition-opacity">
-              <Users className="h-3.5 w-3.5 text-primary-foreground" />
+            <div className="w-7 h-7 rounded-lg border border-border bg-card/60 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+              <svg className="h-4 w-4 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
+                <circle cx="12" cy="4.5" r="2" />
+                <circle cx="5" cy="9.5" r="2" />
+                <circle cx="19" cy="9.5" r="2" />
+                <circle cx="8" cy="18.5" r="2" />
+                <circle cx="16" cy="18.5" r="2" />
+                <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+              </svg>
             </div>
             <span className="font-semibold text-base text-foreground tracking-tight">CommunityConnect</span>
           </Link>

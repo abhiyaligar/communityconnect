@@ -44,7 +44,7 @@ export default function MatrimonyRequests() {
   const [isSendingInvite, setIsSendingInvite] = useState(false)
   const [searchError, setSearchError] = useState("")
 
-  const { data, isLoading, refetch } = useQuery<any>({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ["connection-requests-center"],
     queryFn: async () => {
       const res = await api.get("/matrimony/requests")
@@ -95,20 +95,6 @@ export default function MatrimonyRequests() {
     }
   })
 
-  const removeRecMutation = useMutation({
-    mutationFn: async ({ wardProfileId, recommendedProfileId }: { wardProfileId: string, recommendedProfileId: string }) => {
-      return api.delete("/matrimony/guardian-recommendations", {
-        data: { ward_profile_id: wardProfileId, recommended_profile_id: recommendedProfileId }
-      })
-    },
-    onSuccess: () => {
-      toast.success("Recommendation removed.")
-      refetchRecs()
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.detail || "Failed to remove recommendation.")
-    }
-  })
 
   const cancelMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -187,12 +173,8 @@ export default function MatrimonyRequests() {
 
   const incomingList = data?.incoming || []
   const outgoingList = data?.outgoing || []
-  const allRequestsList = [...incomingList, ...outgoingList]
 
-  const totalRequests = allRequestsList.length
   const newInterestsCount = incomingList.filter((r: any) => r.status === "pending_self_approval" || r.status === "pending_family_approval").length
-  const connectedCount = allRequestsList.filter((r: any) => r.status === "approved").length
-  const declinedCount = allRequestsList.filter((r: any) => r.status.startsWith("declined")).length
   const outgoingPending = outgoingList.filter((r: any) => !r.status.startsWith("declined") && r.status !== "approved").length
 
   const guardianName = user?.matrimony?.family_co_approver_name

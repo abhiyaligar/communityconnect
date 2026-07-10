@@ -115,8 +115,16 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Brand Header */}
       <div className="p-6 pb-4 border-b border-[#e2e8f0]">
         <NavLink to="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center text-white font-extrabold text-xs tracking-tighter shadow-sm">
-            CC
+          <div className="w-8 h-8 rounded-lg border border-[#e2e8f0]/80 bg-[#f8fafc] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+            <svg className="h-4.5 w-4.5 text-[#0f172a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="12" cy="12" r="3.5" className="fill-[#0f172a]/10" />
+              <circle cx="12" cy="4.5" r="2" />
+              <circle cx="5" cy="9.5" r="2" />
+              <circle cx="19" cy="9.5" r="2" />
+              <circle cx="8" cy="18.5" r="2" />
+              <circle cx="16" cy="18.5" r="2" />
+              <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+            </svg>
           </div>
           <span className="font-bold text-lg tracking-tight text-[#0f172a]">
             CommunityConnect
@@ -269,8 +277,16 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center gap-4 flex-1">
             {/* Mobile/Tablet App Brand Header */}
             <NavLink to="/dashboard" className="flex lg:hidden items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center text-white font-extrabold text-xs tracking-tighter shrink-0 shadow-sm">
-                CC
+              <div className="w-8 h-8 rounded-lg border border-[#e2e8f0]/80 bg-[#f8fafc] flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                <svg className="h-4.5 w-4.5 text-[#0f172a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <circle cx="12" cy="12" r="3.5" className="fill-[#0f172a]/10" />
+                  <circle cx="12" cy="4.5" r="2" />
+                  <circle cx="5" cy="9.5" r="2" />
+                  <circle cx="19" cy="9.5" r="2" />
+                  <circle cx="8" cy="18.5" r="2" />
+                  <circle cx="16" cy="18.5" r="2" />
+                  <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+                </svg>
               </div>
               <span className="font-bold text-base tracking-tight text-[#0f172a]">
                 CommunityConnect

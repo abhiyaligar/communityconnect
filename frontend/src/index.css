@@ -171,4 +171,33 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Premium Micro-Animations utilities */
+  .hover-scale {
+    @apply transition-all duration-300 ease-out hover:scale-[1.015] active:scale-[0.985] active:translate-y-[1px];
+  }
+
+  .stagger-fade-in-1 {
+    animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 100ms;
+    opacity: 0;
+  }
+
+  .stagger-fade-in-2 {
+    animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 200ms;
+    opacity: 0;
+  }
+
+  .stagger-fade-in-3 {
+    animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 300ms;
+    opacity: 0;
+  }
+
+  .stagger-fade-in-4 {
+    animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: 400ms;
+    opacity: 0;
+  }
 }

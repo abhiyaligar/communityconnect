@@ -82,9 +82,8 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden transition-colors duration-300">
-      {/* Background gradients */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-secondary/30 -z-10" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
+      {/* Simple Background */}
+      <div className="absolute inset-0 bg-background -z-10" />
 
       {/* Floating Theme Toggle */}
       <button
@@ -104,7 +103,9 @@ export default function ForgotPassword() {
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8 text-center">
           <Link to="/" className="flex flex-col items-center group">
-            <div className="w-14 h-14 rounded-2xl border border-border/80 bg-card/60 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 backdrop-blur-md">
+            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 backdrop-blur-md ${
+              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
+            }`}>
               <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
                 <circle cx="12" cy="4.5" r="2" />

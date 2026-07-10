@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import api from "@/lib/api"
 import { handleApiError, getImageUrl } from "@/lib/utils"
-import { Users, Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart } from "lucide-react"
+import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart, Sun, Moon, Lock } from "lucide-react"
 import { TokenResponse } from "@/types"
 
 type Step = "email" | "otp" | "core" | "matrimony" | "success"
@@ -45,6 +46,7 @@ interface FormData {
 
 export default function Register() {
   const { login } = useAuth()
+  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
   const location = useLocation()
@@ -53,6 +55,7 @@ export default function Register() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
   const [countdown, setCountdown] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleGoogleSignup = async () => {
     setGoogleLoading(true)
@@ -254,104 +257,143 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8 sm:px-6 sm:py-12 relative overflow-hidden transition-colors duration-300">
+      {/* Simple Background */}
+      <div className="absolute inset-0 bg-background -z-10" />
+
+      {/* Floating Theme Toggle */}
+      <button
+        type="button"
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        className="absolute top-6 right-6 p-2.5 rounded-xl border border-border bg-card/50 text-foreground hover:bg-secondary transition-all duration-300 shadow-sm backdrop-blur-sm z-50 cursor-pointer"
+        aria-label="Toggle Theme"
+      >
+        {theme === "dark" ? (
+          <Sun className="h-4.5 w-4.5 text-amber-500 animate-pulse" />
+        ) : (
+          <Moon className="h-4.5 w-4.5 text-slate-700" />
+        )}
+      </button>
 
       <div className="w-full max-w-xl relative z-10">
-        <div className="flex justify-center mb-8">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center group-hover:opacity-90 transition-opacity">
-              <Users className="h-4 w-4 text-primary-foreground" />
+        <div className="flex flex-col items-center mb-8 sm:mb-10 text-center stagger-fade-in-1">
+          <Link to="/" className="flex flex-col items-center group">
+            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md ${
+              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
+            }`}>
+              <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
+                <circle cx="12" cy="4.5" r="2" />
+                <circle cx="5" cy="9.5" r="2" />
+                <circle cx="19" cy="9.5" r="2" />
+                <circle cx="8" cy="18.5" r="2" />
+                <circle cx="16" cy="18.5" r="2" />
+                <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+              </svg>
             </div>
-            <span className="font-semibold text-lg tracking-tight text-foreground">CommunityConnect</span>
+            <span className="font-extrabold text-3xl tracking-tight text-foreground mt-4 group-hover:opacity-90 transition-opacity">
+              CommunityConnect
+            </span>
           </Link>
         </div>
 
-        <Card className="border border-border shadow-sm bg-card">
+        <Card className="w-full border-0 bg-transparent shadow-none p-0 sm:border sm:border-border sm:bg-card sm:shadow-sm sm:p-6 transition-all duration-300 stagger-fade-in-2">
           {/* STEP 1: Email & Password */}
           {step === "email" && (
             <>
-              <CardHeader className="text-center pb-2">
-                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
-                  <Mail className="h-6 w-6 text-foreground" />
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
+                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
+                }`}>
+                  <Mail className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Create Account</CardTitle>
                 <CardDescription className="text-xs">Enter your email and password to begin.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
                 <form onSubmit={handleSendOtp} className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 stagger-fade-in-3">
                     <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={form.email}
-                      onChange={(e) => setF("email")(e.target.value)}
-                      className="h-10 bg-background border-border"
-                      required
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-0 sm:left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85 block sm:hidden" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="name@example.com"
+                        value={form.email}
+                        onChange={(e) => setF("email")(e.target.value)}
+                        className="pl-10 pr-0 h-11 bg-transparent border-0 border-b border-border rounded-none text-xs placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 transition-all duration-200 sm:pl-4 sm:pr-4 sm:h-10 sm:bg-background sm:border sm:border-border sm:rounded-md"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 stagger-fade-in-3">
                     <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={form.password}
-                      onChange={(e) => setF("password")(e.target.value)}
-                      className="h-10 bg-background border-border"
-                      required
-                    />
+                    <div className="relative">
+                      <Lock className="absolute left-0 sm:left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85 block sm:hidden" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={form.password}
+                        onChange={(e) => setF("password")(e.target.value)}
+                        className="pl-10 pr-0 h-11 bg-transparent border-0 border-b border-border rounded-none text-xs placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 transition-all duration-200 sm:pl-4 sm:pr-4 sm:h-10 sm:bg-background sm:border sm:border-border sm:rounded-md"
+                        required
+                      />
+                    </div>
                   </div>
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-                  <Button type="submit" size="lg" className="w-full h-10 gap-2 mt-4" disabled={loading || googleLoading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {loading ? "Sending OTP..." : "Continue"}
-                    {!loading && <ArrowRight className="h-4 w-4" />}
-                  </Button>
+                  
+                  <div className="stagger-fade-in-4 space-y-4 pt-2">
+                    <Button type="submit" size="lg" className="w-full h-11 sm:h-10 gap-2 hover-scale cursor-pointer" disabled={loading || googleLoading}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {loading ? "Sending OTP..." : "Continue"}
+                      {!loading && <ArrowRight className="h-4 w-4" />}
+                    </Button>
 
-                  <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-border"></div>
-                    <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase font-medium tracking-wider">
-                      or continue with
-                    </span>
-                    <div className="flex-grow border-t border-border"></div>
+                    <div className="relative flex py-2 items-center">
+                      <div className="flex-grow border-t border-border"></div>
+                      <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase font-medium tracking-wider">
+                        or continue with
+                      </span>
+                      <div className="flex-grow border-t border-border"></div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="w-full h-11 sm:h-10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-secondary/80 hover:text-foreground text-foreground rounded-xl sm:rounded-md hover-scale cursor-pointer transition-all duration-300"
+                      onClick={handleGoogleSignup}
+                      disabled={loading || googleLoading}
+                    >
+                      {googleLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24">
+                          <path
+                            fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                          />
+                        </svg>
+                      )}
+                      {googleLoading ? "Connecting to Google..." : "Google"}
+                    </Button>
                   </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="w-full h-10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-secondary/40 transition-colors"
-                    onClick={handleGoogleSignup}
-                    disabled={loading || googleLoading}
-                  >
-                    {googleLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <svg className="h-4 w-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
-                    )}
-                    {googleLoading ? "Connecting to Google..." : "Google"}
-                  </Button>
                 </form>
-                <p className="text-center text-sm text-muted-foreground mt-6">
+                <p className="text-center text-sm text-muted-foreground mt-6 stagger-fade-in-4">
                   Already a member? <Link to="/login" className="text-primary hover:underline font-semibold">Sign in</Link>
                 </p>
               </CardContent>
@@ -361,14 +403,16 @@ export default function Register() {
           {/* STEP 2: OTP VERIFICATION */}
           {step === "otp" && (
             <>
-              <CardHeader className="text-center pb-2">
-                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
-                  <ShieldCheck className="h-6 w-6 text-foreground" />
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
+                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
+                }`}>
+                  <ShieldCheck className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Verify Email</CardTitle>
                 <CardDescription className="text-xs">We sent a 6-digit code to {form.email}</CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="code">Verification Code</Label>
@@ -380,19 +424,19 @@ export default function Register() {
                       maxLength={6}
                       value={form.code}
                       onChange={(e) => setF("code")(e.target.value.replace(/\D/g, ""))}
-                      className="h-12 text-2xl text-center font-mono tracking-[0.5em] bg-background border-border"
+                      className="h-12 text-2xl text-center font-mono tracking-[0.5em] bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:h-12 sm:bg-background sm:border sm:border-border sm:rounded-md"
                       required
                     />
                   </div>
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-                  <Button type="submit" size="lg" className="w-full h-10 mt-2" disabled={loading}>
+                  <Button type="submit" size="lg" className="w-full h-11 sm:h-10 mt-2 cursor-pointer" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Verify & Continue"}
                   </Button>
                   <div className="flex items-center justify-between text-sm mt-4">
-                    <button type="button" onClick={() => { setStep("email"); setError("") }} className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <button type="button" onClick={() => { setStep("email"); setError("") }} className="text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer bg-transparent border-0">
                       <ArrowLeft className="h-4 w-4" /> Change email
                     </button>
-                    <button type="button" disabled={countdown > 0} onClick={handleSendOtp} className="text-primary hover:underline font-medium disabled:opacity-50">
+                    <button type="button" disabled={countdown > 0} onClick={handleSendOtp} className="text-primary hover:underline font-medium disabled:opacity-50 cursor-pointer bg-transparent border-0">
                       {countdown > 0 ? `Resend in ${countdown}s` : "Resend Code"}
                     </button>
                   </div>
@@ -404,29 +448,73 @@ export default function Register() {
           {/* STEP 3: CORE PROFILE */}
           {step === "core" && (
             <>
-              <CardHeader className="text-center pb-2">
-                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
-                  <User className="h-6 w-6 text-foreground" />
-                </div>
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
                 <CardTitle className="text-xl">Your Profile</CardTitle>
                 <CardDescription className="text-xs">Tell us a bit about yourself.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-4 space-y-4">
-                <form onSubmit={(e) => { e.preventDefault(); setStep("matrimony") }} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Full Name *</Label>
-                    <Input value={form.full_name} onChange={(e) => setF("full_name")(e.target.value)} required />
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
+                <form onSubmit={(e) => { e.preventDefault(); setStep("matrimony") }} className="space-y-5">
+                  {/* Centered Avatar Image Upload */}
+                  <div className="flex flex-col items-center justify-center pb-6 border-b border-border/40 stagger-fade-in-3">
+                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      {form.profile_photo_url ? (
+                        <img
+                          src={getImageUrl(form.profile_photo_url)}
+                          alt="Profile Preview"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-border shadow-md group-hover:opacity-85 transition-opacity"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-secondary border border-border flex flex-col items-center justify-center text-muted-foreground shadow-inner group-hover:bg-muted transition-colors">
+                          <User className="h-8 w-8 opacity-65 mb-1" />
+                          <span className="text-[10px] font-bold">Add Photo</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md border-2 border-background group-hover:scale-105 transition-transform duration-200">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
+                      onChange={handleProfilePhotoUpload}
+                      className="hidden"
+                      disabled={loading}
+                    />
+                    {loading && <p className="text-[10px] text-muted-foreground mt-2 animate-pulse font-medium">Uploading photo...</p>}
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                  <div className="space-y-4 stagger-fade-in-3">
+                    {/* Full Name */}
+                    <div className="space-y-2">
+                      <Label>Full Name *</Label>
+                      <Input 
+                        value={form.full_name} 
+                        onChange={(e) => setF("full_name")(e.target.value)} 
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                        required 
+                      />
+                    </div>
+                    
+                    {/* Date of Birth */}
                     <div className="space-y-2">
                       <Label>Date of Birth *</Label>
-                      <Input type="date" value={form.date_of_birth} onChange={(e) => setF("date_of_birth")(e.target.value)} required />
+                      <Input 
+                        type="date" 
+                        value={form.date_of_birth} 
+                        onChange={(e) => setF("date_of_birth")(e.target.value)} 
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-left w-full block"
+                        required 
+                      />
                     </div>
+
+                    {/* Gender */}
                     <div className="space-y-2">
                       <Label>Gender *</Label>
                       <Select value={form.gender} onValueChange={setF("gender")} required>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
@@ -434,13 +522,12 @@ export default function Register() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* Marital Status */}
                     <div className="space-y-2">
                       <Label>Marital Status *</Label>
                       <Select value={form.marital_status} onValueChange={setF("marital_status")} required>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="single">Single</SelectItem>
                           <SelectItem value="married">Married</SelectItem>
@@ -449,18 +536,35 @@ export default function Register() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Phone Number */}
                     <div className="space-y-2">
                       <Label>Phone Number *</Label>
-                      <Input type="tel" placeholder="+91..." value={form.phone_number} onChange={(e) => setF("phone_number")(e.target.value)} required />
+                      <div className="relative flex items-center">
+                        <span className="text-xs font-semibold text-muted-foreground mr-2 select-none border-b border-border h-10 flex items-center px-1 sm:px-2 bg-transparent sm:bg-secondary/45 sm:border sm:rounded-l-md sm:border-r-0 shrink-0">
+                          +91
+                        </span>
+                        <Input 
+                          type="tel" 
+                          placeholder="9876543210" 
+                          value={form.phone_number.startsWith("+91") ? form.phone_number.slice(3) : form.phone_number} 
+                          onChange={(e) => {
+                            const rawVal = e.target.value.replace(/\D/g, "");
+                            const limitedVal = rawVal.slice(0, 10);
+                            setForm((f) => ({ ...f, phone_number: limitedVal ? `+91${limitedVal}` : "" }));
+                          }} 
+                          className="flex-1 bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-r-md sm:rounded-l-none h-10 px-0 sm:px-3"
+                          required 
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* Region / Area */}
                     <div className="space-y-2">
                       <Label>Region / Area *</Label>
                       <Select value={form.region_id} onValueChange={setF("region_id")} required>
-                        <SelectTrigger className="w-full bg-background border-border text-foreground"><SelectValue placeholder="Select Area" /></SelectTrigger>
-                        <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
+                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select Area" /></SelectTrigger>
+                        <SelectContent>
                           {regions.map((reg) => (
                             <SelectItem key={reg.id} value={reg.id}>
                               {reg.name} ({reg.pin_code})
@@ -469,40 +573,22 @@ export default function Register() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Current Location / Address */}
                     <div className="space-y-2">
                       <Label>Current Location / Address *</Label>
-                      <Input placeholder="City, State" value={form.address} onChange={(e) => setF("address")(e.target.value)} required />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Profile Photo (Optional)</Label>
-                    <div className="flex items-center gap-4">
-                      {form.profile_photo_url ? (
-                        <img
-                          src={getImageUrl(form.profile_photo_url)}
-                          alt="Profile Preview"
-                          className="w-12 h-12 rounded-full object-cover border border-border"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] text-muted-foreground font-semibold">
-                          No Photo
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <Input
-                          type="file"
-                          accept="image/png, image/jpeg, image/jpg, image/webp"
-                          onChange={handleProfilePhotoUpload}
-                          className="h-10 bg-background border-border cursor-pointer text-xs"
-                          disabled={loading}
-                        />
-                      </div>
+                      <Input 
+                        placeholder="Current Address" 
+                        value={form.address} 
+                        onChange={(e) => setF("address")(e.target.value)} 
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                        required 
+                      />
                     </div>
                   </div>
                   
-                  <div className="pt-2">
-                    <Button type="submit" className="w-full h-10 text-xs">
+                  <div className="pt-4 stagger-fade-in-4">
+                    <Button type="submit" className="w-full h-11 sm:h-10 text-xs cursor-pointer hover-scale">
                       Next Step <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
@@ -514,17 +600,21 @@ export default function Register() {
           {/* STEP 4: MATRIMONY & SUBMIT */}
           {step === "matrimony" && (
             <>
-              <CardHeader className="text-center pb-2">
-                <div className="w-12 h-12 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto mb-4">
-                  <Heart className="h-6 w-6 text-foreground" />
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
+                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
+                }`}>
+                  <Heart className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Matrimony (Optional)</CardTitle>
                 <CardDescription className="text-xs">Find your perfect life partner within the community.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
                 <form onSubmit={handleOnboard} className="space-y-6">
                   
-                  <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
+                  <div className={`flex items-center space-x-3 p-3.5 rounded-lg border ${
+                    theme === "dark" ? "border-neutral-800 bg-neutral-900/40" : "border-border bg-secondary/35"
+                  }`}>
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />
                     <Label htmlFor="create_matrimony" className="font-semibold cursor-pointer text-sm text-foreground">
                       Yes, create my Matrimony Profile
@@ -538,11 +628,22 @@ export default function Register() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Height (cm)</Label>
-                          <Input type="number" placeholder="175" value={form.height_cm} onChange={(e) => setF("height_cm")(e.target.value)} />
+                          <Input 
+                            type="number" 
+                            placeholder="175" 
+                            value={form.height_cm} 
+                            onChange={(e) => setF("height_cm")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label>Gotra</Label>
-                          <Input placeholder="e.g. Kashyap" value={form.gotra} onChange={(e) => setF("gotra")(e.target.value)} />
+                          <Input 
+                            placeholder="e.g. Kashyap" 
+                            value={form.gotra} 
+                            onChange={(e) => setF("gotra")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                          />
                         </div>
                       </div>
 
@@ -550,7 +651,7 @@ export default function Register() {
                         <div className="space-y-2">
                           <Label>Education</Label>
                           <Select value={form.highest_qualification} onValueChange={setF("highest_qualification")}>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="bachelors">Bachelor's</SelectItem>
                               <SelectItem value="masters">Master's</SelectItem>
@@ -563,7 +664,7 @@ export default function Register() {
                         <div className="space-y-2">
                           <Label>Employment</Label>
                           <Select value={form.employment_type} onValueChange={setF("employment_type")}>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="employed">Employed</SelectItem>
                               <SelectItem value="self_employed">Self Employed</SelectItem>
@@ -584,10 +685,10 @@ export default function Register() {
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
                   <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" className="flex-1 h-10 text-xs" onClick={() => setStep("core")}>
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("core")}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
-                    <Button type="submit" className="flex-1 h-10 text-xs" disabled={loading}>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {loading ? "Submitting..." : "Complete Setup"}
                     </Button>
@@ -599,7 +700,7 @@ export default function Register() {
 
           {/* STEP 5: SUCCESS */}
           {step === "success" && (
-            <CardContent className="py-12 text-center space-y-4">
+            <CardContent className="py-12 px-0 sm:px-6 text-center space-y-4">
               <div className="w-14 h-14 rounded-full bg-secondary border border-border flex items-center justify-center mx-auto">
                 <CheckCircle className="h-8 w-8 text-foreground" />
               </div>
