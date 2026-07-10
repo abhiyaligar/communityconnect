@@ -19,15 +19,35 @@ async def lifespan(app: FastAPI):
     print(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     print(f"📖 Docs available at http://{settings.HOST}:{settings.PORT}/docs")
     
-    # Auto-migration: Ensure preferred_language column exists
+    # Auto-migration: Ensure database schema is in sync with latest changes
     from app.db.session import engine
     from sqlalchemy import text
     try:
         async with engine.begin() as conn:
             await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(10) DEFAULT 'en';"))
-        print("✅ Database schema verified (preferred_language column ensured)")
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP WITH TIME ZONE;"))
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS profile_likes (
+                    id UUID PRIMARY KEY,
+                    user_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    liked_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    CONSTRAINT uq_user_liked_profile UNIQUE (user_profile_id, liked_profile_id)
+                );
+            """))
+            await conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS profile_dislikes (
+                    id UUID PRIMARY KEY,
+                    user_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    disliked_profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    CONSTRAINT uq_user_disliked_profile UNIQUE (user_profile_id, disliked_profile_id)
+                );
+            """))
+        print("✅ Database schema verified (preferred_language, verified_at, profile_likes/dislikes tables ensured)")
     except Exception as e:
         print(f"⚠️ Error verifying schema: {e}")
+
         
     yield
     # --- Shutdown ---

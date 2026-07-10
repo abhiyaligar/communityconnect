@@ -21,7 +21,9 @@ class User(Base):
     role = Column(SQLEnum(UserRole, name="user_role"), nullable=False, default=UserRole.unverified)
     is_active = Column(Boolean, nullable=False, default=True)
     preferred_language = Column(String(10), nullable=False, default="en")
+    verified_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships

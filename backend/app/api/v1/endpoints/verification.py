@@ -3,7 +3,9 @@ CommunityConnect Backend - Verification Operations Endpoints
 """
 
 import uuid
+from datetime import datetime, timezone
 from typing import List, Dict, Any
+
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -171,6 +173,7 @@ async def approve_verification(
         # Super Admin approval is final
         req.status = VerificationStatus.approved
         target_user.role = target_role
+        target_user.verified_at = datetime.now(timezone.utc)
     else:
         # Local Admin approval
         if is_local_admin_candidate:
@@ -186,12 +189,15 @@ async def approve_verification(
             if vote_count >= 4:
                 req.status = VerificationStatus.approved
                 target_user.role = UserRole.local_admin
+                target_user.verified_at = datetime.now(timezone.utc)
             else:
                 req.status = VerificationStatus.local_approved
         else:
             # Regular user: one local admin approval is final
             req.status = VerificationStatus.approved
             target_user.role = target_role
+            target_user.verified_at = datetime.now(timezone.utc)
+
 
     await db.commit()
     return {"message": "Verification approval recorded successfully."}

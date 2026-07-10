@@ -35,7 +35,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation()
   const isProfileTab = location.pathname === "/profile"
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
 
   const translateLabel = (label: string) => {
     const key = label.toLowerCase().replace(/\s+/g, "_")
@@ -278,17 +277,6 @@ export function MainLayout({ children }: MainLayoutProps) {
               </span>
             </NavLink>
 
-            {/* Desktop global search bar */}
-            <div className="relative max-w-md w-full hidden lg:block">
-              <input
-                type="text"
-                placeholder={isAdmin ? "Search members, requests..." : "Global search..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-sm text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a]"
-              />
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
-            </div>
           </div>
 
           {/* Right: Mobile Requests Indicator & Desktop Profile Card */}

@@ -10,6 +10,7 @@ from app.models.matrimony import MatrimonyProfile, ConnectionRequest
 from app.models.memorial import MemorialRecord
 from app.models.audit import AuditLog
 from app.models.email_verification import EmailVerification
+from app.models.interaction import ProfileLike, ProfileDislike
 
 __all__ = [
     "UserRole",
@@ -29,4 +30,7 @@ __all__ = [
     "MemorialRecord",
     "AuditLog",
     "EmailVerification",
+    "ProfileLike",
+    "ProfileDislike",
 ]
+
