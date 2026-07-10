@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "@/contexts/LanguageContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,6 +24,7 @@ export default function MatrimonyRequests() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<"inbox" | "outgoing" | "pending_approvals" | "guardian_view">("inbox")
   const [actioningId, setActioningId] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
@@ -104,7 +106,7 @@ export default function MatrimonyRequests() {
     <div className="space-y-8 animate-fade-in text-[#0f172a]">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">Connection Requests</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">{t("requests")}</h1>
         <p className="text-sm text-[#64748b] mt-1 max-w-3xl">
           Manage incoming interests, track outgoing requests, and monitor connection statuses.
           Guardian approvals are required for finalized steps.
@@ -120,7 +122,7 @@ export default function MatrimonyRequests() {
           }`}
         >
           <Inbox className="h-4 w-4" />
-          <span>Inbox ({incomingList.length})</span>
+          <span>{t("inbox")} ({incomingList.length})</span>
         </button>
         <button
           onClick={() => setActiveTab("outgoing")}
@@ -129,7 +131,7 @@ export default function MatrimonyRequests() {
           }`}
         >
           <Send className="h-4 w-4" />
-          <span>Sent ({outgoingList.length})</span>
+          <span>{t("sent")} ({outgoingList.length})</span>
           {outgoingPending > 0 && (
             <span className="ml-0.5 bg-amber-400 text-white text-[8px] font-extrabold rounded-full px-1.5 py-0.5 leading-none">
               {outgoingPending}
@@ -143,7 +145,7 @@ export default function MatrimonyRequests() {
           }`}
         >
           <Clock className="h-4 w-4" />
-          <span>Awaiting ({newInterestsCount})</span>
+          <span>{t("awaiting")} ({newInterestsCount})</span>
         </button>
         <button
           onClick={() => setActiveTab("guardian_view")}
@@ -152,7 +154,7 @@ export default function MatrimonyRequests() {
           }`}
         >
           <Shield className="h-4 w-4" />
-          <span>Guardian View</span>
+          <span>{t("guardian_view")}</span>
         </button>
       </div>
 
@@ -195,7 +197,7 @@ export default function MatrimonyRequests() {
                             disabled={actioningId === req.id}
                           >
                             {actioningId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                            <span>Approve Interest</span>
+                            <span>{t("approve_interest")}</span>
                           </Button>
                           <Button
                             variant="outline"
@@ -203,7 +205,7 @@ export default function MatrimonyRequests() {
                             onClick={() => handleAction(req.id, "reject")}
                             disabled={actioningId === req.id}
                           >
-                            <X className="h-4 w-4" /><span>Decline</span>
+                            <X className="h-4 w-4" /><span>{t("decline")}</span>
                           </Button>
                         </div>
                       )}
@@ -256,7 +258,7 @@ export default function MatrimonyRequests() {
                           disabled={cancellingId === req.id}
                         >
                           {cancellingId === req.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                          <span>Cancel Request</span>
+                          <span>{t("cancel_request")}</span>
                         </Button>
                       )}
                     </div>
@@ -304,7 +306,7 @@ export default function MatrimonyRequests() {
                             disabled={actioningId === req.id}
                           >
                             {actioningId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                            <span>Approve</span>
+                            <span>{t("approve_interest")}</span>
                           </Button>
                           <Button
                             variant="outline"
@@ -312,7 +314,7 @@ export default function MatrimonyRequests() {
                             onClick={() => handleAction(req.id, "reject")}
                             disabled={actioningId === req.id}
                           >
-                            <X className="h-4 w-4" /><span>Decline</span>
+                            <X className="h-4 w-4" /><span>{t("decline")}</span>
                           </Button>
                         </div>
                       </div>

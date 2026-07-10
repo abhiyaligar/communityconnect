@@ -22,6 +22,8 @@ from app.schemas.user import UserCreate
 from pydantic import BaseModel, EmailStr
 from app.utils.email import send_verification_email, send_reset_password_email
 
+from app.core.limiter import limiter
+
 router = APIRouter()
 
 
@@ -36,13 +38,14 @@ class EmailOTPVerify(BaseModel):
 
 
 @router.post("/register/email", status_code=status.HTTP_200_OK)
-async def register_email(request: EmailOTPRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register_email(payload: EmailOTPRequest, request: Request, db: AsyncSession = Depends(get_db)):
     """
     Step 1: User provides email and password.
     We check if the email is already verified/registered.
     If not, we send a 6-digit OTP to the email.
     """
-    email = request.email.lower()
+    email = payload.email.lower()
     
     # 1. Check if user already exists
     stmt = select(User).where(User.email == email)
@@ -65,8 +68,25 @@ async def register_email(request: EmailOTPRequest, db: AsyncSession = Depends(ge
     existing_verification = result.scalars().first()
 
     if existing_verification:
+        # Check if 60 seconds have passed since the last OTP request
+        now = datetime.now(timezone.utc)
+        created_at = existing_verification.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        else:
+            created_at = created_at.astimezone(timezone.utc)
+
+        time_passed = now - created_at
+        if time_passed.total_seconds() < 60:
+            remaining = 60 - int(time_passed.total_seconds())
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Please wait {remaining} seconds before requesting a new OTP."
+            )
+
         existing_verification.code = code
         existing_verification.expires_at = expires_at
+        existing_verification.created_at = now
     else:
         new_verification = EmailVerification(
             email=email,
@@ -76,6 +96,7 @@ async def register_email(request: EmailOTPRequest, db: AsyncSession = Depends(ge
         db.add(new_verification)
         
     await db.commit()
+
 
     # 4. Send email (simulated if no SMTP credentials)
     await send_verification_email(email, code)
@@ -156,16 +177,17 @@ async def verify_email_code(request: EmailOTPVerify, response: Response, db: Asy
     )
 
 @router.post("/login", response_model=TokenResponse)
-async def login(request: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(payload: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     """
     Login with Email and Password.
     """
-    email = request.email.lower()
+    email = payload.email.lower()
     stmt = select(User).where(User.email == email)
     result = await db.execute(stmt)
     user = result.scalars().first()
 
-    if not user or not verify_password(request.password, user.password_hash):
+    if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password."
@@ -451,8 +473,25 @@ async def forgot_password(
     existing_verification = result_v.scalars().first()
 
     if existing_verification:
+        # Check if 60 seconds have passed since the last password reset request
+        now = datetime.now(timezone.utc)
+        created_at = existing_verification.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        else:
+            created_at = created_at.astimezone(timezone.utc)
+
+        time_passed = now - created_at
+        if time_passed.total_seconds() < 60:
+            remaining = 60 - int(time_passed.total_seconds())
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Please wait {remaining} seconds before requesting a new code."
+            )
+
         existing_verification.code = code
         existing_verification.expires_at = expires_at
+        existing_verification.created_at = now
     else:
         new_verification = EmailVerification(
             email=email,

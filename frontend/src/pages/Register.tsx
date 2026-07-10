@@ -131,6 +131,33 @@ export default function Register() {
     }
   }, [step])
 
+  // If user is already authenticated but profile doesn't exist, jump directly to core onboarding step
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      const token = localStorage.getItem("access_token")
+      if (!token) return
+
+      try {
+        const res = await api.get("/profiles/me")
+        // If profile exists, they should go to dashboard
+        if (res.data.role === "community_admin" || res.data.role === "local_admin") {
+          navigate("/admin/dashboard", { replace: true })
+        } else if (res.data.role === "unverified") {
+          navigate("/pending-verification", { replace: true })
+        } else {
+          navigate("/dashboard", { replace: true })
+        }
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          // Token exists but no profile, load the core step directly
+          setStep("core")
+        }
+      }
+    }
+    checkActiveSession()
+  }, [navigate])
+
+
   const startCountdown = () => {
     setCountdown(60)
     const timer = setInterval(() => {

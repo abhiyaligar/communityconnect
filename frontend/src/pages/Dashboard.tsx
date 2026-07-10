@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "@/contexts/LanguageContext"
 import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -29,6 +30,7 @@ import { MatrimonyEntry } from "@/types"
 
 export default function Dashboard() {
   const { user, refreshUser, isAdmin } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [loadingInvId, setLoadingInvId] = useState<string | null>(null)
@@ -309,7 +311,7 @@ export default function Dashboard() {
           {/* Welcome User Banner */}
           <div className="px-5 pt-5 pb-2 text-left">
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Welcome Back, {user?.full_name?.split(" ")[0] || "User"}
+              {t("welcome")}, {user?.full_name?.split(" ")[0] || "User"}
             </h1>
           </div>
 
@@ -415,15 +417,15 @@ export default function Dashboard() {
                     {currentMatch.connection_status && currentMatch.connection_status !== "none" ? (
                       currentMatch.connection_status === "approved" ? (
                         <div className="flex-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 h-11 rounded-2xl flex items-center justify-center text-xs font-extrabold shadow-md tracking-wider uppercase select-none">
-                          Connected
+                          {t("connected")}
                         </div>
                       ) : currentMatch.connection_status.startsWith("pending") ? (
                         <div className="flex-1 bg-amber-500/20 border border-amber-500/30 text-amber-300 h-11 rounded-2xl flex items-center justify-center text-xs font-extrabold shadow-md tracking-wider uppercase select-none animate-pulse">
-                          Requested
+                          {t("requested")}
                         </div>
                       ) : (
                         <div className="flex-1 bg-rose-500/20 border border-rose-500/30 text-rose-300 h-11 rounded-2xl flex items-center justify-center text-xs font-extrabold shadow-md tracking-wider uppercase select-none">
-                          Declined
+                          {t("declined")}
                         </div>
                       )
                     ) : (
@@ -439,7 +441,7 @@ export default function Dashboard() {
                         {connectingId === currentMatch.profile_id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          "Express Interest"
+                          t("express_interest")
                         )}
                       </button>
                     )}
@@ -526,7 +528,7 @@ export default function Dashboard() {
                           }}
                           disabled={connectingId === selectedMatch.profile_id}
                         >
-                          {connectingId === selectedMatch.profile_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Express Interest"}
+                          {connectingId === selectedMatch.profile_id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("express_interest")}
                         </Button>
                       ) : (
                         getStatusBadge(selectedMatch.connection_status)

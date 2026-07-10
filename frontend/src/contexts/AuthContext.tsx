@@ -39,15 +39,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(savedToken)
       try {
         const res = await api.get("/profiles/me")
-        setUser(res.data)
+        setUser({ ...res.data, hasProfile: true })
+
+        // Bi-directional language settings sync
+        const localLang = localStorage.getItem("preferred_language")
+        const backendLang = res.data.preferred_language
+        if (backendLang && backendLang !== localLang) {
+          if (localLang && localLang !== "en" && backendLang === "en") {
+            api.put("/profiles/preferred-language", { preferred_language: localLang }).catch(console.error)
+          } else {
+            localStorage.setItem("preferred_language", backendLang)
+            window.location.reload()
+          }
+        }
       } catch (err: any) {
         if (err.response?.status === 404) {
           // User is authenticated but hasn't created a profile (pending onboarding)
-          // We can parse the JWT or just set a minimal user
           setUser({
             id: "unknown",
             role: "unverified",
             full_name: "New User",
+            hasProfile: false,
           } as AuthUser)
         } else {
           localStorage.removeItem("access_token")
@@ -63,13 +75,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (
     accessToken: string,
-    _userId: string,
-    _role: UserRole
+    userId: string,
+    role: UserRole
   ) => {
     localStorage.setItem("access_token", accessToken)
     setToken(accessToken)
-    const res = await api.get("/profiles/me")
-    setUser(res.data)
+    try {
+      const res = await api.get("/profiles/me")
+      setUser({ ...res.data, hasProfile: true })
+
+      // Sync preferred language on login
+      const localLang = localStorage.getItem("preferred_language")
+      const backendLang = res.data.preferred_language
+      if (backendLang && backendLang !== localLang) {
+        if (localLang && localLang !== "en" && backendLang === "en") {
+          await api.put("/profiles/preferred-language", { preferred_language: localLang }).catch(console.error)
+        } else {
+          localStorage.setItem("preferred_language", backendLang)
+          window.location.reload()
+        }
+      }
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setUser({
+          id: userId,
+          role: role,
+          full_name: "New User",
+          hasProfile: false,
+        } as AuthUser)
+      } else {
+        throw err
+      }
+    }
   }
 
   const logout = async () => {
@@ -87,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!savedToken) return
     try {
       const res = await api.get("/profiles/me")
-      setUser(res.data)
+      setUser({ ...res.data, hasProfile: true })
     } catch (err) {
       console.error("Failed to refresh user profile data", err)
     }

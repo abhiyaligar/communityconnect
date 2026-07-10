@@ -18,6 +18,17 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     print(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     print(f"📖 Docs available at http://{settings.HOST}:{settings.PORT}/docs")
+    
+    # Auto-migration: Ensure preferred_language column exists
+    from app.db.session import engine
+    from sqlalchemy import text
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language VARCHAR(10) DEFAULT 'en';"))
+        print("✅ Database schema verified (preferred_language column ensured)")
+    except Exception as e:
+        print(f"⚠️ Error verifying schema: {e}")
+        
     yield
     # --- Shutdown ---
     print(f"🛑 Shutting down {settings.APP_NAME}")
@@ -40,6 +51,22 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+from app.core.limiter import limiter
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+# Register limiter state for slowapi
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """Returns a standardized JSON response on rate limiting (HTTP 429)."""
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Please try again later."},
+    )
 
 # CORS Middleware — allow all origins (development mode)
 app.add_middleware(

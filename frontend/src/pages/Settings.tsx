@@ -1,6 +1,6 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation, SupportedLanguage } from "@/contexts/LanguageContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LogOut, Download, Globe } from "lucide-react"
@@ -9,7 +9,7 @@ import { toast } from "sonner"
 export default function Settings() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const [language, setLanguage] = useState("english")
+  const { language, changeLanguage, t } = useTranslation()
 
   const handleExportData = () => {
     toast.success("Preparing your personal data archive... Your download will start shortly.")
@@ -24,7 +24,7 @@ export default function Settings() {
     <div className="max-w-3xl mx-auto py-4 md:py-8 px-3 md:px-4 space-y-6 text-[#0f172a]">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">{t("settings")}</h1>
       </div>
 
       {/* List View Settings Container */}
@@ -37,24 +37,25 @@ export default function Settings() {
                 <Globe className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-bold text-sm text-[#0f172a]">App Language</p>
-                <p className="text-[10px] text-[#64748b]">Change interface translation settings.</p>
+                <p className="font-bold text-sm text-[#0f172a]">{t("select_language")}</p>
+                <p className="text-[10px] text-[#64748b]">{t("select_language_subtitle")}</p>
               </div>
             </div>
             <div className="w-full sm:w-auto shrink-0">
               <select
                 value={language}
-                onChange={(e) => {
-                  setLanguage(e.target.value)
-                  toast.success(`Language updated to ${e.target.value.toUpperCase()}!`)
+                onChange={async (e) => {
+                  const target = e.target.value as SupportedLanguage
+                  await changeLanguage(target)
+                  toast.success(`Language updated to ${target.toUpperCase()}!`)
                 }}
                 className="w-full sm:w-48 bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2 rounded-lg focus:outline-none text-xs font-semibold"
               >
-                <option value="english">English (US)</option>
-                <option value="hindi">Hindi (हिन्दी)</option>
-                <option value="gujarati">Gujarati (ગુજરાતી)</option>
-                <option value="marathi">Marathi (મરાઠી)</option>
-                <option value="spanish">Spanish (Español)</option>
+                <option value="en">English (US)</option>
+                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="es">Español (Spanish)</option>
+                <option value="mr">मराठी (Marathi)</option>
               </select>
             </div>
           </div>
@@ -100,7 +101,7 @@ export default function Settings() {
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
-                <span>Log Out</span>
+                <span>{t("logout")}</span>
               </Button>
             </div>
           </div>

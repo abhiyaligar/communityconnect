@@ -4,6 +4,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Navbar } from "@/components/layout/Navbar"
 import { ThemeProvider } from "@/contexts/ThemeContext"
+import { LanguageProvider } from "@/contexts/LanguageContext"
 import { Toaster } from "sonner"
 
 // Pages
@@ -225,12 +226,14 @@ export default function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-            <Toaster richColors position="top-right" />
-          </BrowserRouter>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppRoutes />
+              <Toaster richColors position="top-right" />
+            </BrowserRouter>
+          </AuthProvider>
+        </LanguageProvider>
       </QueryClientProvider>
     </ThemeProvider>
   )

@@ -22,6 +22,7 @@ import {
   Home
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/contexts/LanguageContext"
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -29,11 +30,22 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const { user, logout, isAdmin } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const isProfileTab = location.pathname === "/profile"
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+
+  const translateLabel = (label: string) => {
+    const key = label.toLowerCase().replace(/\s+/g, "_")
+    if (key === "dashboard") return t("dashboard")
+    if (key === "registry") return t("registry")
+    if (key === "requests") return t("requests")
+    if (key === "settings") return t("settings")
+    if (key === "log_out") return t("logout")
+    return label
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -142,7 +154,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 }
               >
                 <link.icon className="h-5 w-5 shrink-0" />
-                <span>{link.label}</span>
+                <span>{translateLabel(link.label)}</span>
               </NavLink>
             ))}
           </nav>
@@ -180,7 +192,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               }
             >
               <link.icon className="h-5 w-5 shrink-0" />
-              <span>{link.label}</span>
+              <span>{translateLabel(link.label)}</span>
             </NavLink>
           ))}
         </nav>

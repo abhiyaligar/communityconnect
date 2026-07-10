@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "@/contexts/LanguageContext"
 import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,7 @@ import { TokenResponse } from "@/types"
 
 export default function Login() {
   const { login } = useAuth()
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
@@ -51,6 +53,12 @@ export default function Login() {
       })
       await login(res.data.access_token, res.data.user_id, res.data.role)
 
+      // Redirect to onboarding if profile hasn't been created yet
+      if (!res.data.registered) {
+        navigate("/register", { state: { step: "core" } })
+        return
+      }
+
       // Redirect based on role
       if (res.data.role === "community_admin" || res.data.role === "local_admin") {
         navigate("/admin/dashboard")
@@ -59,6 +67,7 @@ export default function Login() {
       } else {
         navigate("/dashboard")
       }
+
     } catch (err: unknown) {
       setError(handleApiError(err, "Invalid email or password."))
     } finally {
@@ -111,14 +120,14 @@ export default function Login() {
         {/* Form Container */}
         <div className="w-full border border-border/80 bg-card/45 backdrop-blur-xl shadow-xl rounded-[24px] p-8 transition-all duration-300">
           <div className="space-y-1.5 pb-6">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Welcome Back</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">{t("welcome")}</h2>
           </div>
 
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
-                Username or Email
+                {t("email_label")}
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/85" />
@@ -137,10 +146,10 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
-                  Password
+                  {t("password_label")}
                 </Label>
                 <Link to="/forgot-password" className="text-[11px] text-primary hover:underline font-semibold transition-colors">
-                  Forgot?
+                  {t("forgot_password")}
                 </Link>
               </div>
               <div className="relative">
@@ -201,7 +210,7 @@ export default function Login() {
               ) : (
                 <Shield className="h-4 w-4 fill-primary-foreground/10" />
               )}
-              {loading ? "Signing in..." : "Secure Login"}
+              {loading ? "..." : t("login")}
             </Button>
 
             <div className="relative flex py-2.5 items-center">

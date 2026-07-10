@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,7 +12,15 @@ const steps = [
 ]
 
 export default function PendingVerification() {
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
+
+  useEffect(() => {
+    if (user && user.hasProfile === false) {
+      navigate("/register", { state: { step: "core" } })
+    }
+  }, [user, navigate])
+
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">

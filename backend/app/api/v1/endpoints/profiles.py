@@ -33,6 +33,7 @@ from app.models.enums import (
 )
 import re
 import random
+from pydantic import BaseModel
 from app.schemas.profile import ProfileOnboard, MatrimonyProfileUpdate, SocialLinksUpdate, UsernameUpdate, ProfileUpdate
 
 router = APIRouter()
@@ -97,6 +98,7 @@ async def get_my_profile(
         "full_name": profile.full_name,
         "username": profile.username,
         "email": current_user.email,
+        "preferred_language": getattr(current_user, "preferred_language", "en"),
         "date_of_birth": profile.date_of_birth,
         "gender": profile.gender.value,
         "marital_status": profile.marital_status.value,
@@ -161,6 +163,31 @@ async def get_my_profile(
             for w in wards
         ]
     }
+
+
+class LanguagePreferenceRequest(BaseModel):
+    preferred_language: str
+
+
+@router.put("/preferred-language", status_code=status.HTTP_200_OK)
+async def update_preferred_language(
+    payload: LanguagePreferenceRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Updates the logged-in user's preferred interface language.
+    """
+    lang = payload.preferred_language.lower().strip()
+    if lang not in ["en", "kn", "hi", "es", "mr"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid language code selection. Supported: 'en', 'kn', 'hi', 'es', 'mr'"
+        )
+
+    current_user.preferred_language = lang
+    await db.commit()
+    return {"message": "Language priority updated successfully.", "preferred_language": lang}
 
 
 @router.post("/onboard", status_code=status.HTTP_201_CREATED)
