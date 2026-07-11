@@ -34,6 +34,7 @@ export default function MatrimonyRequests() {
   const { user, refreshUser } = useAuth()
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<"inbox" | "outgoing" | "pending_approvals" | "guardian_view">("inbox")
+  const [requestSearch, setRequestSearch] = useState("")
   const [actioningId, setActioningId] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null)
@@ -173,8 +174,20 @@ export default function MatrimonyRequests() {
     }
   }
 
-  const incomingList = data?.incoming || []
-  const outgoingList = data?.outgoing || []
+  const incomingList = (data?.incoming || []).filter((r: any) => {
+    if (!requestSearch) return true
+    const q = requestSearch.toLowerCase()
+    const name = r.sender?.full_name || ""
+    const username = r.sender?.username || ""
+    return name.toLowerCase().includes(q) || username.toLowerCase().includes(q)
+  })
+  const outgoingList = (data?.outgoing || []).filter((r: any) => {
+    if (!requestSearch) return true
+    const q = requestSearch.toLowerCase()
+    const name = r.receiver?.full_name || ""
+    const username = r.receiver?.username || ""
+    return name.toLowerCase().includes(q) || username.toLowerCase().includes(q)
+  })
 
   const newInterestsCount = incomingList.filter((r: any) => r.status === "pending_self_approval" || r.status === "pending_family_approval").length
   const outgoingPending = outgoingList.filter((r: any) => !r.status.startsWith("declined") && r.status !== "approved").length
@@ -251,6 +264,18 @@ export default function MatrimonyRequests() {
         </button>
       </div>
 
+
+      {/* Search within requests */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+        <input
+          type="text"
+          placeholder={`Search ${activeTab.replace(/_/g, " ")}...`}
+          value={requestSearch}
+          onChange={(e) => setRequestSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-sm text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:border-[#0f172a]"
+        />
+      </div>
 
       {/* Grid */}
       <div className="grid lg:grid-cols-3 gap-8 items-start">

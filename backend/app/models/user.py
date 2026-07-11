@@ -24,6 +24,12 @@ class User(Base):
     verified_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+    # Aadhar verification fields
+    aadhar_number = Column(String(12), nullable=True, index=True)
+    aadhar_card_url = Column(String(512), nullable=True)
+    aadhar_verified_at = Column(DateTime(timezone=True), nullable=True)
+    aadhar_data_delete_at = Column(DateTime(timezone=True), nullable=True)
+
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships

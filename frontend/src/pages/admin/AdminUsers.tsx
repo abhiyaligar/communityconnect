@@ -20,6 +20,8 @@ export default function AdminUsers() {
   const queryClient = useQueryClient()
   const { user: currentUser } = useAuth()
   const [search, setSearch] = useState("")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [activeFilter, setActiveFilter] = useState("all")
   const [editTarget, setEditTarget] = useState<UserProfile | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null)
   const [editForm, setEditForm] = useState<Partial<UserProfile & { is_active: boolean; role: string }>>({})
@@ -104,11 +106,20 @@ export default function AdminUsers() {
     const fullName = u.full_name || ""
     const phoneNumber = u.user?.phone_number || ""
     const address = u.address || ""
-    return (
+    const matchesSearch =
       fullName.toLowerCase().includes(search.toLowerCase()) ||
       phoneNumber.includes(search) ||
       address.toLowerCase().includes(search.toLowerCase())
-    )
+
+    const matchesRole =
+      roleFilter === "all" || u.user?.role === roleFilter
+
+    const matchesActive =
+      activeFilter === "all" ||
+      (activeFilter === "active" && u.user?.is_active) ||
+      (activeFilter === "inactive" && !u.user?.is_active)
+
+    return matchesSearch && matchesRole && matchesActive
   })
 
   const openEdit = (u: UserProfile) => {
@@ -161,15 +172,40 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
-        <Input
-          placeholder="Search by name, phone, address..."
-          className="pl-9 bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-[#0f172a]"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+          <Input
+            placeholder="Search by name, phone, address..."
+            className="pl-9 bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-[#0f172a]"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none"
+          >
+            <option value="all">All Roles</option>
+            <option value="unverified">Unverified</option>
+            <option value="verified_adult">Verified Adult</option>
+            <option value="minor">Minor</option>
+            <option value="local_admin">Local Admin</option>
+            <option value="community_admin">Community Admin</option>
+          </select>
+          <select
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value)}
+            className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
       </div>
 
       {isLoading ? (

@@ -47,6 +47,8 @@ export default function Registry() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [regionFilter, setRegionFilter] = useState("all")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [professionFilter, setProfessionFilter] = useState("")
   const [showFilters, setShowFilters] = useState(false)
 
   // Fetch actual database users
@@ -131,7 +133,14 @@ export default function Registry() {
     const matchesRegion =
       regionFilter === "all" || p.region === regionFilter
 
-    return matchesSearch && matchesStatus && matchesRegion
+    const matchesRole =
+      roleFilter === "all" || p.role === roleFilter
+
+    const matchesProfession =
+      !professionFilter ||
+      (p.profession || "").toLowerCase().includes(professionFilter.toLowerCase())
+
+    return matchesSearch && matchesStatus && matchesRegion && matchesRole && matchesProfession
   })
 
   const isForbiddenError = error && (error as any).response?.status === 403
@@ -235,6 +244,37 @@ export default function Registry() {
                 </Button>
               </div>
             </div>
+
+            {/* Advanced Filters (collapsible) */}
+            {showFilters && (
+              <div className="flex flex-wrap gap-3 pt-3 border-t border-[#e2e8f0]">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-[#64748b]">Role:</label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="verified_adult">Verified Adult</option>
+                    <option value="unverified">Unverified</option>
+                    <option value="minor">Minor</option>
+                    <option value="local_admin">Local Admin</option>
+                    <option value="community_admin">Community Admin</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-[#64748b]">Profession:</label>
+                  <input
+                    type="text"
+                    placeholder="Search profession..."
+                    value={professionFilter}
+                    onChange={(e) => setProfessionFilter(e.target.value)}
+                    className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none placeholder:text-[#94a3b8] w-36"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Grid List */}

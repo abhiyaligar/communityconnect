@@ -3,7 +3,7 @@ CommunityConnect Backend - Verification Operations Endpoints
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
 
@@ -92,7 +92,11 @@ async def get_pending_verifications(
         )
         target_role_val = "local_admin" if is_ladmin else req.target_user.role.value
         
-        response_data.append({
+        # Mask aadhar number: show only last 4 digits
+    aadhar_raw = req.target_user.aadhar_number if req.target_user else None
+    aadhar_masked = f"XXXX XXXX {aadhar_raw[-4:]}" if aadhar_raw and len(aadhar_raw) == 12 else None
+
+    response_data.append({
             "request_id": str(req.id),
             "user_id": str(req.target_user_id),
             "status": req.status.value,
@@ -111,6 +115,8 @@ async def get_pending_verifications(
                 "address": user_profile.address if user_profile else None,
                 "occupation": user_profile.occupation if user_profile else None,
                 "social_links": user_profile.social_links if user_profile else None,
+                "aadhar_number": aadhar_masked,
+                "aadhar_card_url": req.target_user.aadhar_card_url if req.target_user else None,
             } if user_profile else None,
             "matrimony": {
                 "opted_in": matrimony.opted_in if matrimony else False,
@@ -187,11 +193,13 @@ async def approve_verification(
     # Determine final role
     target_role = UserRole.local_admin if is_local_admin_candidate else UserRole.verified_adult
 
+    now = datetime.now(timezone.utc)
+
     if current_user.role == UserRole.community_admin:
         # Super Admin approval is final
         req.status = VerificationStatus.approved
         target_user.role = target_role
-        target_user.verified_at = datetime.now(timezone.utc)
+        target_user.verified_at = now
     else:
         # Local Admin approval
         if is_local_admin_candidate:
@@ -207,14 +215,19 @@ async def approve_verification(
             if vote_count >= 4:
                 req.status = VerificationStatus.approved
                 target_user.role = UserRole.local_admin
-                target_user.verified_at = datetime.now(timezone.utc)
+                target_user.verified_at = now
             else:
                 req.status = VerificationStatus.local_approved
         else:
             # Regular user: one local admin approval is final
             req.status = VerificationStatus.approved
             target_user.role = target_role
-            target_user.verified_at = datetime.now(timezone.utc)
+            target_user.verified_at = now
+
+    # Schedule aadhar data deletion 8 days after verification
+    if req.status == VerificationStatus.approved:
+        target_user.aadhar_verified_at = now
+        target_user.aadhar_data_delete_at = now + timedelta(days=8)
 
 
     await db.commit()
@@ -257,6 +270,35 @@ async def reject_verification(
 
     await db.commit()
     return {"message": "Verification request rejected."}
+
+
+@router.post("/cleanup-aadhar", status_code=status.HTTP_200_OK)
+async def cleanup_expired_aadhar_data(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.community_admin]))
+):
+    """
+    Cleans up aadhar data for users whose 8-day deletion period has passed.
+    Should be called periodically (e.g., via cron) to purge expired aadhar data.
+    """
+    now = datetime.now(timezone.utc)
+    stmt = select(User).where(
+        User.aadhar_data_delete_at.isnot(None),
+        User.aadhar_data_delete_at <= now
+    )
+    result = await db.execute(stmt)
+    users = result.scalars().all()
+
+    count = 0
+    for user in users:
+        user.aadhar_number = None
+        user.aadhar_card_url = None
+        user.aadhar_verified_at = None
+        user.aadhar_data_delete_at = None
+        count += 1
+
+    await db.commit()
+    return {"message": f"Cleaned up aadhar data for {count} user(s)."}
 
 
 @router.post("/{request_id}/escalate", status_code=status.HTTP_200_OK)

@@ -14,5 +14,5 @@ async def health_check():
     """Returns API health status."""
     return {
         "status": "healthy",
-        "message": "CommunityConnect API is up and running 🚀",
+        "message": "Lad Matrimony API is up and running 🚀",
     }

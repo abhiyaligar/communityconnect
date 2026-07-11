@@ -30,6 +30,8 @@ interface FormData {
   address: string
   region_id: string
   profile_photo_url: string
+  aadhar_number: string
+  aadhar_card_url: string
 
   // Social Links
   linkedin: string
@@ -101,6 +103,8 @@ export default function Register() {
     address: "",
     region_id: "",
     profile_photo_url: "",
+    aadhar_number: "",
+    aadhar_card_url: "",
     linkedin: "",
     instagram: "",
     facebook: "",
@@ -269,6 +273,16 @@ export default function Register() {
       return
     }
 
+    // Validate Aadhar
+    if (!form.aadhar_number || form.aadhar_number.length !== 12) {
+      setError("Aadhar number must be exactly 12 digits.")
+      return
+    }
+    if (!form.aadhar_card_url) {
+      setError("Aadhar card image upload is compulsory.")
+      return
+    }
+
     setError("")
     setStep("matrimony")
   }
@@ -313,6 +327,8 @@ export default function Register() {
         address: form.address || "Not provided",
         region_id: form.region_id || undefined,
         profile_photo_url: form.profile_photo_url || undefined,
+        aadhar_number: form.aadhar_number,
+        aadhar_card_url: form.aadhar_card_url,
         create_matrimony: form.create_matrimony,
         social_links: {
           linkedin: form.linkedin?.trim() || undefined,
@@ -395,7 +411,7 @@ export default function Register() {
               </svg>
             </div>
             <span className="font-extrabold text-3xl tracking-tight text-foreground mt-4 group-hover:opacity-90 transition-opacity">
-              CommunityConnect
+              Lad Matrimony
             </span>
           </Link>
         </div>
@@ -660,6 +676,78 @@ export default function Register() {
                           required 
                         />
                       </div>
+                    </div>
+
+                    {/* Aadhar Number */}
+                    <div className="space-y-2">
+                      <Label>Aadhar Number *</Label>
+                      <Input 
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="1234 5678 9012"
+                        value={form.aadhar_number.replace(/(\d{4})(?=\d)/g, "$1 ").trim()}
+                        onChange={(e) => {
+                          const rawVal = e.target.value.replace(/\D/g, "");
+                          const limitedVal = rawVal.slice(0, 12);
+                          setForm((f) => ({ ...f, aadhar_number: limitedVal }));
+                        }}
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 font-mono tracking-wider"
+                        required
+                      />
+                      {form.aadhar_number.length > 0 && form.aadhar_number.length < 12 && (
+                        <p className="text-[10px] text-amber-600">Aadhar must be 12 digits</p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground">Your Aadhar details will be deleted 8 days after verification.</p>
+                    </div>
+
+                    {/* Aadhar Card Upload */}
+                    <div className="space-y-2">
+                      <Label>Aadhar Card Image *</Label>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById("aadhar-upload")?.click()}
+                          disabled={loading}
+                          className="text-xs h-9"
+                        >
+                          {form.aadhar_card_url ? "Change Image" : "Upload Image"}
+                        </Button>
+                        {form.aadhar_card_url && (
+                          <span className="text-[10px] text-green-600 font-medium">Uploaded</span>
+                        )}
+                      </div>
+                      <input
+                        id="aadhar-upload"
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          if (file.size > 20 * 1024 * 1024) {
+                            setError("Image file is too large. Maximum size is 20MB.")
+                            return
+                          }
+                          const formData = new FormData()
+                          formData.append("file", file)
+                          setError("")
+                          setLoading(true)
+                          try {
+                            const res = await api.post("/uploads/image", formData, {
+                              headers: { "Content-Type": "multipart/form-data" }
+                            })
+                            setForm((f) => ({ ...f, aadhar_card_url: res.data.url }))
+                          } catch (err: any) {
+                            setError(handleApiError(err, "Failed to upload aadhar card image."))
+                          } finally {
+                            setLoading(false)
+                          }
+                        }}
+                        className="hidden"
+                        disabled={loading}
+                      />
+                      <p className="text-[10px] text-muted-foreground">Upload a clear image of your Aadhar card. This is mandatory for verification.</p>
                     </div>
 
                     {/* Region / Area */}

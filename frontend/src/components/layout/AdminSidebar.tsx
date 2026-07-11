@@ -9,6 +9,7 @@ import {
   LogOut,
   Shield,
   ChevronRight,
+  MessageSquareText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,10 @@ const adminLinks = [
 
 const communityAdminLinks = [
   { to: "/admin/create-admin", label: "Create Admin", icon: UserPlus },
+]
+
+const communityOnlyLinks = [
+  { to: "/admin/suggestions", label: "Suggestions", icon: MessageSquareText },
 ]
 
 export function AdminSidebar() {
@@ -100,6 +105,32 @@ export function AdminSidebar() {
               ))}
             </div>
           </>
+        )}
+
+        {user?.role === "community_admin" && (
+          <div className="pt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-3">
+              Community
+            </p>
+            {communityOnlyLinks.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                    isActive
+                      ? "bg-primary/15 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  )
+                }
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1">{label}</span>
+                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+              </NavLink>
+            ))}
+          </div>
         )}
       </nav>
 

@@ -21,7 +21,8 @@ import {
   XCircle,
   AlertTriangle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Search
 } from "lucide-react"
 import { toast } from "sonner"
 import { getImageUrl } from "@/lib/utils"
@@ -42,6 +43,8 @@ export default function AdminVerification() {
   const [action, setAction] = useState<Action>(null)
   const [comments, setComments] = useState("")
   const [selectedProfileRequest, setSelectedProfileRequest] = useState<ExtendedRequest | null>(null)
+  const [verificationSearch, setVerificationSearch] = useState("")
+  const [ladFilter, setLadFilter] = useState(false)
 
   // Fetch actual pending requests
   const { data: requests, isLoading } = useQuery({
@@ -79,20 +82,55 @@ export default function AdminVerification() {
   }
 
   // Filter requests dynamically
-  const localAdminRequests = requests?.filter(r => r.target_role === "local_admin") || []
-  const disputeRequests = requests?.filter(r => r.escalated || r.status === "escalated") || []
-  const regularRequests = requests?.filter(r => r.target_role !== "local_admin" && !r.escalated && r.status !== "escalated") || []
+  const searchFilter = (r: ExtendedRequest) => {
+    if (!verificationSearch && !ladFilter) return true
+    const q = verificationSearch.toLowerCase()
+    const name = r.profile?.full_name || ""
+    const reqId = r.request_id || ""
+    const matchesSearch = !verificationSearch || name.toLowerCase().includes(q) || reqId.toLowerCase().includes(q)
+    const matchesLad = !ladFilter || (r.matrimony?.sub_caste || "").toLowerCase().includes("lad")
+    return matchesSearch && matchesLad
+  }
+
+  const localAdminRequests = requests?.filter(r => r.target_role === "local_admin" && searchFilter(r)) || []
+  const disputeRequests = requests?.filter(r => (r.escalated || r.status === "escalated") && searchFilter(r)) || []
+  const regularRequests = requests?.filter(r => r.target_role !== "local_admin" && !r.escalated && r.status !== "escalated" && searchFilter(r)) || []
 
   return (
     <div className="space-y-8 animate-fade-in text-[#0f172a]">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
-          Member Verification
-        </h1>
-        <p className="text-sm text-[#64748b] mt-1">
-          Review, approve, reject, or escalate pending membership applications.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0f172a]">
+            Member Verification
+          </h1>
+          <p className="text-sm text-[#64748b] mt-1">
+            Review, approve, reject, or escalate pending membership applications.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={ladFilter}
+              onChange={(e) => setLadFilter(e.target.checked)}
+              className="w-4 h-4 rounded border-[#e2e8f0] text-[#0f172a] focus:ring-[#0f172a] cursor-pointer"
+            />
+            <span className="text-xs font-semibold text-[#0f172a]">
+              Lad Subcaste
+            </span>
+          </label>
+          <div className="relative w-full sm:w-56">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+            <input
+              type="text"
+              placeholder="Search by name or ID..."
+              value={verificationSearch}
+              onChange={(e) => setVerificationSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#e2e8f0] bg-white text-sm text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:border-[#0f172a]"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Grid Layout */}
@@ -388,6 +426,61 @@ export default function AdminVerification() {
               </DialogHeader>
 
               <div className="space-y-4 text-sm">
+                {/* Aadhar Cross-Verification (Community Admin only) */}
+                {(selectedProfileRequest.profile?.aadhar_card_url || selectedProfileRequest.profile?.aadhar_number) && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
+                      <CheckSquare className="h-3.5 w-3.5 text-[#0f172a]" />
+                      Identity Cross-Verification
+                    </h4>
+                    <div className="bg-[#f8fafc] border-2 border-[#d0d5dd] p-4 rounded-xl space-y-4">
+                      <p className="text-[10px] text-[#64748b] font-semibold uppercase tracking-wider">
+                        Community Admin: Compare the profile photo with the Aadhar card image below
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-[#64748b] font-semibold uppercase">Profile Photo</p>
+                          <div className="aspect-[3/2] rounded-lg border border-[#e2e8f0] bg-white overflow-hidden flex items-center justify-center">
+                            {selectedProfileRequest.profile?.profile_photo_url ? (
+                              <img
+                                src={getImageUrl(selectedProfileRequest.profile.profile_photo_url)}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] text-[#64748b]">No photo</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-[#64748b] font-semibold uppercase">Aadhar Card</p>
+                          <div className="aspect-[3/2] rounded-lg border border-[#e2e8f0] bg-white overflow-hidden flex items-center justify-center">
+                            {selectedProfileRequest.profile?.aadhar_card_url ? (
+                              <img
+                                src={getImageUrl(selectedProfileRequest.profile.aadhar_card_url)}
+                                alt="Aadhar Card"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] text-[#64748b]">Not uploaded</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {selectedProfileRequest.profile?.aadhar_number && (
+                        <div className="bg-[#fff8e5] border border-[#fde68a] rounded-lg p-2.5 text-center">
+                          <span className="text-[10px] text-[#92400e] font-semibold">
+                            Aadhar Number: {selectedProfileRequest.profile.aadhar_number}
+                          </span>
+                        </div>
+                      )}
+                      <p className="text-[9px] text-[#64748b] italic">
+                        Note: Aadhar data will be automatically deleted 8 days after verification.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Core Details */}
                 <div className="space-y-2">
                   <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Personal Information</h4>

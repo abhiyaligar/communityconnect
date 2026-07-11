@@ -1,7 +1,7 @@
 
 # CommunityConnect Backend - Profile & Matrimony Schemas
 
-from pydantic import BaseModel, HttpUrl, Field, field_validator, model_validator
+from pydantic import BaseModel, HttpUrl, Field, field_validator, model_validator, ConfigDict
 from typing import Optional, List
 from datetime import date
 from uuid import UUID
@@ -20,6 +20,8 @@ class ProfileOnboard(BaseModel):
     address: str
     region_id: Optional[UUID] = None
     profile_photo_url: str = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"
+    aadhar_number: str
+    aadhar_card_url: str
     
     # Matrimony Opt-in
     create_matrimony: bool = False
@@ -68,6 +70,33 @@ class ProfileOnboard(BaseModel):
     
     # Username
     username: Optional[str] = None
+
+    @field_validator("aadhar_number")
+    @classmethod
+    def validate_aadhar_number(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Aadhar number is compulsory.")
+        digits = v.strip()
+        if not digits.isdigit() or len(digits) != 12:
+            raise ValueError("Aadhar number must be exactly 12 digits.")
+        return digits
+
+    @field_validator("aadhar_card_url")
+    @classmethod
+    def validate_aadhar_card_url(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Aadhar card image upload is compulsory.")
+        return v.strip()
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v: str) -> str:
+        if not v:
+            return v
+        digits = v.replace("+91", "").replace("-", "").replace(" ", "")
+        if not digits.isdigit() or len(digits) != 10:
+            raise ValueError("Phone number must be exactly 10 digits.")
+        return v
 
     @model_validator(mode="after")
     def validate_onboard_requirements(self) -> 'ProfileOnboard':

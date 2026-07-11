@@ -232,6 +232,12 @@ async def onboard_profile(
         if not reg_res.scalars().first():
             raise HTTPException(status_code=400, detail="Invalid Region ID selected.")
 
+    # Set aadhar fields on the user
+    current_user.aadhar_number = payload.aadhar_number
+    current_user.aadhar_card_url = payload.aadhar_card_url
+    # Schedule aadhar data deletion 8 days after verification
+    current_user.aadhar_data_delete_at = None
+
     # Validate photo count based on role/type
     if payload.create_matrimony:
         if len(payload.additional_photos or []) > 5:

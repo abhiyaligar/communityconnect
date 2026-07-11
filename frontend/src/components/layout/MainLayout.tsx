@@ -20,7 +20,8 @@ import {
   LogOut,
   Plus,
   Camera,
-  Home
+  Home,
+  MessageSquareText
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/contexts/LanguageContext"
@@ -130,7 +131,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             </svg>
           </div>
           <span className="font-bold text-lg tracking-tight text-[#0f172a]">
-            CommunityConnect
+            Lad Matrimony
           </span>
         </NavLink>
       </div>
@@ -293,7 +294,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </svg>
                 </div>
                 <span className="font-bold text-base tracking-tight text-[#0f172a]">
-                  CommunityConnect
+                  Lad Matrimony
                 </span>
               </NavLink>
 
@@ -314,6 +315,19 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </Button>
               )}
 
+              {/* Mobile/Tablet Suggestions Icon */}
+              <div className="lg:hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/settings?tab=suggestion")}
+                  className="text-[#64748b] hover:text-[#0f172a] h-9 w-9"
+                  title="Suggestion & Bug Report"
+                >
+                  <MessageSquareText className="h-5 w-5" />
+                </Button>
+              </div>
+
               {/* Mobile/Tablet Requests Notification Icon */}
               {!isAdmin && isVerifiedAdult && (
                 <div className="lg:hidden">
@@ -330,6 +344,15 @@ export function MainLayout({ children }: MainLayoutProps) {
 
               {/* Desktop right panel layout */}
               <div className="hidden lg:flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/settings?tab=suggestion")}
+                  className="text-[#64748b] hover:text-[#0f172a] h-9 w-9"
+                  title="Suggestion & Bug Report"
+                >
+                  <MessageSquareText className="h-5 w-5" />
+                </Button>
                 <Button variant="ghost" size="icon" className="text-[#64748b] hover:text-[#0f172a] h-9 w-9">
                   <Bell className="h-5 w-5" />
                 </Button>

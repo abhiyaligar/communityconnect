@@ -29,7 +29,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description=(
-        "CommunityConnect — A premium platform to connect and empower local communities.\n\n"
+        "Lad Matrimony — A premium matrimony platform for trusted community connections.\n\n"
         "## Core Features\n"
         "- **Identity & Verification** — OTP Email registration, Password Recovery, and Admin verification workflows.\n"
         "- **Matrimony Network** — Detailed opt-in matrimonial profiles with dynamic swiper-based matchmaking.\n"
@@ -88,5 +88,5 @@ async def root():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "docs": "/docs",
-        "message": "Welcome to CommunityConnect API! 🌐",
+        "message": "Welcome to Lad Matrimony API! 🌐",
     }

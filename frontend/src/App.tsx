@@ -35,6 +35,7 @@ import AdminUsers from "@/pages/admin/AdminUsers"
 import AdminVerification from "@/pages/admin/AdminVerification"
 import AdminMatrimony from "@/pages/admin/AdminMatrimony"
 import CreateAdmin from "@/pages/admin/CreateAdmin"
+import AdminSuggestions from "@/pages/admin/AdminSuggestions"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -210,6 +211,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute allowedRoles={["community_admin", "local_admin"]}>
                 <CreateAdmin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="suggestions"
+            element={
+              <ProtectedRoute allowedRoles={["community_admin"]}>
+                <AdminSuggestions />
               </ProtectedRoute>
             }
           />

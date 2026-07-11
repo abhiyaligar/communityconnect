@@ -112,6 +112,8 @@ export interface VerificationRequest {
     contact_number?: string
     address?: string
     occupation?: string
+    aadhar_number?: string
+    aadhar_card_url?: string
     social_links?: {
       linkedin?: string
       instagram?: string
@@ -163,6 +165,8 @@ export interface UserProfile {
     is_active: boolean
     phone_number: string
   }
+  aadhar_number?: string
+  aadhar_card_url?: string
 }
 export interface MatrimonyEntry {
   profile_id: string

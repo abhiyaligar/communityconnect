@@ -108,7 +108,7 @@ async def send_otp_sms(phone_number: str, otp: str) -> bool:
             from twilio.rest import Client
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
             client.messages.create(
-                body=f"Your CommunityConnect verification code is: {otp}. Valid for 5 minutes.",
+                body=f"Your Lad Matrimony verification code is: {otp}. Valid for 5 minutes.",
                 from_=settings.TWILIO_FROM_NUMBER,
                 to=phone_number
             )

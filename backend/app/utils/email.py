@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 async def send_verification_email(to_email: str, code: str) -> None:
-    subject = "CommunityConnect - Your Verification Code"
+    subject = "Lad Matrimony - Your Verification Code"
     body = f"Your verification code is: {code}\n\nThis code will expire in 10 minutes."
 
     if settings.EMAIL_PROVIDER.lower() == "mock":
@@ -49,7 +49,7 @@ async def send_verification_email(to_email: str, code: str) -> None:
 
 
 async def send_reset_password_email(to_email: str, code: str) -> None:
-    subject = "CommunityConnect - Reset Your Password"
+    subject = "Lad Matrimony - Reset Your Password"
     body = f"You requested to reset your password. Your password reset verification code is: {code}\n\nThis code will expire in 10 minutes."
 
     if settings.EMAIL_PROVIDER.lower() == "mock":

@@ -12,6 +12,7 @@ from app.models.audit import AuditLog
 from app.models.email_verification import EmailVerification
 from app.models.interaction import ProfileLike, ProfileDislike
 from app.models.chat import ChatMessage
+from app.models.suggestion import Suggestion, SuggestionType
 
 __all__ = [
     "UserRole",
@@ -35,5 +36,7 @@ __all__ = [
     "ProfileDislike",
     "GuardianRecommendation",
     "ChatMessage",
+    "Suggestion",
+    "SuggestionType",
 ]
 

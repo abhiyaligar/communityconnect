@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Camera, Trash, Loader2, Heart, Shield } from "lucide-react"
+import { Camera, Trash, Loader2, Heart, Shield, ChevronLeft } from "lucide-react"
 import { getImageUrl, handleApiError } from "@/lib/utils"
 import api from "@/lib/api"
 import { toast } from "sonner"
@@ -15,7 +14,6 @@ export default function ManageGallery() {
   const { refreshUser } = useAuth()
   const [uploading, setUploading] = useState(false)
 
-  // Fetch matrimonial profile details
   const { data: profileDetails, isLoading } = useQuery({
     queryKey: ["my-matrimony-profile"],
     queryFn: async () => {
@@ -27,7 +25,6 @@ export default function ManageGallery() {
   const isOptedIn = profileDetails?.matrimony?.opted_in
   const additionalPhotos = profileDetails?.matrimony?.additional_photos || []
 
-  // Mutation to update additional photos list
   const updateGalleryMutation = useMutation({
     mutationFn: async (photos: string[]) => {
       await api.put("/profiles/me/matrimony", { additional_photos: photos })
@@ -107,81 +104,103 @@ export default function ManageGallery() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-4 md:py-8 px-3 md:px-4 space-y-4 md:space-y-6 text-[#0f172a]">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <span className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/10 text-rose-500">
-          {additionalPhotos.length} / 5 Photos
-        </span>
-      </div>
-
-      <Card className="border border-[#e2e8f0] rounded-2xl shadow-sm bg-white overflow-hidden">
-        <CardHeader className="border-b border-[#e2e8f0] p-6">
-          <CardTitle className="text-sm font-bold uppercase tracking-wider text-[#64748b] flex items-center gap-2">
-            <Camera className="h-4.5 w-4.5 text-rose-500" />
-            Candidate Photo Gallery
-          </CardTitle>
-          <CardDescription className="text-xs text-[#64748b]">
-            Your gallery can contain up to 5 additional images. Only one image is visible before connection approval.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          {/* Photos Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {additionalPhotos.map((url: string, index: number) => (
-              <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-border group shadow-sm bg-[#f8fafc]">
-                <img
-                  src={getImageUrl(url)}
-                  alt={`Candidate ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleDeletePhoto(index)}
-                  disabled={updateGalleryMutation.isPending}
-                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg text-white hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                >
-                  <Trash className="h-3.5 w-3.5" />
-                </button>
-                {index === 0 && (
-                  <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-rose-600 text-white shadow-sm">
-                    First Photo
-                  </span>
-                )}
+    <div className="space-y-0 text-[#0f172a]">
+      {/* Full-width hero header */}
+      <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] px-4 md:px-8 py-6 md:py-10 -mx-3 md:-mx-8 -mt-3 md:-mt-8 mb-6 md:mb-8">
+        <div className="max-w-6xl mx-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-white/60 hover:text-white flex items-center gap-1 text-xs font-semibold mb-4 transition-colors cursor-pointer bg-transparent border-0"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Back
+          </button>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="p-1.5 bg-white/10 rounded-lg">
+                  <Camera className="h-4.5 w-4.5 text-rose-300" />
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase bg-rose-500/20 text-rose-200 border border-rose-500/20">
+                  {additionalPhotos.length} / 5 Photos
+                </span>
               </div>
-            ))}
-
-            {/* Upload Box */}
-            {additionalPhotos.length < 5 && (
-              <label className="aspect-square rounded-xl border border-dashed border-[#e2e8f0] hover:border-muted-foreground cursor-pointer flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground bg-muted/20 hover:bg-muted/40 transition-colors">
-                {uploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-rose-500" />
-                ) : (
-                  <Camera className="h-5 w-5 text-rose-500" />
-                )}
-                <span className="text-[10px] font-semibold uppercase tracking-wider">Upload Photo</span>
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  onChange={handlePhotoUpload}
-                  disabled={uploading || updateGalleryMutation.isPending}
-                  className="hidden"
-                />
-              </label>
-            )}
-          </div>
-
-          {/* Privacy Note */}
-          <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-4 flex gap-3 text-xs text-[#64748b]">
-            <Shield className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold text-[#0f172a]">Confidentiality Safeguard Active</p>
-              <p className="leading-relaxed">
-                Only the first gallery image is visible to prospective matches before you approve their connection request. All subsequent gallery photos are strictly hidden until you establish a mutual match.
+              <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Candidate Photo Gallery</h1>
+              <p className="text-xs text-white/60 mt-1 max-w-xl">
+                Your gallery can contain up to 5 additional images. Only one image is visible before connection approval. All subsequent gallery photos are hidden until you establish a mutual match.
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Full-width photo grid */}
+      <div className="px-4 md:px-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {additionalPhotos.map((url: string, index: number) => (
+            <div key={index} className="group relative aspect-[4/5] rounded-xl overflow-hidden bg-[#f8fafc] border border-[#e2e8f0] shadow-sm">
+              <img
+                src={getImageUrl(url)}
+                alt={`Candidate ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300" />
+              <button
+                type="button"
+                onClick={() => handleDeletePhoto(index)}
+                disabled={updateGalleryMutation.isPending}
+                className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-lg text-white hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 cursor-pointer border-0"
+              >
+                <Trash className="h-3.5 w-3.5" />
+              </button>
+              {index === 0 && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2.5">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-rose-500 text-white shadow-sm">
+                    Featured
+                  </span>
+                </div>
+              )}
+              <div className="absolute bottom-2 right-2">
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/90 text-[#0f172a] shadow-sm">
+                  #{index + 1}
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {additionalPhotos.length < 5 && (
+            <label className="group relative aspect-[4/5] rounded-xl border-2 border-dashed border-[#e2e8f0] hover:border-rose-300 cursor-pointer flex flex-col items-center justify-center gap-2 bg-[#fafbfc] hover:bg-rose-50/30 transition-all duration-300">
+              {uploading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-rose-500" />
+              ) : (
+                <>
+                  <div className="p-2.5 rounded-full bg-rose-50 group-hover:bg-rose-100 transition-colors">
+                    <Camera className="h-5 w-5 text-rose-400" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#64748b] group-hover:text-rose-600 uppercase tracking-wider transition-colors">
+                    Upload Photo
+                  </span>
+                  <span className="text-[8px] text-[#94a3b8]">PNG, JPG or WEBP</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                onChange={handlePhotoUpload}
+                disabled={uploading || updateGalleryMutation.isPending}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        {/* Privacy note - minimal */}
+        <div className="mt-8 mb-4 flex items-start gap-2.5 bg-[#f8fafc] rounded-xl px-4 py-3 border border-[#e2e8f0]">
+          <Shield className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-[#64748b] leading-relaxed">
+            <span className="font-semibold text-[#0f172a]">Confidentiality Safeguard:</span> Only the first gallery image is visible to prospective matches before connection approval.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -31,8 +31,13 @@ import { getImageUrl } from "@/lib/utils"
 export default function Matrimony() {
   const { user } = useAuth()
   const [search, setSearch] = useState("")
+  const [maritalFilter, setMaritalFilter] = useState("all")
+  const [minAge, setMinAge] = useState("")
+  const [maxAge, setMaxAge] = useState("")
   const [selectedMatch, setSelectedMatch] = useState<MatrimonyEntry | null>(null)
   const [connectingId, setConnectingId] = useState<string | null>(null)
+
+  const oppositeGender = user?.gender === "male" ? "female" : user?.gender === "female" ? "male" : null
 
   const { data: profiles, isLoading, refetch } = useQuery({
     queryKey: ["matrimony"],
@@ -56,13 +61,29 @@ export default function Matrimony() {
   const [wardPickerOpenFor, setWardPickerOpenFor] = useState<string | null>(null)
   const [selectedWards, setSelectedWards] = useState<string[]>([])
 
+  const getAge = (dob: string | undefined) => {
+    if (!dob) return null
+    return Math.floor((Date.now() - new Date(dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+  }
+
   const filtered = profiles?.filter((p) => {
     const fullName = p.profile?.full_name || ""
     const occupation = p.profile?.occupation || ""
-    return (
+    const matchesSearch =
       fullName.toLowerCase().includes(search.toLowerCase()) ||
       occupation.toLowerCase().includes(search.toLowerCase())
-    )
+
+    const matchesGender =
+      !oppositeGender || p.profile?.gender === oppositeGender
+
+    const matchesMarital =
+      maritalFilter === "all" || p.profile?.marital_status === maritalFilter
+
+    const age = getAge(p.profile?.date_of_birth)
+    const matchesMinAge = !minAge || (age !== null && age >= parseInt(minAge))
+    const matchesMaxAge = !maxAge || (age !== null && age <= parseInt(maxAge))
+
+    return matchesSearch && matchesGender && matchesMarital && matchesMinAge && matchesMaxAge
   })
 
   const handleRecommend = async (profileId: string, wardId: string, isRemoving: boolean) => {
@@ -336,8 +357,8 @@ export default function Matrimony() {
         </div>
       )}
 
-      {/* Search Input Bar */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 shadow-sm max-w-md">
+      {/* Search & Filter Bar */}
+      <div className="bg-white border border-[#e2e8f0] rounded-xl p-4 shadow-sm space-y-3">
         <div className="relative">
           <input
             type="text"
@@ -347,6 +368,45 @@ export default function Matrimony() {
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] text-sm text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:border-[#0f172a]"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {oppositeGender && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase bg-[#0f172a]/5 text-[#0f172a] border border-[#e2e8f0]">
+              Showing {oppositeGender}s
+            </span>
+          )}
+          <select
+            value={maritalFilter}
+            onChange={(e) => setMaritalFilter(e.target.value)}
+            className="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+            <option value="divorced">Divorced</option>
+            <option value="widowed">Widowed</option>
+          </select>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              placeholder="Min Age"
+              value={minAge}
+              onChange={(e) => setMinAge(e.target.value)}
+              className="w-16 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none placeholder:text-[#94a3b8]"
+              min={18}
+              max={100}
+            />
+            <span className="text-[10px] text-[#64748b] font-semibold">-</span>
+            <input
+              type="number"
+              placeholder="Max Age"
+              value={maxAge}
+              onChange={(e) => setMaxAge(e.target.value)}
+              className="w-16 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold p-2 text-[#0f172a] focus:outline-none placeholder:text-[#94a3b8]"
+              min={18}
+              max={100}
+            />
+          </div>
         </div>
       </div>
 
