@@ -5,7 +5,7 @@ CommunityConnect Backend - Chat Endpoints
 import re
 from typing import List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -149,8 +149,7 @@ async def get_chat_sessions(
         })
 
     # Sort sessions: chats with last messages first (most recent first), then alphabetical by full name
-    sessions.sort(key=lambda s: (s["last_message"].created_at if s["last_message"] else datetime.min, s["profile"]["full_name"]), reverse=True)
-
+    sessions.sort(key=lambda s: (s["last_message"].created_at if s["last_message"] else datetime.min.replace(tzinfo=timezone.utc), s["profile"]["full_name"]), reverse=True)
     return sessions
 
 
