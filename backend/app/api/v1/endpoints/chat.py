@@ -3,22 +3,24 @@ CommunityConnect Backend - Chat Endpoints
 """
 
 import re
-from typing import List
+import html
+from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import or_, and_, func
 
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, RoleChecker
+from app.core.limiter import limiter
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.matrimony import ConnectionRequest
-from app.models.enums import ConnectionRequestStatus
+from app.models.enums import ConnectionRequestStatus, UserRole
 from app.models.chat import ChatMessage
 from app.schemas.chat import ChatMessageCreate, ChatMessageOut, ChatSessionOut
 
@@ -35,24 +37,27 @@ def sanitize_message(text: str) -> str:
     # 1. Regex to match phone numbers (e.g. 8 to 15 digits, optionally separated by spaces, dashes, dots, or parentheses)
     # Matches digit sequences with separators that have between 8 and 15 digits in total.
     phone_pattern = re.compile(
-        r'\+?\(?\d\)?(?:\s*[-.\(\)]?\s*\d){7,14}\b'
+        r'\+?\d[\d\s\-\(\)]{7,15}\d'
     )
     text = phone_pattern.sub("[REDACTED PHONE]", text)
     
-    # 2. Regex to match potential 6-digit Indian PIN codes or 5-digit US Zip codes
-    pin_pattern = re.compile(r'\b\d{5,6}\b')
+    # 2. Regex to match Indian PIN codes (6-digit starting with 1-9) and US Zip codes (5-digit)
+    pin_pattern = re.compile(r'\b[1-9]\d{2}\s?\d{3}\b')
     text = pin_pattern.sub("[REDACTED PIN]", text)
 
     # 3. Common address keywords and street numbers
     address_keywords = [
         r"street", r"road", r"lane", r"sector", r"apartment", r"apt", 
-        r"building", r"house no", r"h\.no", r"flat no", r"cross", 
+        r"building", r"house no", r"h\.no", r"flat no",
         r"nagar", r"colony", r"bazar", r"pincode", r"pin code"
     ]
     # For each keyword, match the keyword itself and any following numbers, hash signs, or single character/word identifiers (like 'Building A', 'Flat 4B')
     for keyword in address_keywords:
         pattern = re.compile(rf'\b{keyword}\b(?:\s*(?:no\.?|number)?\s*#?\s*\d*\w*)?', re.IGNORECASE)
         text = pattern.sub("[REDACTED ADDRESS]", text)
+
+    # 4. Escape HTML to prevent XSS
+    text = html.escape(text)
         
     return text
 
@@ -81,7 +86,7 @@ async def check_connection(
 @router.get("/sessions", response_model=List[ChatSessionOut])
 async def get_chat_sessions(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
 ):
     """
     Returns list of connected profiles (approved connections only) with their last message and unread count.
@@ -156,11 +161,13 @@ async def get_chat_sessions(
 @router.get("/{profile_id}/messages", response_model=List[ChatMessageOut])
 async def get_chat_messages(
     profile_id: UUID,
+    limit: int = Query(50, ge=1, le=200, description="Max messages to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
 ):
     """
-    Returns all messages with the given profile, sorted by created_at. Marks all incoming messages from this profile as read.
+    Returns paginated messages with the given profile, sorted by created_at. Marks all incoming messages from this profile as read.
     """
     # 1. Fetch current user profile
     stmt_me = select(Profile).where(Profile.user_id == current_user.id)
@@ -192,24 +199,26 @@ async def get_chat_messages(
     if unread_messages:
         await db.commit()
 
-    # 4. Fetch all messages
+    # 4. Fetch paginated messages
     stmt_messages = select(ChatMessage).where(
         or_(
             and_(ChatMessage.sender_profile_id == my_profile.id, ChatMessage.receiver_profile_id == profile_id),
             and_(ChatMessage.sender_profile_id == profile_id, ChatMessage.receiver_profile_id == my_profile.id)
         )
-    ).order_by(ChatMessage.created_at.asc())
+    ).order_by(ChatMessage.created_at.desc()).offset(offset).limit(limit)
     result_messages = await db.execute(stmt_messages)
-    messages = result_messages.scalars().all()
+    messages = list(reversed(result_messages.scalars().all()))
 
     return messages
 
 
 @router.post("/messages", response_model=ChatMessageOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def send_chat_message(
+    request: Request,
     payload: ChatMessageCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
 ):
     """
     Creates and sends a new message. Validate connection approval first. Sanitize/redact contact numbers and addresses.
@@ -250,7 +259,7 @@ async def send_chat_message(
 async def mark_messages_read(
     profile_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
 ):
     """
     Explicitly marks all incoming messages from profile_id as read.

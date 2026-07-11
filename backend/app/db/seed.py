@@ -38,7 +38,9 @@ async def seed_data():
 
         # 2. Create Users
         print("Creating users...")
-        raw_password = "Password@123".encode("utf-8")
+        import os
+        seed_password = os.getenv("SEED_PASSWORD", "Password@123")
+        raw_password = seed_password.encode("utf-8")
         hashed_password = bcrypt.hashpw(raw_password, bcrypt.gensalt()).decode("utf-8")
 
         # Head / Super Admin

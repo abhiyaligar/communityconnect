@@ -313,6 +313,9 @@ async def delete_user_account_admin(
     """
     Permanent deletion of user account and associated profile/matrimony details.
     """
+    if current_admin.id == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account.")
+
     stmt = select(User).where(User.id == user_id)
     result = await db.execute(stmt)
     user = result.scalars().first()

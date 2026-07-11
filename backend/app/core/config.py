@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "CommunityConnect"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
     ENVIRONMENT: str = "development"
 
     # Database
@@ -67,6 +67,15 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v):
+        if v == "your-super-secret-key-change-in-production":
+            import os
+            if os.getenv("ENVIRONMENT", "development") == "production":
+                raise ValueError("SECRET_KEY must be changed from the default in production")
+        return v
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):
@@ -78,7 +87,7 @@ class Settings(BaseSettings):
         "env_file": os.getenv("ENV_FILE", ".env"),
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
-        "extra": "ignore", # Allow extra variables without crashing
+        "extra": "ignore",
     }
 
 

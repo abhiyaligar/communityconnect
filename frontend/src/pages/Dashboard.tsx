@@ -403,9 +403,11 @@ export default function Dashboard() {
                       <h2 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">
                         {featuredProfile?.full_name}, {age || "—"}
                       </h2>
+                      {(user?.role === "verified_adult" || user?.role === "community_admin" || user?.role === "local_admin") && (
                       <span className="text-emerald-400 drop-shadow-sm flex items-center">
                         <CheckCircle className="h-4 w-4 fill-white/10" />
                       </span>
+                    )}
                     </div>
                     <p className="text-xs text-slate-300 font-medium drop-shadow-sm truncate">
                       {featuredProfile?.occupation || "Member"} • {featuredProfile?.address || "Bangalore, IN"}

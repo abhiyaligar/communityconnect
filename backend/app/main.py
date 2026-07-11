@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="1.2.0",
+    version=settings.APP_VERSION,
     description=(
         "CommunityConnect — A premium platform to connect and empower local communities.\n\n"
         "## Core Features\n"
@@ -39,8 +39,8 @@ app = FastAPI(
         "- **Admin Panel** — Comprehensive user escalation, moderation, and verification management.\n"
         "- **Infrastructure** — Global rate-limiting backed by Redis and fully tracked Alembic migrations.\n"
     ),
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
+    redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
     lifespan=lifespan,
 )
 
@@ -60,13 +60,10 @@ async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
         content={"detail": "Rate limit exceeded. Please try again later."},
     )
 
-# CORS Middleware — allow all origins (development mode)
+# CORS Middleware — use settings.CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://communityconnect-alpha.vercel.app",
-        "http://localhost:5173",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

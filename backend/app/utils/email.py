@@ -45,7 +45,7 @@ async def send_verification_email(to_email: str, code: str) -> None:
             logger.info(f"Email sent successfully to {to_email}")
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
-            logger.info(f"SIMULATION FALLBACK: Code is {code}")
+            logger.info(f"SIMULATION FALLBACK: Email would have been sent to {to_email}")
 
 
 async def send_reset_password_email(to_email: str, code: str) -> None:
@@ -79,5 +79,5 @@ async def send_reset_password_email(to_email: str, code: str) -> None:
             logger.info(f"Password reset email sent successfully to {to_email}")
         except Exception as e:
             logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
-            logger.info(f"SIMULATION FALLBACK: Password reset code is {code}")
+            logger.info(f"SIMULATION FALLBACK: Password reset email would have been sent to {to_email}")
 

@@ -3,7 +3,7 @@ CommunityConnect Backend - Verification System Models
 """
 
 import uuid
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Text, CheckConstraint
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Text, CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -49,6 +49,7 @@ class VerificationApproval(Base):
     approver_profile = relationship("Profile", back_populates="verification_approvals", foreign_keys=[approver_profile_id])
 
     __table_args__ = (
+        UniqueConstraint("verification_request_id", "approver_user_id", name="uq_approval_per_admin"),
         CheckConstraint(
             "(approver_user_id IS NOT NULL AND approver_profile_id IS NULL) OR "
             "(approver_user_id IS NULL AND approver_profile_id IS NOT NULL)",

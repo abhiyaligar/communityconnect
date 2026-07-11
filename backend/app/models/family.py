@@ -30,7 +30,7 @@ class FamilyUnit(Base):
         "Profile",
         foreign_keys="[Profile.family_unit_id]",
         back_populates="family_unit",
-        cascade="all, delete-orphan"
+        cascade="all"
     )
     family_head = relationship(
         "Profile",

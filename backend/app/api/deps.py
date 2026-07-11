@@ -40,6 +40,13 @@ async def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    if payload.get("type") not in (None, "access"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
         
     user_id = payload.get("sub")
     if not user_id:

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func as sqlfunc
 
 from app.db.session import get_db
 from app.api.deps import get_current_user, RoleChecker
@@ -161,6 +162,12 @@ async def approve_verification(
 
     target_user = req.target_user
 
+    if current_user.id == req.target_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot approve your own verification request."
+        )
+
     # Create Approval Record
     approval = VerificationApproval(
         verification_request_id=req.id,
@@ -189,13 +196,13 @@ async def approve_verification(
         # Local Admin approval
         if is_local_admin_candidate:
             # Requires peer verification (minimum 4 admins)
-            votes_stmt = select(VerificationApproval).where(
+            votes_stmt = select(sqlfunc.count(sqlfunc.distinct(VerificationApproval.approver_user_id))).where(
                 VerificationApproval.verification_request_id == req.id,
                 VerificationApproval.decision == "approved",
                 VerificationApproval.approver_role == "local_admin"
             )
             votes_res = await db.execute(votes_stmt)
-            vote_count = len(votes_res.scalars().all()) + 1 # include current vote
+            vote_count = votes_res.scalar() or 0
 
             if vote_count >= 4:
                 req.status = VerificationStatus.approved

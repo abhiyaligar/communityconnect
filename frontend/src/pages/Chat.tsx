@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import api from "@/lib/api"
@@ -113,21 +113,29 @@ export default function Chat() {
   })
 
   // 4-second Polling logic (ONLY active when component is mounted and chat is active)
-  useEffect(() => {
-    // 1. Initial immediate refresh of sessions
-    refetchSessions()
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // 2. Setup interval
-    const intervalId = setInterval(() => {
-      refetchSessions()
-      if (selectedProfileId) {
-        refetchMessages()
+  const schedulePoll = useCallback(() => {
+    pollingRef.current = setTimeout(async () => {
+      try {
+        await Promise.all([
+          refetchSessions(),
+          selectedProfileId ? refetchMessages() : Promise.resolve(),
+        ])
+      } catch {
+        // Swallow polling errors silently
       }
+      schedulePoll()
     }, 4000)
-
-    // 3. Clear interval on unmount
-    return () => clearInterval(intervalId)
   }, [selectedProfileId, refetchSessions, refetchMessages])
+
+  useEffect(() => {
+    refetchSessions()
+    schedulePoll()
+    return () => {
+      if (pollingRef.current) clearTimeout(pollingRef.current)
+    }
+  }, [schedulePoll, refetchSessions])
 
   // Scroll to bottom when messages list updates
   useEffect(() => {
@@ -141,14 +149,15 @@ export default function Chat() {
       return
     }
 
-    // Phone number regex (checks for 8 or more contiguous digits, or common phone spacings)
-    const phoneRegex = /(?:\+?\d{1,3}[-.\s\(]*)?\(?\d{3}\)?[-.\s\)]*\d{3}[-.\s]*\d{4}|\b\d{8,15}\b/
-    const pinRegex = /\b\d{5,6}\b/
+    // Phone number regex (must match backend sanitize_message exactly)
+    const phoneRegex = /\+?\d[\d\s\-\(\)]{7,15}\d/
+    // Indian PIN codes (6-digit starting with 1-9) and US Zip codes (5-digit)
+    const pinRegex = /\b[1-9]\d{2}\s?\d{3}\b/
     
-    // Address keyword list
+    // Address keyword list (must match backend sanitize_message exactly)
     const addressKeywords = [
       "street", "road", "lane", "sector", "apartment", "apt", "flat",
-      "building", "house no", "h.no", "flat no", "cross", "nagar",
+      "building", "house no", "h.no", "flat no", "nagar",
       "colony", "bazar", "pincode", "pin code"
     ]
 

@@ -21,7 +21,8 @@ async def seed_admin():
     async_session = async_sessionmaker(engine, expire_on_commit=False)
 
     email = "head.admin@communityconnect.org"
-    password = "Password@123"
+    import os
+    password = os.getenv("SEED_PASSWORD", "Password@123")
 
     print("Generating password hash...")
     raw_password = password.encode("utf-8")

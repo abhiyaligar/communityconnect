@@ -17,12 +17,26 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token")
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      const exp = getTokenExpFromPayload(token)
+      if (exp && Date.now() >= exp) {
+        localStorage.removeItem("access_token")
+      } else {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },
   (error) => Promise.reject(error)
 )
+
+function getTokenExpFromPayload(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]))
+    return payload.exp ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
 
 // Helper to check if an error is transient/retryable
 function isRetryableError(error: any) {

@@ -197,12 +197,21 @@ export default function Register() {
   }, [navigate])
 
 
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const startCountdown = () => {
     setCountdown(60)
-    const timer = setInterval(() => {
-      setCountdown((c) => { if (c <= 1) { clearInterval(timer); return 0 } return c - 1 })
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setCountdown((c) => { if (c <= 1) { if (timerRef.current) clearInterval(timerRef.current); timerRef.current = null; return 0 } return c - 1 })
     }, 1000)
   }
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [])
 
   // --- API Handlers ---
 

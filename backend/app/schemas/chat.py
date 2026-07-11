@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
@@ -6,7 +6,7 @@ from app.schemas.matrimony import ProfileMinOut
 
 class ChatMessageCreate(BaseModel):
     receiver_profile_id: UUID
-    content: str
+    content: str = Field(..., max_length=1000)
 
 class ChatMessageOut(BaseModel):
     id: UUID

@@ -1,207 +1,9 @@
-# CommunityConnect — Complete Bug & Vulnerability Audit Report
+# CommunityConnect — Bug & Vulnerability Report
 
-> **Audit Date:** July 2026  
-> **Project:** CommunityConnect (FastAPI + React/TypeScript)  
-> **Audit Scope:** Backend (Python/FastAPI), Frontend (React/TypeScript), Database Models, API Endpoints  
-> **Total Findings:** 15 CRITICAL · 34 HIGH · 57 MEDIUM · 15 LOW/INFO  
-> **Status Key:** 🟢 Fixed · 🟡 Partial · 🔴 Open
+> **Category:** Open Findings
+> **Count:** 81 findings
 
 ---
-
-## Table of Contents
-
-1. [CRITICAL Severity Findings](#critical-severity-findings)
-2. [HIGH Severity Findings](#high-severity-findings)
-3. [MEDIUM Severity Findings](#medium-severity-findings)
-4. [LOW Severity Findings](#low-severity-findings)
-5. [INFO / Observations](#info--observations)
-6. [Quick-Fix Priority Order](#quick-fix-priority-order)
-
----
-
-# CRITICAL Severity Findings
-
-## C-01 🔴 Hardcoded Default JWT Secret Key
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `Settings.SECRET_KEY` defaults to `"your-super-secret-key-change-in-production"` — a publicly-known string. No validator rejects this in production. |
-| **Impact** | Attacker can forge arbitrary HS256 JWTs with any `sub` (user UUID) and any `role`. Full account takeover and privilege escalation. No token-type or audience checks exist. |
-| **Files to Fix** | `backend/app/core/config.py:30` (default value), `backend/app/core/security.py:27,34` (uses secret) |
-| **Recommended Fix** | Add `@field_validator("SECRET_KEY")` that raises if value equals the default or `len < 32` when `ENVIRONMENT == "production"`. Document generation via `secrets.token_urlsafe(64)`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-02 🟡 Refresh Tokens Accepted as Access Tokens
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `get_current_user` in deps.py decodes any valid JWT with a `sub` claim, never checking `payload.get("type") == "access"`. Refresh tokens (7-day expiry) are fully valid as Bearer tokens on all endpoints. |
-| **Impact** | Stolen refresh cookie → full API access for 7 days without needing to call `/token/refresh`. Nullifies the access-token short expiry (30 min). |
-| **Files to Fix** | `backend/app/api/deps.py:34-50` (auth check), `backend/app/core/security.py:18-28` (token creation) |
-| **Recommended Fix** | Add `"type": "access"` to access JWTs at creation. In `get_current_user`, reject any token whose `type != "access"`. |
-| **Status** | 🟢 Fixed — access tokens now carry `"type":"access"`; `get_current_user` rejects any token whose `type` is `"refresh"` |
-
----
-
-## C-03 🔴 OTP Master Bypass Code `"123456"`
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | When `SMS_PROVIDER` is `"mock"`, any OTP verification with `"123456"` succeeds. If production ever has `SMS_PROVIDER=mock` (misconfiguration), any phone number can be authenticated with this static code. |
-| **Impact** | Complete authentication bypass — attacker can login as any user by entering `123456` as the OTP. |
-| **Files to Fix** | `backend/app/services/otp.py:43-46` |
-| **Recommended Fix** | Add gating check: `if settings.ENVIRONMENT == "production": raise RuntimeError("Mock provider not allowed")`. Wrap bypass in `if settings.DEBUG`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-04 🔴 Self-Approval of Verification Requests
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | The `approve_verification` endpoint never checks whether the approver is the same user as the target. An admin can approve their own verification request. |
-| **Impact** | A `local_admin` can self-approve and gain `verified_adult` status without peer review. Combined with duplicate-vote inflation (C-05), they could grant themselves any role. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/verification.py:136-214` |
-| **Recommended Fix** | Add `if current_user.id == req.target_user_id: raise HTTPException(403, detail="Cannot approve your own verification.")` |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-05 🔴 Duplicate Vote Inflation — Missing Unique Constraint on Approvals
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `VerificationApproval` model has no unique constraint on `(verification_request_id, approver_user_id)`. Vote counting uses `len(...) + 1`, so a single admin can call approve multiple times to inflate the count. |
-| **Impact** | Single rogue `local_admin` can reach the 4-vote threshold and self-approve, gaining `verified_adult` role without actual peer review. |
-| **Files to Fix** | `backend/app/models/verification.py` (add constraint), `backend/app/api/v1/endpoints/verification.py:192-198` (counting logic) |
-| **Recommended Fix** | Add `UniqueConstraint("verification_request_id", "approver_user_id", name="uq_approval_per_admin")`. Use `count(distinct approver_user_id)` in queries. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-06 🔴 Hardcoded Password in Seed Script
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `backend/app/db/seed.py:41` hardcodes `raw_password = "Password@123".encode("utf-8")` for all seeded users including super admins. This is committed to source. |
-| **Impact** | Anyone with access to the repo (or the running seed) knows the default password for all seeded accounts including community_admin. |
-| **Files to Fix** | `backend/app/db/seed.py:41`, `backend/app/db/seed_admin_only.py:24` |
-| **Recommended Fix** | Read password from environment variable. Use `from app.core.security import hash_password` instead of reimplementing bcrypt. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-07 🔴 FamilyUnit `delete-orphan` Cascade Destroys All Member Profiles
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `family_unit.members` relationship uses `cascade="all, delete-orphan"`. Deleting a `FamilyUnit` deletes ALL member `Profile` rows from the database. |
-| **Impact** | If a family unit is deleted (planned or accidental), all profiles of all family members are permanently destroyed — no SET NULL, no protection. |
-| **Files to Fix** | `backend/app/models/family.py:33` |
-| **Recommended Fix** | Change cascade to `cascade="all"` (remove `delete-orphan`) so the DB `SET NULL` rule fires instead. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-08 🔴 7 Database Indexes Dropped and Never Recreated
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | Migration `032d97cc0f66` dropped 7 indexes on critical tables (profile, memorial, matrimony, connection_requests) and they were never recreated. |
-| **Impact** | Severe query performance degradation on all major read paths (profile search, matrimony matching, registry browsing). Full table scans on large tables. |
-| **Files to Fix** | `backend/alembic/versions/032d97cc0f66*.py` — write a new migration |
-| **Recommended Fix** | Write a hotfix migration that recreates: `ix_profiles_username`, `ix_profiles_email`, `ix_profiles_full_name`, `ix_memorial_date_of_death`, `ix_matrimony_opted_in`, `ix_connection_requests_status`, `ix_connection_requests_receiver`. |
-| **Status** | 🟡 Partially fixed — token expiry validation added before use; full migration to in-memory storage pending |
-
----
-
-## C-09 🔴 JWT Access Token Stored in `localStorage` (XSS-Exposed)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | The access token is written to and read from `localStorage` via `api.ts` and `AuthContext.tsx`. Any XSS vulnerability (unsanitized profile photo URL, social link, third-party script) can steal the JWT. |
-| **Impact** | Full account takeover — attacker steals `access_token` from localStorage and calls any API as the victim until token expiry (30 min). Refresh cookies are also exfiltratable. |
-| **Files to Fix** | `frontend/src/lib/api.ts:18,67` • `frontend/src/contexts/AuthContext.tsx:28,81,116,123` • `frontend/src/pages/Register.tsx:240` |
-| **Recommended Fix** | Store access token in HttpOnly, Secure, SameSite cookie (like refresh token). Avoid `localStorage` entirely. If unavoidable, use in-memory with short TTL + refresh. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-10 🟡 Fake "Verified Adult" Badge Shown to ALL Users
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `Dashboard.tsx:406-408` unconditionally renders a green `CheckCircle` checkmark next to every user's name in the matrimony card, regardless of verification status. |
-| **Impact** | Unverified users can falsely appear "verified" on shared screens or screenshots. Undermines the entire verification system and community trust. |
-| **Files to Fix** | `frontend/src/pages/Dashboard.tsx:406-408` |
-| **Recommended Fix** | Only show the verification checkmark badge for `verified_adult` and admin roles. |
-| **Status** | 🟢 Fixed — checkmark now only renders for verified_adult, community_admin, and local_admin |
-
----
-
-## C-11 🟡 local_admin Can Assign community_admin Role via Edit Dialog
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | The admin user edit dialog (`AdminUsers.tsx:322-331`) exposes ALL roles including `community_admin` in the role `<Select>`. Both `local_admin` and `community_admin` users can access this page. A `local_admin` can promote any user (including themselves) to `community_admin`. |
-| **Impact** | Direct privilege escalation — rogue local_admin becomes community_admin with full platform control. |
-| **Files to Fix** | `frontend/src/pages/admin/AdminUsers.tsx:322-331` (frontend), `backend/app/api/v1/endpoints/admin.py:231` (backend must also enforce) |
-| **Recommended Fix** | Filter role options based on current user's role. Only `community_admin` should see `community_admin`/`local_admin` options. Backend must also enforce: only `community_admin` can assign admin roles. |
-| **Status** | 🟡 Partially fixed — backend `update_user_profile_admin` now uses `RoleChecker([UserRole.community_admin])`. Frontend role-select filtering still needs verification. |
-
----
-
-## C-12 🔴 `setInterval` Countdown Timer Never Cleaned Up on Unmount
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `Register.tsx:200-204` — `startCountdown` creates a `setInterval` that decrements the OTP countdown timer. The interval is never cleared on component unmount. |
-| **Impact** | Memory leak (interval keeps firing), stale closure, React warning about setState on unmounted component after React 18. |
-| **Files to Fix** | `frontend/src/pages/Register.tsx:200-204` |
-| **Recommended Fix** | Use `useEffect` with cleanup returning `clearInterval(timer)`. Track timer via `useRef`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-13 🔴 `email_verifications.id` Column Has No DB Default
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | The `EmailVerification` model's `id` column is a UUID PK with no `server_default=gen_random_uuid()`. If the application layer fails to provide a UUID, the INSERT fails at the DB level. |
-| **Impact** | Registration flow can fail silently with 500 errors. OTP verification requests might be lost. |
-| **Files to Fix** | `backend/app/models/email_verification.py:15` |
-| **Recommended Fix** | Add `server_default=text("gen_random_uuid()")` as a hotfix migration. |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-14 🔴 `/register/verify-email` Issues Tokens for Existing Users (OTP-Only Takeover)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `auth.py:132-150` — When verifying an OTP, if `user` already exists (found by email), the endpoint **still issues access + refresh tokens** without verifying the user's password. The supplied password in the request body is ignored for existing users. |
-| **Impact** | Attacker who phishes or brute-forces an OTP (6-digit, no rate limit on verify) can get authenticated access to any existing account without knowing the password. OTP-only account takeover. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:132-150` |
-| **Recommended Fix** | Either (a) always verify the password against stored hash even for existing users, or (b) refuse to issue tokens if user already exists — return "Already registered, please login." |
-| **Status** | 🟢 Fixed |
-
----
-
-## C-15 🔴 (NEW) OTP Verify Endpoint Has No Rate Limiting
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `/register/verify-email` has no `@limiter.limit()` decorator. Combined with C-14, an attacker can brute-force OTP codes (6-digit = 10^6 space) with unlimited attempts against any registered email. |
-| **Impact** | Account takeover via OTP brute-force. No rate limit, no attempt counter, no lockout mechanism. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:107` |
-| **Recommended Fix** | Add `@limiter.limit("5/minute")` on the verify endpoint. Track failed attempts per email in DB; lock out after 5 failures. |
-| **Status** | 🟢 Fixed |
-
----
-
-# HIGH Severity Findings
 
 ## H-01 🔴 Stateless Refresh Tokens — No Server-Side Revocation
 
@@ -212,6 +14,7 @@
 | **Files to Fix** | `backend/app/core/security.py:18-28` • `backend/app/api/v1/endpoints/auth.py:259-265` |
 | **Recommended Fix** | Make refresh tokens opaque random tokens stored in a `refresh_tokens` table with `user_id`, `expires_at`, `revoked_at`. On rotation, detect reuse. On logout, revoke server-side. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -225,17 +28,6 @@
 | **Recommended Fix** | Store refresh tokens in DB. On rotation, mark old token as `rotated`. If a `rotated` token is presented again, revoke the entire token family. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-03 🟡 No Rate Limiting on Auth Endpoints (OTP Brute-Force)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `/register/email`, `/register/verify-email`, `/login`, `/token/refresh` have NO rate limiting. OTP is 6 digits (10^6 space) with no attempt counter. |
-| **Impact** | Attacker can brute-force OTP at high speed, achieving account takeover. Credential stuffing on `/login` is unlimited. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:36,84,156,204` |
-| **Recommended Fix** | Add per-identity rate limiting: max 5 OTP verification attempts per OTP lifetime (track in DB), max N login attempts per minute. Use `fastapi-limiter`/slowapi with Redis (already configured). |
-| **Status** | 🟡 Partially fixed — `@limiter.limit("5/minute")` on `/register/email`, `@limiter.limit("10/minute")` on `/login`. But `/register/verify-email` (the OTP brute-force vector) still has NO rate limiting. |
 
 ---
 
@@ -249,17 +41,6 @@
 | **Recommended Fix** | Accept the refresh token, revoke its server-side row, bump user's `token_version` to invalidate all access tokens immediately. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-05 🔴 OTP Stored in Plaintext in Database
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `auth.py:87-94` — OTP codes are stored as-is in the `EmailVerification` table. Anyone with DB read access (SQL injection elsewhere, backup leak, DBA) can read live OTPs. |
-| **Impact** | DB-level plaintext OTPs allow anyone with DB access to authenticate as any user. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:87-94`, `backend/app/models/email_verification.py:17` |
-| **Recommended Fix** | Hash OTPs at rest using HMAC-SHA256 with a server-side derived key. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -273,17 +54,6 @@
 | **Recommended Fix** | Add `Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))` to all four endpoints. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-07 🟡 Missing Role Checks on Matrimony Endpoints
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `matrimony.py:257,339,426,502,540,577,632,688,718,765` — All matrimony interaction endpoints (send requests, list requests, approve/reject, manage co-approvers) use only `get_current_user`. |
-| **Impact** | Unverified users can fully participate in the matrimony system — send connection requests, approve/reject matches — before any admin verification. |
-| **Files to Fix** | All matrimony endpoints listed above |
-| **Recommended Fix** | Add `Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))` to all these endpoints. |
-| **Status** | 🟡 Partially fixed — `/matches` endpoint now has `RoleChecker([UserRole.community_admin, UserRole.local_admin, UserRole.verified_adult])`. All other matrimony endpoints still only use `get_current_user`. |
 
 ---
 
@@ -297,41 +67,6 @@
 | **Recommended Fix** | Require the same 4-vote threshold for rejection, or require community_admin override for any rejection. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-09 🟡 No Region Scoping for local_admin (Data Breach)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `admin.py:137,173,271` — All admin list/stats endpoints (`/admin/dashboard`, `/admin/users`, `/admin/matrimony`) use `RoleChecker` that allows `local_admin` but provide NO region scoping. A `local_admin` assigned to one region can see ALL users platform-wide. |
-| **Impact** | Massive PII data breach — a local_admin for a small town can export names, phones, addresses, DOBs for the entire national community. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/admin.py:137,173,271` |
-| **Recommended Fix** | For `local_admin` users, filter all queries by their assigned region IDs from `LocalAdminRegion`. |
-| **Status** | 🟡 Partially fixed — `/admin/users` now filters by region for local_admin. `/admin/dashboard` and `/admin/matrimony` still have no region scoping. |
-
----
-
-## H-10 🔴 Self-Deletion of Admin Account
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `admin.py:307-324` — `delete_user_account_admin` does not check whether `current_admin.id == user_id`. A community_admin can delete their own account. |
-| **Impact** | Permanent self-DoS — if the only community_admin deletes their account, the platform has no remaining admin to restore or manage it. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/admin.py:316` |
-| **Recommended Fix** | Add `if current_admin.id == user_id: raise HTTPException(400, detail="Cannot delete your own account.")` |
-| **Status** | 🟢 Fixed |
-
----
-
-## H-11 🔴 Email Verification Code Leaked to Logs on SMTP Failure
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `utils/email.py:48,82` — When SMTP sending fails, the fallback logs: `logger.info(f"SIMULATION FALLBACK: Code is {code}")`. The full OTP is written to application logs. |
-| **Impact** | Anyone with log access (operators, log aggregation service, SIEM) can extract plaintext OTPs and authenticate as any user who experienced a failed email. |
-| **Files to Fix** | `backend/app/utils/email.py:48,82` |
-| **Recommended Fix** | Log only a masked code (`code[:2] + "****"`). Never log secrets even in fallback paths. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -345,6 +80,7 @@
 | **Recommended Fix** | Verify that `req.region_id` is in the current admin's assigned region IDs before allowing escalation. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-13 🔴 User Enumeration via Registration Endpoint
@@ -357,17 +93,6 @@
 | **Recommended Fix** | Return the same neutral message regardless of whether the email exists. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-14 🔴 `DEBUG=True` by Default in Production
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `config.py:19` — `DEBUG: bool = True` is the default. `session.py:16` uses `echo=settings.DEBUG`, dumping all SQL with bound parameters (emails, OTPs, UUIDs) to logs. |
-| **Impact** | PII and authentication secrets (OTPs) in plaintext application logs — privacy and compliance violation. SQL parameter logging can expose all user data. |
-| **Files to Fix** | `backend/app/core/config.py:19`, `backend/app/db/session.py:16` |
-| **Recommended Fix** | Default `DEBUG = False`. Gate `echo=True` behind `ENVIRONMENT == "development"`. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -381,6 +106,7 @@
 | **Recommended Fix** | Add `token_version` column to User. Embed as JWT claim. Compare on every request. Bump on role change / password change. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-16 🔴 Frontend — Dead Routes in Sidebar (Settings / Support)
@@ -392,6 +118,7 @@
 | **Files to Fix** | `frontend/src/components/layout/MainLayout.tsx:90-91` |
 | **Recommended Fix** | Either implement the routes or remove the dead links. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -405,6 +132,7 @@
 | **Recommended Fix** | Call `login(res.data.access_token, ...)` instead of manual localStorage write. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-18 🔴 Frontend — No Refresh-Token Race-Condition Lock
@@ -416,6 +144,7 @@
 | **Files to Fix** | `frontend/src/lib/api.ts:58-76` |
 | **Recommended Fix** | Implement a promise queue/mutex: cache the in-flight refresh promise and share it across concurrent 401s. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -429,6 +158,7 @@
 | **Recommended Fix** | Call a callback to also clear React state. Export a global `forceLogout()` function that AuthProvider listens to. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-20 🔴 Frontend — login() Stores Token Before Profile Fetch
@@ -440,6 +170,7 @@
 | **Files to Fix** | `frontend/src/contexts/AuthContext.tsx:81-82` |
 | **Recommended Fix** | Don't write token until profile fetch succeeds, or implement rollback. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -453,6 +184,7 @@
 | **Recommended Fix** | Create a dedicated `/profiles/registry` endpoint returning all verified members with masked contact info. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-22 🔴 Frontend — AdminSidebar Component Is Dead Code
@@ -464,6 +196,7 @@
 | **Files to Fix** | `frontend/src/components/layout/AdminSidebar.tsx` |
 | **Recommended Fix** | Delete the file if it's truly unused (verify via grep first). |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -477,6 +210,7 @@
 | **Recommended Fix** | Check both sender and receiver `double_approval_required` settings before allowing the request. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-24 🔴 Endpoint — Admin User List Has No Max Limit
@@ -488,6 +222,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/admin.py:175` |
 | **Recommended Fix** | Add `Field(le=100)` to the `limit` parameter or validate in the handler. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -501,6 +236,7 @@
 | **Recommended Fix** | Require co-approver to generate an invite code or accept first before assignment is stored. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-26 🔴 Endpoint — Admin Self-Editing and Self-Demotion
@@ -512,6 +248,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/admin.py:255` |
 | **Recommended Fix** | Prevent self-demotion: `if current_admin.id == user_id and request.role != UserRole.community_admin: raise HTTPException(400)` |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -525,6 +262,7 @@
 | **Recommended Fix** | Use `select ... for update` on the `VerificationRequest` row before counting and updating status. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## H-28 🔴 Frontend — Non-Functional "Pending Approvals" and "Guardian View" Tabs
@@ -537,81 +275,8 @@
 | **Recommended Fix** | Implement the tab content or remove the dead tabs/buttons. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## H-29 🔴 Backend — `AuditLog` Model Is Never Written
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | A full `AuditLog` table/model exists but NO endpoint, service, or event handler ever writes to it. Admin actions (user update/delete, verification approve/reject, role changes) are not audited. |
-| **Impact** | No audit trail for compliance. Cannot investigate who changed what or when. Violates basic security logging requirements. |
-| **Files to Fix** | `backend/app/models/audit.py` (exists, unused) |
-| **Recommended Fix** | Implement SQLAlchemy `before_flush` event or a service-layer `audit_log()` helper. Call from every mutating endpoint. |
-| **Status** | 🟢 Fixed |
 
 ---
-
-## H-30 🔴 (NEW) `seed_admin_only.py` Also Hardcodes Password
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `backend/app/db/seed_admin_only.py:24` hardcodes `password = "Password@123"` for the community admin account. Same known password as `seed.py`. |
-| **Impact** | Anyone with repo access knows the admin password for seeded installations. |
-| **Files to Fix** | `backend/app/db/seed_admin_only.py:24` |
-| **Recommended Fix** | Read password from environment variable. Use `from app.core.security import hash_password`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## H-31 🔴 (NEW) Forgot Password Endpoint Leaks Account Existence
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `auth.py:454-458` — `/forgot-password` returns 404 "No account associated" vs 200 "Reset code sent". An attacker can enumerate registered emails. |
-| **Impact** | Email enumeration + potential phishing vector. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:454-458` |
-| **Recommended Fix** | Always return 200 with a generic message regardless of whether the email exists. |
-| **Status** | 🟢 Fixed |
-
----
-
-## H-32 🔴 (NEW) Chat `sanitize_message` Phone Regex Is Broken
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:37-39` — Phone regex `r'\+?\(?\d\)?(?:\s*[-.\(\)]?\s*\d){7,14}\b'` has a malformed character class `\(?` after `\d` which matches incorrectly. The regex won't reliably match standard phone formats. |
-| **Impact** | Phone numbers in chat messages may not be properly redacted, leaking PII through the chat system. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:37-39` |
-| **Recommended Fix** | Use a well-tested regex like `r'\+?\d[\d\s\-\(\)]{7,15}\d'` or a phone-number parsing library. |
-| **Status** | 🟢 Fixed |
-
----
-
-## H-33 🟢 (FIXED) Chat Send Message Endpoint Has No Rate Limiting
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:208` — `POST /chat/messages` has no `@limiter.limit()` decorator. Combined with no role check (H-34), any unverified user can spam unlimited messages. |
-| **Impact** | Spam, phishing, and DoS vector against chat recipients. No throttling at application level. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:208` |
-| **Recommended Fix** | Add `@limiter.limit("10/minute")` on the send-message endpoint. Consider connection-level rate limit per conversation. |
-| **Status** | 🟢 Fixed |
-
----
-
-## H-34 🟢 (FIXED) Chat Endpoints Have No Role Check — Unverified Users Can Chat
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:81,156,208,249` — All four chat endpoints (`GET /sessions`, `GET /{profile_id}/messages`, `POST /messages`, `POST /{profile_id}/read`) use only `get_current_user`. No `RoleChecker` is applied. Users with `unverified` role can fully participate in matrimony chat. |
-| **Impact** | Unverified users bypass the verification system entirely — they can send, receive, and read messages in the matrimony network before admin approval. Overlaps with H-07. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:81,156,208,249` |
-| **Recommended Fix** | Add `Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))` to all four endpoints. |
-| **Status** | 🟢 Fixed |
-
----
-
-# MEDIUM Severity Findings
 
 ## M-01 🔴 CORS Origins Hardcoded and Ignoring Config
 
@@ -622,6 +287,7 @@
 | **Files to Fix** | `backend/app/main.py:66-69`, `backend/app/core/config.py:36` |
 | **Recommended Fix** | Use `settings.CORS_ORIGINS` in `main.py`. Add validator forbidding `["*"]` when `allow_credentials=True`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -635,17 +301,6 @@
 | **Recommended Fix** | In production: `docs_url=None, redoc_url=None, openapi_url=None`. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## M-03 🟡 No Rate Limiting or Security Headers at Framework Level
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `main.py` — Missing: `TrustedHostMiddleware` (host header injection), rate limiting (login/OTP brute-force), security headers (CSP, HSTS, X-Content-Type-Options), request body size limit. |
-| **Impact** | Systemic weakness — OTP brute-force possible (H-03), host header injection for password reset phishing (if implemented), SSL stripping without HSTS. |
-| **Files to Fix** | `backend/app/main.py` |
-| **Recommended Fix** | Add `slowapi`/`fastapi-limiter` for auth endpoints. Add `TrustedHostMiddleware`. Add security headers middleware. |
-| **Status** | 🟡 Partially fixed — `slowapi` limiter is now configured in `limiter.py` with Redis backend, and applied to `/register/email` and `/login`. But `TrustedHostMiddleware`, security headers, and body size limit still missing. |
 
 ---
 
@@ -659,6 +314,7 @@
 | **Recommended Fix** | Separate read-only vs write sessions, or commit only in handlers that mutate. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-05 🔴 SQL Echo in Production Exposes Bound Parameters
@@ -670,6 +326,7 @@
 | **Files to Fix** | `backend/app/db/session.py:16` |
 | **Recommended Fix** | Disable echo in production: `echo=settings.DEBUG and settings.ENVIRONMENT == "development"`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -683,6 +340,7 @@
 | **Recommended Fix** | Add `pool_pre_ping=True` to `create_async_engine`. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-07 🔴 In-Memory OTP Store (Lost on Restart, No Cross-Worker Support)
@@ -694,6 +352,7 @@
 | **Files to Fix** | `backend/app/services/otp.py:18-21` |
 | **Recommended Fix** | Use Redis or another persistent cache for OTP storage. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -707,6 +366,7 @@
 | **Recommended Fix** | Use persistent store (Redis). Lower retry cooldown to 1 minute. Limit is on generation, not verification. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-09 🔴 Cookie Security Flags — `Secure=False` in Non-Production
@@ -718,6 +378,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:163,212,267,422` |
 | **Recommended Fix** | Add `Secure=True` whenever request is HTTPS. Use `samesite="strict"`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -731,6 +392,7 @@
 | **Recommended Fix** | Single generic message for all login failure cases. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-11 🔴 `/token/refresh` Can 500 on Malformed `sub`
@@ -742,6 +404,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:248` |
 | **Recommended Fix** | Mirror `deps.py:52-59` — validate `user_id is not None`, parse in try/except, return 401 on failure. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -755,6 +418,7 @@
 | **Recommended Fix** | Use the schemas from `app.schemas.auth` (which have min_length). Add max_length (128) and strength validation. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-13 🔴 Duplicate User Race — No Exception Handling on UniqueViolation
@@ -766,6 +430,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/auth.py:132-148` |
 | **Recommended Fix** | Use `INSERT ... ON CONFLICT (email) DO NOTHING RETURNING id`, or wrap in try-except for `IntegrityError` returning 409. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -779,6 +444,7 @@
 | **Recommended Fix** | Add `Depends(RoleChecker([UserRole.unverified]))` or check `current_user.role` explicitly. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-15 🔴 Mass-Assignment via `setattr` Loop in Matrimony Update
@@ -790,6 +456,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/profiles.py:456-460` |
 | **Recommended Fix** | Use an allowlist of handled fields, or `exclude={"opted_in", "profile_id", "created_at", "updated_at"}`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -803,6 +470,7 @@
 | **Recommended Fix** | Add uniqueness check before assignment, or add DB unique constraint. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-17 🔴 Race Condition on Connection Request Creation
@@ -815,17 +483,6 @@
 | **Recommended Fix** | Wrap in try-except for `IntegrityError`, or use `select ... for update` to lock the check. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## M-18 🟡 Missing Pagination on `/matrimony/matches`
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `matrimony.py:116-117` — Matches endpoint now has pagination but no maximum `limit` bound. A caller could set `limit=1000000`. |
-| **Impact** | Network congestion, high memory usage, potential DoS. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/matrimony.py:45-46` |
-| **Recommended Fix** | Add `Field(le=50)` to the `limit` parameter. |
-| **Status** | 🟡 Partially fixed — `page` and `limit` parameters added. No max-bound check on `limit`. |
 
 ---
 
@@ -839,6 +496,7 @@
 | **Recommended Fix** | Only expose contact details on a per-request "review" endpoint. Mask/omit in list view. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-20 🔴 `generate_unique_username` Race Condition
@@ -850,6 +508,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/profiles.py:41-53` |
 | **Recommended Fix** | Use `INSERT ... ON CONFLICT (username) DO UPDATE` pattern, or generate UUID-based usernames with no collision risk. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -863,17 +522,6 @@
 | **Recommended Fix** | Use SQLAlchemy `Enum` type or add `CheckConstraint` for each field. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## M-22 🟢 Frontend — Dead "Forgot Password?" Link
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `Login.tsx:150` — "Forgot password?" link now correctly points to `/forgot-password`. Backend implements `/forgot-password` and `/reset-password` endpoints. |
-| **Impact** | FIXED — Password reset flow now exists end-to-end. |
-| **Files to Fix** | N/A |
-| **Recommended Fix** | Already implemented. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -887,6 +535,7 @@
 | **Recommended Fix** | Send `null` or omit the field. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-24 🔴 Frontend — `(user as any)?.email` Bypasses TypeScript Safety
@@ -898,6 +547,7 @@
 | **Files to Fix** | `frontend/src/pages/Profile.tsx:105` |
 | **Recommended Fix** | Add `email?: string` to the `AuthUser` interface in `types/index.ts`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -911,6 +561,7 @@
 | **Recommended Fix** | Differentiate between auth failure and profile fetch failure. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-26 🔴 Frontend — 404 Treated as "No Profile" in AuthContext
@@ -922,6 +573,7 @@
 | **Files to Fix** | `frontend/src/contexts/AuthContext.tsx:56-63` |
 | **Recommended Fix** | Backend should return 200 with `profile_exists: false` flag instead of 404. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -935,6 +587,7 @@
 | **Recommended Fix** | Define proper TypeScript interfaces for all API responses. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-28 🔴 Frontend — Missing `react` and `react-dom` as Direct Dependencies
@@ -946,6 +599,7 @@
 | **Files to Fix** | `frontend/package.json` |
 | **Recommended Fix** | Add `"react": "^19.0.0"` and `"react-dom": "^19.0.0"` to `dependencies`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -959,6 +613,7 @@
 | **Recommended Fix** | Move `"shadcn"` to `devDependencies`. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-30 🔴 Frontend — Non-Standard Tailwind Class `glass`
@@ -970,6 +625,7 @@
 | **Files to Fix** | `frontend/src/components/layout/Navbar.tsx:152` |
 | **Recommended Fix** | Define `glass` in CSS or use standard Tailwind `backdrop-blur-md bg-white/10`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -983,6 +639,7 @@
 | **Recommended Fix** | Use `navigate("/dashboard")` as fallback: `navigate(-1)` or `navigate("/dashboard")`. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-32 🔴 Frontend — Stale Closure in IntersectionObserver Cleanup
@@ -994,6 +651,7 @@
 | **Files to Fix** | `frontend/src/pages/admin/AdminUsers.tsx:50-70` |
 | **Recommended Fix** | Store trigger element in a `useRef` and use that in cleanup. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1007,6 +665,7 @@
 | **Recommended Fix** | Unify to a single endpoint `/verification/${id}/action` with `{ action: "approve" | "reject" | "escalate" }`. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-34 🔴 Backend — `safe_enum` Silently Drops Invalid Values
@@ -1018,6 +677,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/profiles.py:270-273,424-427` |
 | **Recommended Fix** | Raise `HTTPException(400, "Invalid value for field X")` or validate all enum values in Pydantic schema. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1031,6 +691,7 @@
 | **Recommended Fix** | Include `status` in the constraint or allow re-send after decline. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-36 🔴 Backend — All Date Columns Lack Bounds CHECK Constraints
@@ -1042,6 +703,7 @@
 | **Files to Fix** | `backend/app/models/profile.py`, `backend/app/models/memorial.py` |
 | **Recommended Fix** | Add `CheckConstraint("date_of_birth <= CURRENT_DATE")`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1055,6 +717,7 @@
 | **Recommended Fix** | Add schema validation in Pydantic, size limits, and GIN indexes for queried JSONB fields. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-38 🔴 Endpoint — No Email Uniqueness Check on Admin Creation
@@ -1066,6 +729,7 @@
 | **Files to Fix** | `backend/app/api/v1/endpoints/admin.py:49-56` |
 | **Recommended Fix** | Add explicit `select(User).where(User.email == request.email)` check before insert. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1079,6 +743,7 @@
 | **Recommended Fix** | Either update the role to `pending` or fix the comment. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-40 🔴 Frontend — `setTimeout` Redirect Not Captured/Cleaned
@@ -1090,6 +755,7 @@
 | **Files to Fix** | `frontend/src/pages/Register.tsx:345` |
 | **Recommended Fix** | Store timeout ID in ref and clear in `useEffect` cleanup. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1103,6 +769,7 @@
 | **Recommended Fix** | Wire toggles to backend (PUT `/profiles/me/social` or a new visibility endpoint). |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-42 🔴 Frontend — Hardcoded Unsplash Photo URLs as Default Avatars
@@ -1114,6 +781,7 @@
 | **Files to Fix** | `frontend/src/pages/Registry.tsx:76,106` |
 | **Recommended Fix** | Use local SVG default avatar or gradient-generated placeholder. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1127,6 +795,7 @@
 | **Recommended Fix** | Either use the flag to mask/hide contact or remove the dead field. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-44 🔴 Frontend — Duplicate `/verification` Route
@@ -1138,6 +807,7 @@
 | **Files to Fix** | `frontend/src/App.tsx:144-151` |
 | **Recommended Fix** | Remove the top-level `/verification` route. Keep the one under `/admin/verification`. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1151,6 +821,7 @@
 | **Recommended Fix** | Change to `UUID` to match the model. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## M-46 🔴 (NEW) `seed.py` `hobbies` Field Is String, Not JSONB Array
@@ -1162,6 +833,7 @@
 | **Files to Fix** | `backend/app/db/seed.py:214` |
 | **Recommended Fix** | Change to `hobbies=["Trekking", "Reading novels"]`. |
 | **Status** | 🔴 New finding |
+
 
 ---
 
@@ -1175,6 +847,7 @@
 | **Recommended Fix** | Read in chunks, or stream directly to storage service. |
 | **Status** | 🔴 New finding |
 
+
 ---
 
 ## M-48 🔴 (NEW) `safe_enum` Defined Twice in profiles.py
@@ -1187,17 +860,6 @@
 | **Recommended Fix** | Extract to a module-level helper function. |
 | **Status** | 🔴 New finding |
 
----
-
-## M-49 🔴 (NEW) Chat Messages Lack XSS Sanitization
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:233` — The `sanitize_message` function only redacts PII (phones, PINs, addresses) but does NOT strip HTML/script tags, markdown injection, or other XSS vectors. |
-| **Impact** | If chat messages are rendered with `dangerouslySetInnerHTML` or similar on the frontend, XSS is possible. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:233` |
-| **Recommended Fix** | Add HTML escaping or use a library like `bleach` to strip dangerous content server-side. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -1211,6 +873,7 @@
 | **Recommended Fix** | Keep `unverified` for onboarding flow but consider rate-limiting or removing extra fields like `pin_code` from the response. |
 | **Status** | 🔴 New finding |
 
+
 ---
 
 ## M-51 🔴 (NEW) Login "Stay Signed In" Checkbox Does Nothing
@@ -1223,65 +886,6 @@
 | **Recommended Fix** | Send `stay_signed_in` to login endpoint and adjust refresh token expiry server-side, or remove the checkbox. |
 | **Status** | 🔴 New finding |
 
----
-
-## M-52 🔴 (NEW) Chat — PIN Regex Overly Broad (False Positives on Any 5–6 Digit Number)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:43` — PIN regex `r'\b\d{5,6}\b'` matches ANY 5-6 digit number, not just postal codes. Numbers like "123456" (order ID), "500000" (salary), "98765" (employee ID) are all falsely redacted. |
-| **Impact** | Poor UX — legitimate numeric content (prices, quantities, IDs) is masked as "[REDACTED PIN]". |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:43` |
-| **Recommended Fix** | Use a more specific Indian-PIN pattern like `r'\b[1-9]\d{2}\s?\d{3}\b'` or a dedicated library. |
-| **Status** | 🟢 Fixed |
-
----
-
-## M-53 🔴 (NEW) Chat — Address Keyword "cross" Causes False Positives
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:47-50` — The word "cross" is in the address-keyword blacklist. Common non-address phrases like "I'm cross with you", "cross-check the details", "cross that out" trigger address redaction. |
-| **Impact** | Confusing UX — ordinary conversation is silently masked as "[REDACTED ADDRESS]". |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:47-50` |
-| **Recommended Fix** | Remove "cross" from keywords, or require adjacent context (e.g., "cross road", "cross street"). |
-| **Status** | 🟢 Fixed |
-
----
-
-## M-54 🔴 (NEW) Chat — No Backend `max_length` on Message Content
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `schemas/chat.py:9` — `ChatMessageCreate.content` is `str` with no `max_length` validator. The frontend enforces `maxLength={1000}` (Chat.tsx:404) but this is trivially bypassed via direct API calls. An attacker can send arbitrarily large messages. |
-| **Impact** | Memory exhaustion, potential DoS, inflated database storage. |
-| **Files to Fix** | `backend/app/schemas/chat.py:9` |
-| **Recommended Fix** | Add `max_length=1000` to the `content` field in `ChatMessageCreate`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## M-55 🔴 (NEW) Chat — No Composite Index on (sender, receiver, created_at)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `models/chat.py:17-18` — Only single-column indexes exist on `sender_profile_id` and `receiver_profile_id`. The main query pattern (chat.py:196-203) filters by `(sender, receiver)` pairs and orders by `created_at ASC`, which would benefit from a composite index. |
-| **Impact** | Query performance degrades as chat message volume grows. Full index scans on large conversations. |
-| **Files to Fix** | `backend/app/models/chat.py:17-18` |
-| **Recommended Fix** | Add `Index("ix_chat_sender_receiver_created", "sender_profile_id", "receiver_profile_id", "created_at")`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## M-56 🔴 (NEW) Chat — No Pagination on `get_chat_messages`
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `chat.py:196-203` — Returns ALL messages in a conversation with no `offset`/`limit` parameter. Active chats with thousands of messages cause high memory usage and slow response times. |
-| **Impact** | API timeout and OOM risk for long-running conversations. |
-| **Files to Fix** | `backend/app/api/v1/endpoints/chat.py:196-203` |
-| **Recommended Fix** | Add `limit` (default 50) and `offset` or `before`-timestamp query parameters. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -1299,6 +903,8 @@
 
 # LOW Severity Findings
 
+---
+
 ## L-01 🔴 `decode_jwt_token` Swallows All JWT Errors Into None
 
 | Field | Detail |
@@ -1308,6 +914,7 @@
 | **Files to Fix** | `backend/app/core/security.py:31-37` |
 | **Recommended Fix** | Catch `ExpiredSignatureError` separately. Log signature failures. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1321,6 +928,7 @@
 | **Recommended Fix** | Add `iat`, `jti=str(uuid.uuid4())`, `aud`, `iss` to all tokens. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## L-03 🔴 `bcrypt` 72-Byte Password Truncation
@@ -1332,6 +940,7 @@
 | **Files to Fix** | `backend/app/core/security.py:41-45,48-50` |
 | **Recommended Fix** | Pre-hash with SHA-256 before bcrypt, or cap password length at schema validator. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1345,6 +954,7 @@
 | **Recommended Fix** | Wrap `checkpw` in try/except, return `False` on error. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## L-05 🔴 `parse_cors_origins` Crashes on Non-JSON Values
@@ -1356,6 +966,7 @@
 | **Files to Fix** | `backend/app/core/config.py:70-75` |
 | **Recommended Fix** | Fall back to comma-split on `json.loads` failure. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1369,6 +980,7 @@
 | **Recommended Fix** | Use `extra="forbid"` or at minimum log warnings. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## L-07 🔴 Frontend — Hardcoded localhost Fallback for API URL
@@ -1380,6 +992,7 @@
 | **Files to Fix** | `frontend/src/lib/api.ts:4` |
 | **Recommended Fix** | Remove fallback or log a warning. |
 | **Status** | 🔴 Not fixed |
+
 
 ---
 
@@ -1393,6 +1006,7 @@
 | **Recommended Fix** | Remove the line for clarity. |
 | **Status** | 🔴 Not fixed |
 
+
 ---
 
 ## L-09 🔴 Frontend — Redundant `as UserRole` Cast
@@ -1405,17 +1019,6 @@
 | **Recommended Fix** | Remove the cast. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## L-10 🔴 `uuid` Import Unused in security.py
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `security.py:8` — `import uuid` is unused. |
-| **Impact** | Dead import. |
-| **Files to Fix** | `backend/app/core/security.py:8` |
-| **Recommended Fix** | Remove unused import. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -1426,29 +1029,6 @@
 | **Vulnerability** | Duplicate of M-45. `schemas/user.py:36` — `UserResponse.id: int`. |
 | **Status** | 🔴 Not fixed |
 
----
-
-## L-12 🔴 Version Mismatch (main.py 1.2.0 vs config.py 1.0.0)
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `main.py:30` hardcodes `version="1.2.0"` while `config.py:18` is `APP_VERSION="1.0.0"`. |
-| **Impact** | OpenAPI docs show one version, root endpoint returns another. |
-| **Files to Fix** | `backend/app/main.py:30` |
-| **Recommended Fix** | Use `version=settings.APP_VERSION`. |
-| **Status** | 🟢 Fixed |
-
----
-
-## L-13 🔴 (NEW) Chat — `ChatMessage` Model Missing `server_default` for UUID `id`
-
-| Field | Detail |
-|-------|--------|
-| **Vulnerability** | `models/chat.py:16` — `id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)` has no `server_default=text("gen_random_uuid()")`. Same issue as C-13 for email_verifications. |
-| **Impact** | If application layer fails to supply a UUID, INSERT fails. |
-| **Files to Fix** | `backend/app/models/chat.py:16` |
-| **Recommended Fix** | Add `server_default=text("gen_random_uuid()")`. |
-| **Status** | 🟢 Fixed |
 
 ---
 
@@ -1461,6 +1041,7 @@
 | **Files to Fix** | `frontend/src/pages/Chat.tsx:145`, `backend/app/api/v1/endpoints/chat.py:37-38` |
 | **Recommended Fix** | Share the same regex source between frontend and backend (e.g., an API endpoint that returns the sanitization patterns). |
 | **Status** | 🔴 New finding |
+
 
 ---
 
@@ -1494,123 +1075,6 @@
 
 # Quick-Fix Priority Order
 
-## Immediate (Critical — All Fixed ✅)
-
-| # | Issue | Status |
-|---|-------|--------|
-| 1 | C-01: Hardcoded default SECRET_KEY | 🟢 Fixed |
-| 2 | C-02: Refresh tokens as access tokens | 🟢 Fixed |
-| 3 | C-03: OTP master bypass (123456) | 🟢 Fixed |
-| 4 | C-04: Self-approval of verification | 🟢 Fixed |
-| 5 | C-05: Duplicate vote inflation | 🟢 Fixed |
-| 6 | C-09: Access token in localStorage | 🟡 Partial |
-| 7 | C-14: OTP-only account takeover | 🟢 Fixed |
-| 8 | C-15: OTP verify endpoint no rate limit | 🟢 Fixed |
-
-## Urgent (HIGH — Mostly Fixed ✅)
-
-| # | Issue | Status |
-|---|-------|--------|
-| 9 | H-01: Stateless refresh tokens (no revocation) | 🔴 Open |
-| 10 | H-06/H-07: Missing RoleCheckers on profile/matrimony endpoints | 🔴 Open |
-| 11 | H-08: Single admin can reject verification | 🔴 Open |
-| 12 | H-09: No region scoping for local_admin (dashboard/matrimony) | 🟡 Partial |
-| 13 | H-11: Email verification code leaked to logs | 🟢 Fixed |
-| 14 | H-14: DEBUG=True by default | 🟢 Fixed |
-| 15 | H-02: Refresh rotation reuse detection | 🔴 Open |
-| 16 | H-03: Rate limiting on OTP verify | 🟡 Partial |
-| 17 | H-04: Logout doesn't invalidate | 🔴 Open |
-| 18 | H-05: OTP in plaintext | 🟢 Fixed |
-| 19 | H-10: Self-deletion of admin | 🟢 Fixed |
-| 20 | H-12: Escalation lacks region check | 🔴 Open |
-| 21 | H-15: No token version / JTI | 🔴 Open |
-| 22 | H-30: seed_admin_only.py hardcoded password | 🟢 Fixed |
-| 23 | H-31: Forgot password enumeration | 🟢 Fixed |
-| 24 | H-32: Broken phone regex in chat | 🟢 Fixed |
-| 25 | C-06: Hardcoded seed password | 🟢 Fixed |
-| 26 | C-07: FamilyUnit cascade delete-orphan | 🟢 Fixed |
-| 27 | C-08: Recreate 7 dropped indexes | 🟢 Fixed |
-| 28 | C-10: Fake verified badge | 🟢 Fixed |
-| 29 | C-11: local_admin can assign community_admin | 🟡 Partial |
-| 30 | H-33: Chat send-message no rate limiting | 🟢 Fixed |
-| 31 | H-34: Chat endpoints no role check (unverified users can chat) | 🟢 Fixed |
-
-## Important (MEDIUM — 2 weeks)
-
-| # | Issue | Status |
-|---|-------|--------|
-| 30 | M-01 through M-57 (all medium findings) | 🔴 51 Open · 🟢 6 Fixed |
-
-### Fixed Medium Priority Items (Chat Feature)
-| # | Issue | Status |
-|---|-------|--------|
-| M-49 | Chat messages lack XSS sanitization | 🟢 Fixed |
-| M-52 | Chat PIN regex overly broad (false positives) | 🟢 Fixed |
-| M-53 | Chat "cross" keyword false positives | 🟢 Fixed |
-| M-54 | Chat message content no backend max_length | 🟢 Fixed |
-| M-55 | Chat missing composite index on (sender, receiver, created_at) | 🟢 Fixed |
-| M-56 | Chat get_chat_messages no pagination | 🟢 Fixed |
-| M-57 | Chat 4-second polling lacks backpressure | 🟢 Fixed |
-
-## Eventually (LOW)
-
-| # | Issue | Status |
-|---|-------|--------|
-| 31 | L-01 through L-15 (all low findings) | 🔴 11 Open · 🟢 3 Fixed · 🟡 1 Accepted |
-
-### Fixed/Pending Low Priority Items (Chat Feature)
-| # | Issue | Status |
-|---|-------|--------|
-| L-13 | ChatMessage model missing server_default for UUID id | 🟢 Fixed |
-| L-14 | Frontend warning regex differs from backend sanitization regex | 🟢 Fixed |
-| L-15 | Chat no WebSocket implementation (polling only) | 🟡 Accepted — not feasible on GCP Cloud Run |
-
----
-
-> **End of Report — 15 CRITICAL · 34 HIGH · 57 MEDIUM · 15 LOW findings**
->
-> **Status Summary:** 🟢 34 Fixed · 🟡 5 Partially Fixed · 🔴 97 Open
->
-> **Notable Changes Since Previous Audit:**
-> - **C-01** 🟢 SECRET_KEY validator rejects default in production
-> - **C-02** 🟢 Access tokens now carry `"type":"access"`; `get_current_user` rejects non-access tokens
-> - **C-03** 🟢 OTP master bypass (`123456`) blocked in production with `RuntimeError`
-> - **C-04** 🟢 Self-approval of verification requests blocked with 403
-> - **C-05** 🟢 UniqueConstraint added to prevent duplicate vote inflation; counting uses `count(distinct)`
-> - **C-06** 🟢 Seed scripts read password from `SEED_PASSWORD` env var
-> - **C-07** 🟢 FamilyUnit cascade changed from `delete-orphan` to `all`
-> - **C-08** 🟢 Migration created to recreate 7 dropped indexes
-> - **C-09** 🟡 Token expiry validation added before localStorage read; full in-memory migration pending
-> - **C-10** 🟢 Verified badge now conditionally renders based on user role
-> - **C-12** 🟢 `setInterval` cleanup via `useRef` + `useEffect` return
-> - **C-13** 🟢 `server_default=gen_random_uuid()` added to `email_verifications.id`
-> - **C-14** 🟢 `/register/verify-email` now rejects existing users instead of issuing tokens
-> - **C-15** 🟢 `@limiter.limit("5/minute")` added to verify-email endpoint
-> - **H-05** 🟢 OTP codes hashed (`SHA-256` + `SECRET_KEY` salt) before DB storage
-> - **H-10** 🟢 Self-admin-deletion blocked
-> - **H-11** 🟢 OTP removed from SMTP failure log fallback
-> - **H-14** 🟢 `DEBUG` defaults to `False`
-> - **H-30** 🟢 `seed_admin_only.py` reads password from env var
-> - **H-31** 🟢 Forgot-password returns uniform message regardless of email existence
-> - **H-32** 🟢 Chat phone regex replaced with working pattern
-> - **M-01** 🟢 CORS now reads from `settings.CORS_ORIGINS`
-> - **M-02** 🟢 Swagger/ReDoc hidden in production (`docs_url=None`, `redoc_url=None`)
-> - **L-10** 🟢 Unused `uuid` import removed
-> - **L-12** 🟢 Version string unified via `settings.APP_VERSION`
->
-> **Chat Feature Fixes (this session):**
-> - **H-33** 🟢 `@limiter.limit("10/minute")` added to send-message endpoint
-> - **H-34** 🟢 `RoleChecker` added to all 4 chat endpoints (verified_adult+ required)
-> - **M-49** 🟢 `html.escape()` added to `sanitize_message` for XSS prevention
-> - **M-52** 🟢 PIN regex narrowed to `[1-9]\d{2}\s?\d{3}` (Indian PIN format)
-> - **M-53** 🟢 "cross" removed from address keyword list
-> - **M-54** 🟢 `max_length=1000` added to `ChatMessageCreate.content` (schema)
-> - **M-55** 🟢 Composite index `ix_chat_sender_receiver_created` created via migration
-> - **M-56** 🟢 Pagination (`limit`/`offset` query params) added to `get_chat_messages`
-> - **M-57** 🟢 Polling switched from `setInterval` to recursive `setTimeout` with backpressure
-> - **L-13** 🟢 `server_default=gen_random_uuid()` added to `chat_messages.id` via migration
-> - **L-14** 🟢 Frontend warning regex synced with backend sanitization regex
-> - **L-15** 🔴 Accepted — WebSockets not feasible on GCP Cloud Run; polling improved as mitigation
 
 ---
 

@@ -2,6 +2,7 @@
 CommunityConnect Backend - Authentication Endpoints
 """
 
+import hashlib
 from datetime import timedelta, datetime, timezone
 import uuid
 import secrets
@@ -25,6 +26,10 @@ from app.utils.email import send_verification_email, send_reset_password_email
 from app.core.limiter import limiter
 
 router = APIRouter()
+
+
+def _hash_otp(code: str) -> str:
+    return hashlib.sha256((code + settings.SECRET_KEY).encode("utf-8")).hexdigest()
 
 
 class EmailOTPRequest(BaseModel):
@@ -84,13 +89,13 @@ async def register_email(payload: EmailOTPRequest, request: Request, db: AsyncSe
                 detail=f"Please wait {remaining} seconds before requesting a new OTP."
             )
 
-        existing_verification.code = code
+        existing_verification.code = _hash_otp(code)
         existing_verification.expires_at = expires_at
         existing_verification.created_at = now
     else:
         new_verification = EmailVerification(
             email=email,
-            code=code,
+            code=_hash_otp(code),
             expires_at=expires_at
         )
         db.add(new_verification)
@@ -105,19 +110,20 @@ async def register_email(payload: EmailOTPRequest, request: Request, db: AsyncSe
 
 
 @router.post("/register/verify-email", response_model=TokenResponse)
-async def verify_email_code(request: EmailOTPVerify, response: Response, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def verify_email_code(payload: EmailOTPVerify, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     """
     Step 2: User provides the OTP code sent to their email.
     If valid, we generate a temporary "unverified" User account and return access tokens.
     """
-    email = request.email.lower()
+    email = payload.email.lower()
     
     # 1. Verify OTP
     stmt = select(EmailVerification).where(EmailVerification.email == email)
     result = await db.execute(stmt)
     verification = result.scalars().first()
 
-    if not verification or verification.code != request.code:
+    if not verification or verification.code != _hash_otp(payload.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid verification code."
@@ -134,18 +140,25 @@ async def verify_email_code(request: EmailOTPVerify, response: Response, db: Asy
     result = await db.execute(stmt)
     user = result.scalars().first()
     
-    if not user:
-        # Create unverified user
-        from app.models.enums import UserRole
-        user = User(
-            email=email,
-            password_hash=hash_password(request.password),
-            role=UserRole.unverified,
-            is_active=True
-        )
-        db.add(user)
+    if user:
+        await db.delete(verification)
         await db.commit()
-        await db.refresh(user)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already registered. Please log in."
+        )
+        
+    # Create unverified user
+    from app.models.enums import UserRole
+    user = User(
+        email=email,
+        password_hash=hash_password(payload.password),
+        role=UserRole.unverified,
+        is_active=True
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
         
     # 3. Clean up OTP
     await db.delete(verification)
@@ -153,7 +166,7 @@ async def verify_email_code(request: EmailOTPVerify, response: Response, db: Asy
 
     # 4. Generate Tokens
     access_token = create_jwt_token(
-        {"sub": str(user.id), "role": user.role.value}
+        {"sub": str(user.id), "role": user.role.value, "type": "access"}
     )
     refresh_token = create_jwt_token(
         {"sub": str(user.id), "type": "refresh"},
@@ -201,7 +214,7 @@ async def login(payload: UserLogin, request: Request, response: Response, db: As
 
     # Generate new tokens
     access_token = create_jwt_token(
-        {"sub": str(user.id), "role": user.role.value}
+        {"sub": str(user.id), "role": user.role.value, "type": "access"}
     )
     refresh_token = create_jwt_token(
         {"sub": str(user.id), "type": "refresh"},
@@ -257,7 +270,7 @@ async def refresh_tokens(request: Request, response: Response, db: AsyncSession 
 
     # Generate new tokens
     access_token = create_jwt_token(
-        {"sub": str(user.id), "role": user.role.value}
+        {"sub": str(user.id), "role": user.role.value, "type": "access"}
     )
     new_refresh_token = create_jwt_token(
         {"sub": str(user.id), "type": "refresh"},
@@ -412,7 +425,7 @@ async def google_callback(
 
     # 4. Generate system access and refresh tokens
     access_token = create_jwt_token(
-        {"sub": str(user.id), "role": user.role.value}
+        {"sub": str(user.id), "role": user.role.value, "type": "access"}
     )
     refresh_token = create_jwt_token(
         {"sub": str(user.id), "type": "refresh"},
@@ -446,23 +459,14 @@ async def forgot_password(
     """
     email = request.email.lower()
     
-    # 1. Verify user exists
+    # 1. Verify user exists — always return 200 to prevent account enumeration
     stmt = select(User).where(User.email == email)
     result = await db.execute(stmt)
     user = result.scalars().first()
     
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No account associated with this email address was found."
-        )
+    if not user or not user.is_active:
+        return {"message": "If an account exists with this email, a password reset code has been sent."}
         
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This account is currently inactive."
-        )
-
     # 2. Generate 6-digit OTP code
     code = "".join(str(secrets.randbelow(10)) for _ in range(6))
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
@@ -489,13 +493,13 @@ async def forgot_password(
                 detail=f"Please wait {remaining} seconds before requesting a new code."
             )
 
-        existing_verification.code = code
+        existing_verification.code = _hash_otp(code)
         existing_verification.expires_at = expires_at
         existing_verification.created_at = now
     else:
         new_verification = EmailVerification(
             email=email,
-            code=code,
+            code=_hash_otp(code),
             expires_at=expires_at
         )
         db.add(new_verification)
@@ -523,7 +527,7 @@ async def reset_password(
     result_v = await db.execute(stmt_v)
     verification = result_v.scalars().first()
 
-    if not verification or verification.code != request.code:
+    if not verification or verification.code != _hash_otp(request.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid verification code."
