@@ -417,9 +417,19 @@ export default function Matrimony() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                      <DialogTitle className="text-xl font-bold text-[#0f172a]">
-                        {selectedMatch.profile?.full_name}
-                      </DialogTitle>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <DialogTitle className="text-xl font-bold text-[#0f172a]">
+                          {selectedMatch.profile?.full_name}
+                        </DialogTitle>
+                        {selectedMatch.profile?.username && (
+                          <Link
+                            to={`/${selectedMatch.profile.username}`}
+                            className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            (View Profile Page)
+                          </Link>
+                        )}
+                      </div>
                       {selectedMatch.profile?.username && (
                         <p className="text-xs text-[#64748b] font-mono leading-none">
                           @{selectedMatch.profile.username}
@@ -477,19 +487,7 @@ export default function Matrimony() {
                   <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5 text-[#0f172a]" /> Contact details
                   </h4>
-                  <div className="grid sm:grid-cols-2 gap-4 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
-                        Contact Number
-                      </p>
-                      {selectedMatch.connection_status === "approved" ? (
-                        <p className="font-semibold text-[#0f172a]">{selectedMatch.profile?.contact_number || "—"}</p>
-                      ) : (
-                        <p className="text-[#64748b] font-medium flex items-center gap-1 italic">
-                          <Lock className="h-3 w-3" /> Masked until connected
-                        </p>
-                      )}
-                    </div>
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs">
                     <div>
                       <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
                         Home Address

@@ -11,6 +11,7 @@ from app.models.memorial import MemorialRecord
 from app.models.audit import AuditLog
 from app.models.email_verification import EmailVerification
 from app.models.interaction import ProfileLike, ProfileDislike
+from app.models.chat import ChatMessage
 
 __all__ = [
     "UserRole",
@@ -33,5 +34,6 @@ __all__ = [
     "ProfileLike",
     "ProfileDislike",
     "GuardianRecommendation",
+    "ChatMessage",
 ]
 

@@ -112,13 +112,29 @@ export interface VerificationRequest {
     contact_number?: string
     address?: string
     occupation?: string
+    social_links?: {
+      linkedin?: string
+      instagram?: string
+      facebook?: string
+      twitter?: string
+    }
   }
   matrimony?: {
     opted_in: boolean
     height_cm?: number
     employment_type?: string
+    company_name?: string
     gotra?: string
+    sub_caste?: string
     highest_qualification?: string
+    rashi?: string
+    nakshatra?: string
+    manglik_status?: string
+    birth_time?: string
+    birth_place?: string
+    father_name?: string
+    mother_name?: string
+    family_values?: string
   }
 }
 

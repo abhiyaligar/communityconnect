@@ -365,7 +365,7 @@ export default function AdminVerification() {
 
       {/* Profile Details Dialog */}
       <Dialog open={!!selectedProfileRequest} onOpenChange={(open) => !open && setSelectedProfileRequest(null)}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto border border-[#e2e8f0] bg-white p-6 rounded-2xl text-[#0f172a]">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto border border-[#e2e8f0] bg-white p-6 rounded-2xl text-[#0f172a]">
           {selectedProfileRequest && (
             <div className="space-y-6">
               <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">
@@ -421,26 +421,131 @@ export default function AdminVerification() {
                   </div>
                 </div>
 
+                {/* Social Links */}
+                {selectedProfileRequest.profile?.social_links && (
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Social Media Verification Links</h4>
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2 text-xs flex gap-4 flex-wrap">
+                      {selectedProfileRequest.profile.social_links.linkedin && (
+                        <a 
+                          href={selectedProfileRequest.profile.social_links.linkedin} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline font-semibold flex items-center gap-1"
+                        >
+                          LinkedIn ↗
+                        </a>
+                      )}
+                      {selectedProfileRequest.profile.social_links.instagram && (
+                        <a 
+                          href={selectedProfileRequest.profile.social_links.instagram} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-pink-600 hover:text-pink-800 underline font-semibold flex items-center gap-1"
+                        >
+                          Instagram ↗
+                        </a>
+                      )}
+                      {selectedProfileRequest.profile.social_links.facebook && (
+                        <a 
+                          href={selectedProfileRequest.profile.social_links.facebook} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-blue-700 hover:text-blue-900 underline font-semibold flex items-center gap-1"
+                        >
+                          Facebook ↗
+                        </a>
+                      )}
+                      {selectedProfileRequest.profile.social_links.twitter && (
+                        <a 
+                          href={selectedProfileRequest.profile.social_links.twitter} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-slate-700 hover:text-slate-900 underline font-semibold flex items-center gap-1"
+                        >
+                          Twitter ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Matrimony Details */}
                 {selectedProfileRequest.matrimony?.opted_in && (
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Matrimony Opt-In Details</h4>
-                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-[#64748b]">Height</span>
-                        <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.height_cm ? `${selectedProfileRequest.matrimony.height_cm} cm` : "—"}</span>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Matrimony Profile Details</h4>
+                      <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
+                        <div className="flex justify-between border-b border-[#e2e8f0]/40 pb-1.5 col-span-2">
+                          <span className="text-[#64748b]">Sub Caste</span>
+                          <span className="font-bold text-[#0f172a]">{selectedProfileRequest.matrimony.sub_caste || "—"}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-[#e2e8f0]/40 pb-1.5 col-span-2">
+                          <span className="text-[#64748b]">Company Name</span>
+                          <span className="font-bold text-[#0f172a]">{selectedProfileRequest.matrimony.company_name || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Height</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.height_cm ? `${selectedProfileRequest.matrimony.height_cm} cm` : "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Gotra</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.gotra || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Qualification</span>
+                          <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.highest_qualification || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Employment</span>
+                          <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.employment_type || "—"}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#64748b]">Gotra</span>
-                        <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.gotra || "—"}</span>
+                    </div>
+
+                    {/* Birth & Horoscope details */}
+                    <div className="space-y-2">
+                      <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Horoscope & Birth Details</h4>
+                      <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Rashi</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.rashi || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Nakshatra</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.nakshatra || "—"}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2 border-t border-[#e2e8f0]/40 pt-2">
+                          <span className="text-[#64748b]">Manglik Status</span>
+                          <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.manglik_status || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Birth Time</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.birth_time || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#64748b]">Birth Place</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.birth_place || "—"}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#64748b]">Qualification</span>
-                        <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.highest_qualification || "—"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#64748b]">Employment</span>
-                        <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.employment_type || "—"}</span>
+                    </div>
+
+                    {/* Family background details */}
+                    <div className="space-y-2">
+                      <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider">Family Background</h4>
+                      <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
+                        <div className="flex justify-between col-span-2 border-b border-[#e2e8f0]/40 pb-1.5">
+                          <span className="text-[#64748b]">Father's Name</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.father_name || "—"}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2 border-b border-[#e2e8f0]/40 pb-1.5">
+                          <span className="text-[#64748b]">Mother's Name</span>
+                          <span className="font-semibold text-[#0f172a]">{selectedProfileRequest.matrimony.mother_name || "—"}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-[#64748b]">Family Values</span>
+                          <span className="font-semibold text-[#0f172a] capitalize">{selectedProfileRequest.matrimony.family_values || "—"}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

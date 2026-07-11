@@ -1,7 +1,7 @@
 
 # CommunityConnect Backend - Profile & Matrimony Schemas
 
-from pydantic import BaseModel, HttpUrl, Field, field_validator
+from pydantic import BaseModel, HttpUrl, Field, field_validator, model_validator
 from typing import Optional, List
 from datetime import date
 from uuid import UUID
@@ -60,12 +60,38 @@ class ProfileOnboard(BaseModel):
     languages: List[str] = []
     additional_photos: List[str] = []
     visibility: str = "public"
+    sub_caste: Optional[str] = None
+    company_name: Optional[str] = None
     
     # Social
     social_links: Optional[dict] = None
     
     # Username
     username: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_onboard_requirements(self) -> 'ProfileOnboard':
+        if not self.profile_photo_url or self.profile_photo_url == "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde":
+            raise ValueError("A profile photo upload is compulsory. Please upload a profile photo to proceed.")
+        
+        socials = self.social_links or {}
+        active_socials = {k: v for k, v in socials.items() if v and str(v).strip()}
+        if not active_socials:
+            raise ValueError("At least one social media link is compulsory to proceed.")
+        
+        is_employed = False
+        if self.create_matrimony and self.employment_type in ["employed", "self_employed", "business"]:
+            is_employed = True
+        
+        if is_employed:
+            linkedin_url = active_socials.get("linkedin")
+            if not linkedin_url or not str(linkedin_url).strip():
+                raise ValueError("LinkedIn verification profile link is compulsory for employed, self-employed, or business candidates.")
+            
+            if "linkedin.com" not in str(linkedin_url).lower():
+                raise ValueError("A valid LinkedIn profile URL is required (e.g. https://www.linkedin.com/in/username).")
+                
+        return self
     
     class Config:
         json_schema_extra = {
@@ -98,11 +124,13 @@ class MatrimonyProfileUpdate(BaseModel):
     institution: Optional[str] = None
     employment_type: Optional[str] = None
     job_title: Optional[str] = None
+    company_name: Optional[str] = None
     income_range: Optional[str] = None
     work_location: Optional[str] = None
     
     # Horoscope
     gotra: Optional[str] = None
+    sub_caste: Optional[str] = None
     rashi: Optional[str] = None
     nakshatra: Optional[str] = None
     manglik_status: Optional[str] = None

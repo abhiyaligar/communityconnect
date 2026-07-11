@@ -186,7 +186,7 @@ async def get_matrimony_matches(
             is_connected = req.status == ConnectionRequestStatus.approved
 
         # Data masking
-        contact_number = prof.contact_number if is_connected else None
+        contact_number = None
         address = prof.address if is_connected else "Hidden until connected"
         additional_photos = mat.additional_photos if is_connected else []
 

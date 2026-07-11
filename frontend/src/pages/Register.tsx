@@ -31,16 +31,35 @@ interface FormData {
   region_id: string
   profile_photo_url: string
 
+  // Social Links
+  linkedin: string
+  instagram: string
+  facebook: string
+  twitter: string
+
   // Matrimony
   create_matrimony: boolean
   height_cm: string
   highest_qualification: string
   employment_type: string
   job_title: string
+  company_name: string
   income_range: string
   work_location: string
   gotra: string
+  sub_caste: string
+  rashi: string
+  nakshatra: string
   manglik_status: string
+  birth_time: string
+  birth_place: string
+  father_name: string
+  father_occupation: string
+  mother_name: string
+  mother_occupation: string
+  family_type: string
+  family_values: string
+  family_financial_status: string
   diet: string
 }
 
@@ -82,15 +101,32 @@ export default function Register() {
     address: "",
     region_id: "",
     profile_photo_url: "",
+    linkedin: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
     create_matrimony: false,
     height_cm: "",
     highest_qualification: "",
     employment_type: "",
     job_title: "",
+    company_name: "",
     income_range: "",
     work_location: "",
     gotra: "",
+    sub_caste: "",
+    rashi: "",
+    nakshatra: "",
     manglik_status: "",
+    birth_time: "",
+    birth_place: "",
+    father_name: "",
+    father_occupation: "",
+    mother_name: "",
+    mother_occupation: "",
+    family_type: "",
+    family_values: "",
+    family_financial_status: "",
     diet: "",
   })
 
@@ -210,12 +246,51 @@ export default function Register() {
     }
   }
 
+  const handleNextToMatrimony = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!form.profile_photo_url || form.profile_photo_url === "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde") {
+      setError("A profile photo upload is compulsory. Please upload a photo to proceed.")
+      return
+    }
+
+    const hasSocial = form.linkedin?.trim() || form.instagram?.trim() || form.facebook?.trim() || form.twitter?.trim()
+    if (!hasSocial) {
+      setError("At least one social media link (LinkedIn, Instagram, Facebook, or Twitter) is compulsory.")
+      return
+    }
+
+    setError("")
+    setStep("matrimony")
+  }
+
   const handleOnboard = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.full_name || !form.date_of_birth || !form.gender || !form.phone_number || !form.region_id) {
       setError("Please fill in all required core fields.")
       return
     }
+
+    // Double check social link counts
+    const hasSocial = form.linkedin?.trim() || form.instagram?.trim() || form.facebook?.trim() || form.twitter?.trim();
+    if (!hasSocial) {
+      setError("At least one social media link is compulsory.")
+      return
+    }
+
+    // Double check LinkedIn rule for active employment
+    const isEmployed = form.create_matrimony && ["employed", "self_employed", "business"].includes(form.employment_type);
+    if (isEmployed && (!form.linkedin || !form.linkedin.trim() || !form.linkedin.toLowerCase().includes("linkedin.com"))) {
+      setError("LinkedIn profile URL is compulsory for employed, self-employed, or business candidates.")
+      return
+    }
+
+    // Double check photo upload
+    if (!form.profile_photo_url || form.profile_photo_url === "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde") {
+      setError("A profile photo upload is compulsory.")
+      return
+    }
+
     setError("")
     setLoading(true)
     try {
@@ -230,15 +305,34 @@ export default function Register() {
         region_id: form.region_id || undefined,
         profile_photo_url: form.profile_photo_url || undefined,
         create_matrimony: form.create_matrimony,
+        social_links: {
+          linkedin: form.linkedin?.trim() || undefined,
+          instagram: form.instagram?.trim() || undefined,
+          facebook: form.facebook?.trim() || undefined,
+          twitter: form.twitter?.trim() || undefined
+        },
         // Optional Matrimony data
         height_cm: form.height_cm || undefined,
         highest_qualification: form.highest_qualification || undefined,
         employment_type: form.employment_type || undefined,
         job_title: form.job_title || undefined,
+        company_name: form.company_name || undefined,
         income_range: form.income_range || undefined,
         work_location: form.work_location || undefined,
         gotra: form.gotra || undefined,
+        sub_caste: form.sub_caste || undefined,
+        rashi: form.rashi || undefined,
+        nakshatra: form.nakshatra || undefined,
         manglik_status: form.manglik_status || undefined,
+        birth_time: form.birth_time || undefined,
+        birth_place: form.birth_place || undefined,
+        father_name: form.father_name || undefined,
+        father_occupation: form.father_occupation || undefined,
+        mother_name: form.mother_name || undefined,
+        mother_occupation: form.mother_occupation || undefined,
+        family_type: form.family_type || undefined,
+        family_values: form.family_values || undefined,
+        family_financial_status: form.family_financial_status || undefined,
         diet: form.diet || undefined,
       })
       
@@ -453,7 +547,7 @@ export default function Register() {
                 <CardDescription className="text-xs">Tell us a bit about yourself.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
-                <form onSubmit={(e) => { e.preventDefault(); setStep("matrimony") }} className="space-y-5">
+                <form onSubmit={handleNextToMatrimony} className="space-y-5">
                   {/* Centered Avatar Image Upload */}
                   <div className="flex flex-col items-center justify-center pb-6 border-b border-border/40 stagger-fade-in-3">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -585,8 +679,56 @@ export default function Register() {
                         required 
                       />
                     </div>
+
+                    {/* Social Media Links */}
+                    <div className="space-y-4 pt-4 border-t border-border/40">
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Social Media (Add at least one)</h3>
+                      
+                      <div className="space-y-2">
+                        <Label>LinkedIn Profile URL (Mandatory if employed)</Label>
+                        <Input 
+                          placeholder="https://www.linkedin.com/in/username" 
+                          value={form.linkedin} 
+                          onChange={(e) => setF("linkedin")(e.target.value)} 
+                          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Instagram Profile URL</Label>
+                        <Input 
+                          placeholder="https://www.instagram.com/username" 
+                          value={form.instagram} 
+                          onChange={(e) => setF("instagram")(e.target.value)} 
+                          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Facebook URL</Label>
+                          <Input 
+                            placeholder="https://facebook.com/username" 
+                            value={form.facebook} 
+                            onChange={(e) => setF("facebook")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Twitter / X URL</Label>
+                          <Input 
+                            placeholder="https://x.com/username" 
+                            value={form.twitter} 
+                            onChange={(e) => setF("twitter")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
                   <div className="pt-4 stagger-fade-in-4">
                     <Button type="submit" className="w-full h-11 sm:h-10 text-xs cursor-pointer hover-scale">
                       Next Step <ArrowRight className="h-4 w-4 ml-2" />
@@ -623,35 +765,47 @@ export default function Register() {
 
                   {form.create_matrimony && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Quick Details</h3>
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Matrimony Profile Details</h3>
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Height (cm)</Label>
+                          <Label>Height (cm) *</Label>
                           <Input 
                             type="number" 
                             placeholder="175" 
                             value={form.height_cm} 
                             onChange={(e) => setF("height_cm")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Gotra</Label>
+                          <Label>Gotra *</Label>
                           <Input 
                             placeholder="e.g. Kashyap" 
                             value={form.gotra} 
                             onChange={(e) => setF("gotra")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
                           />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Education</Label>
-                          <Select value={form.highest_qualification} onValueChange={setF("highest_qualification")}>
-                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <Label>Sub Caste *</Label>
+                          <Input 
+                            placeholder="e.g. Shakdwipi" 
+                            value={form.sub_caste} 
+                            onChange={(e) => setF("sub_caste")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Education *</Label>
+                          <Select value={form.highest_qualification} onValueChange={setF("highest_qualification")} required>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="bachelors">Bachelor's</SelectItem>
                               <SelectItem value="masters">Master's</SelectItem>
@@ -661,10 +815,13 @@ export default function Register() {
                             </SelectContent>
                           </Select>
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Employment</Label>
-                          <Select value={form.employment_type} onValueChange={setF("employment_type")}>
-                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <Label>Employment Status *</Label>
+                          <Select value={form.employment_type} onValueChange={setF("employment_type")} required>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="employed">Employed</SelectItem>
                               <SelectItem value="self_employed">Self Employed</SelectItem>
@@ -674,11 +831,136 @@ export default function Register() {
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="space-y-2">
+                          <Label>Company Name * (If employed)</Label>
+                          <Input 
+                            placeholder="e.g. Google" 
+                            value={form.company_name} 
+                            onChange={(e) => setF("company_name")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required={["employed", "self_employed", "business"].includes(form.employment_type)}
+                          />
+                        </div>
                       </div>
-                      
-                      <p className="text-xs text-muted-foreground mt-2">
-                        You can add more details (horoscope, family, photos) later from your dashboard.
-                      </p>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Profession / Job Title *</Label>
+                          <Input 
+                            placeholder="e.g. Software Engineer" 
+                            value={form.job_title} 
+                            onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Work Location *</Label>
+                          <Input 
+                            placeholder="e.g. Bangalore" 
+                            value={form.work_location} 
+                            onChange={(e) => setF("work_location")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Rashi *</Label>
+                          <Input 
+                            placeholder="e.g. Mesh" 
+                            value={form.rashi} 
+                            onChange={(e) => setF("rashi")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Nakshatra *</Label>
+                          <Input 
+                            placeholder="e.g. Ashwini" 
+                            value={form.nakshatra} 
+                            onChange={(e) => setF("nakshatra")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Manglik Status *</Label>
+                          <Select value={form.manglik_status} onValueChange={setF("manglik_status")} required>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manglik">Manglik</SelectItem>
+                              <SelectItem value="non_manglik">Non Manglik</SelectItem>
+                              <SelectItem value="partial">Anshik (Partial)</SelectItem>
+                              <SelectItem value="unknown">Don't Know</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Family Values *</Label>
+                          <Select value={form.family_values} onValueChange={setF("family_values")} required>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="orthodox">Orthodox</SelectItem>
+                              <SelectItem value="traditional">Traditional</SelectItem>
+                              <SelectItem value="moderate">Moderate</SelectItem>
+                              <SelectItem value="liberal">Liberal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Birth Time *</Label>
+                          <Input 
+                            placeholder="e.g. 14:35" 
+                            value={form.birth_time} 
+                            onChange={(e) => setF("birth_time")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Birth Place *</Label>
+                          <Input 
+                            placeholder="e.g. Hubli" 
+                            value={form.birth_place} 
+                            onChange={(e) => setF("birth_place")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Father's Name *</Label>
+                          <Input 
+                            placeholder="Father's Full Name" 
+                            value={form.father_name} 
+                            onChange={(e) => setF("father_name")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Mother's Name *</Label>
+                          <Input 
+                            placeholder="Mother's Full Name" 
+                            value={form.mother_name} 
+                            onChange={(e) => setF("mother_name")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
 

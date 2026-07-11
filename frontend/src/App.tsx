@@ -20,6 +20,7 @@ import Settings from "@/pages/Settings"
 import Matrimony from "@/pages/Matrimony"
 import EditMatrimony from "@/pages/EditMatrimony"
 import MatrimonyRequests from "@/pages/MatrimonyRequests"
+import Chat from "@/pages/Chat"
 import NotFound from "@/pages/NotFound"
 import GoogleCallback from "@/pages/GoogleCallback"
 import ForgotPassword from "@/pages/ForgotPassword"
@@ -175,6 +176,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={["verified_adult"]}>
               <MainLayout>
                 <MatrimonyRequests />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matrimony/chat"
+          element={
+            <ProtectedRoute allowedRoles={["verified_adult", "local_admin", "community_admin"]}>
+              <MainLayout>
+                <Chat />
               </MainLayout>
             </ProtectedRoute>
           }

@@ -1,21 +1,21 @@
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   Users,
   Shield,
   Loader2,
-  Phone,
   Lock,
-  BookOpen,
-  Coffee,
-  Star,
   CheckCircle,
   ArrowLeft,
-  Briefcase
+  Camera,
+  Heart,
+  Share2,
+  Globe,
+  MapPin,
+  MessageSquare
 } from "lucide-react"
 import api from "@/lib/api"
 import { toast } from "sonner"
@@ -25,6 +25,7 @@ export default function UsernameProfileView() {
   const { username } = useParams()
   const navigate = useNavigate()
   const [connecting, setConnecting] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
 
   const { data: profile, isLoading, error, refetch } = useQuery<any>({
     queryKey: ["username-profile", username],
@@ -49,32 +50,6 @@ export default function UsernameProfileView() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "approved":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm select-none">
-            Connected
-          </span>
-        )
-      case "pending_self_approval":
-      case "pending_family_approval":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-sm select-none animate-pulse">
-            Requested
-          </span>
-        )
-      case "declined_by_self":
-      case "declined_by_family":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-extrabold uppercase bg-destructive/10 text-destructive border border-destructive/20 shadow-sm select-none">
-            Declined
-          </span>
-        )
-      default:
-        return null
-    }
-  }
 
   if (isLoading) {
     return (
@@ -107,286 +82,264 @@ export default function UsernameProfileView() {
     : null
 
   return (
-    <div className="max-w-2xl mx-auto w-full space-y-6 pb-12 animate-fade-in text-[#0f172a] text-left">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-xs font-bold focus:outline-none mb-2"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Go Back</span>
-      </button>
+    <div className="max-w-2xl mx-auto w-full pb-12 animate-fade-in text-[#0f172a] text-left min-h-screen bg-slate-50/20">
+      {/* 1. Hero Section */}
+      <div className="relative w-full h-[60vh] md:h-[65vh] bg-slate-100 overflow-hidden">
+        {/* Back Arrow */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-md flex items-center justify-center text-[#0f172a] shadow-md transition-all cursor-pointer border border-slate-100"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
 
-      <div className="bg-white border border-[#e2e8f0] rounded-3xl p-5 sm:p-8 shadow-sm space-y-6">
-        {/* Profile Card Header */}
-        <div className="pb-4 border-b border-[#e2e8f0] flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
-              <AvatarImage src={getImageUrl(profile.profile_photo_url)} className="object-cover" />
-              <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
-                {profile.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="text-xl font-bold text-[#0f172a]">
-                  {profile.full_name}
-                </h1>
-                <span className="text-emerald-500">
-                  <CheckCircle className="h-4.5 w-4.5 fill-emerald-500/10" />
-                </span>
-              </div>
-              {profile.username && (
-                <p className="text-xs text-[#64748b] font-mono leading-none">
-                  @{profile.username}
-                </p>
-              )}
-              <div className="flex gap-1.5 flex-wrap pt-1.5">
-                {age && (
-                  <Badge className="text-[9.5px] font-extrabold px-2.5 py-0.5 bg-[#f1f5f9] hover:bg-[#f1f5f9] text-[#0f172a] rounded-md border-none select-none">
-                    {age} Yrs
-                  </Badge>
-                )}
-                {profile.gender && (
-                  <Badge className="text-[9.5px] font-extrabold px-2.5 py-0.5 bg-[#f1f5f9] hover:bg-[#f1f5f9] text-[#0f172a] rounded-md border-none capitalize select-none">
-                    {profile.gender}
-                  </Badge>
-                )}
-                {profile.marital_status && (
-                  <Badge className="text-[9.5px] font-extrabold px-2.5 py-0.5 bg-[#f1f5f9] hover:bg-[#f1f5f9] text-[#0f172a] rounded-md border-none capitalize select-none">
-                    {profile.marital_status}
-                  </Badge>
-                )}
-              </div>
-            </div>
+        {/* Top Right Likes & Share */}
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          <button className="w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-md flex items-center justify-center text-[#0f172a] shadow-md transition-all cursor-pointer border border-slate-100">
+            <Heart className="h-5 w-5 hover:text-red-500 hover:fill-red-500 transition-colors" />
+          </button>
+          <button 
+            onClick={() => {
+              const url = window.location.href
+              navigator.clipboard.writeText(url)
+              toast.success("Profile link copied!")
+            }}
+            className="w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-md flex items-center justify-center text-[#0f172a] shadow-md transition-all cursor-pointer border border-slate-100"
+          >
+            <Share2 className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Hero Cover Image */}
+        <img
+          src={getImageUrl(profile.profile_photo_url)}
+          alt={profile.full_name}
+          className="w-full h-full object-cover"
+        />
+
+        {/* Dark overlay with info */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10" />
+
+        <div className="absolute bottom-6 left-6 z-20 space-y-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-extrabold text-white tracking-tight drop-shadow-sm flex items-center gap-1.5">
+              {profile.full_name}
+              <span className="text-white">
+                <CheckCircle className="h-5 w-5 fill-white/10" />
+              </span>
+            </h1>
           </div>
-
-          <div>
-            {profile.connection_status === "none" || !profile.connection_status ? (
-              <Button
-                size="sm"
-                className="bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-9 shadow-md"
-                onClick={() => handleConnect(profile.profile_id)}
-                disabled={connecting}
-              >
-                {connecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Request Connection"}
-              </Button>
-            ) : (
-              getStatusBadge(profile.connection_status)
+          <div className="flex gap-1.5 flex-wrap">
+            {age && (
+              <span className="text-[10px] font-bold px-3 py-1 bg-black/45 text-slate-200 backdrop-blur-md rounded-md select-none">
+                {age} Yrs
+              </span>
+            )}
+            {profile.gender && (
+              <span className="text-[10px] font-bold px-3 py-1 bg-black/45 text-slate-200 backdrop-blur-md rounded-md capitalize select-none">
+                {profile.gender}
+              </span>
+            )}
+            {profile.marital_status && (
+              <span className="text-[10px] font-bold px-3 py-1 bg-black/45 text-slate-200 backdrop-blur-md rounded-md capitalize select-none">
+                {profile.marital_status}
+              </span>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Profile Card Body Details */}
-        <div className="space-y-6 pt-2">
-          {profile.about_me && (
-            <div className="space-y-1.5">
-              <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                <BookOpen className="h-3.5 w-3.5 text-[#0f172a]" /> About Candidate
-              </h4>
-              <p className="text-xs text-[#0f172a] leading-relaxed bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl italic">
-                "{profile.about_me}"
-              </p>
-            </div>
+      {/* 2. Details Content Wrapper */}
+      <div className="p-4 sm:p-6 space-y-6 bg-transparent sm:bg-slate-50/50">
+        {/* Action Buttons Row */}
+        <div className="flex gap-3">
+          {profile.connection_status === "none" || !profile.connection_status ? (
+            <Button
+              className="flex-1 bg-black text-white hover:bg-slate-900 font-extrabold h-12 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider text-xs shadow-sm"
+              onClick={() => handleConnect(profile.profile_id)}
+              disabled={connecting}
+            >
+              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                <>
+                  <Users className="h-4.5 w-4.5" />
+                  Connect
+                </>
+              )}
+            </Button>
+          ) : profile.connection_status === "approved" ? (
+            <Button
+              className="flex-1 bg-black text-white font-extrabold h-12 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider text-xs shadow-sm cursor-default"
+            >
+              <CheckCircle className="h-4.5 w-4.5 text-emerald-400" />
+              Connected
+            </Button>
+          ) : (
+            <Button
+              className="flex-1 bg-slate-800 text-white font-extrabold h-12 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider text-xs shadow-sm cursor-default animate-pulse"
+            >
+              Requested
+            </Button>
           )}
+          
+          <button
+            onClick={() => navigate(`/matrimony/chat?profile_id=${profile.profile_id}`)}
+            className="w-12 h-12 shrink-0 border border-[#e2e8f0] bg-white rounded-xl flex items-center justify-center text-[#0f172a] hover:bg-slate-100 shadow-sm transition-all"
+            title="Chat"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </button>
+        </div>
 
-          <div className="space-y-2">
-            <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-[#0f172a]" /> Contact details
+        {/* Bio Section */}
+        {profile.about_me && (
+          <div className="space-y-1.5 text-left">
+            <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              About Me
             </h4>
-            <div className="grid sm:grid-cols-2 gap-4 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs">
-              <div>
-                <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
-                  Contact Number
-                </p>
-                {profile.connection_status === "approved" ? (
-                  <p className="font-semibold text-[#0f172a]">{profile.contact_number || "—"}</p>
-                ) : (
-                  <p className="text-[#64748b] font-medium flex items-center gap-1 italic select-none">
-                    <Lock className="h-3 w-3" /> Masked until connected
-                  </p>
-                )}
+            <p className="text-xs text-slate-700 leading-relaxed font-semibold">
+              {profile.about_me}
+            </p>
+          </div>
+        )}
+
+        {/* Personal Details Section */}
+        {profile.matrimony_details && (
+          <div className="space-y-3 text-left">
+            <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+              Personal Details
+            </h4>
+            <div className="divide-y divide-slate-200 border-t border-b border-slate-200 text-xs">
+              <div className="flex justify-between py-3.5">
+                <span className="text-slate-500 font-bold">Height</span>
+                <span className="font-extrabold text-[#0f172a]">{profile.matrimony_details.height_cm ? `${profile.matrimony_details.height_cm} cm` : "—"}</span>
               </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
-                  Home Address
-                </p>
-                {profile.connection_status === "approved" ? (
-                  <p className="font-semibold text-[#0f172a]">{profile.address || "—"}</p>
-                ) : (
-                  <p className="text-[#64748b] font-medium flex items-center gap-1 italic select-none">
-                    <Lock className="h-3 w-3" /> Masked until connected
-                  </p>
-                )}
+              <div className="flex justify-between py-3.5">
+                <span className="text-slate-500 font-bold">Body Type</span>
+                <span className="font-extrabold text-[#0f172a] capitalize">{profile.matrimony_details.body_type || "—"}</span>
+              </div>
+              <div className="flex justify-between py-3.5">
+                <span className="text-slate-500 font-bold">Education</span>
+                <span className="font-extrabold text-[#0f172a] capitalize">{profile.matrimony_details.highest_qualification || "—"}</span>
+              </div>
+              <div className="flex justify-between py-3.5">
+                <span className="text-slate-500 font-bold">Profession</span>
+                <span className="font-extrabold text-[#0f172a]">{profile.occupation || "—"}</span>
               </div>
             </div>
           </div>
+        )}
 
-          {profile.matrimony_details && (
-            <>
-              <div className="grid sm:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-[#0f172a]" /> Physical & Astro
-                  </h4>
-                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Height</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.height_cm ? `${profile.matrimony_details.height_cm} cm` : "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Body Type</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.body_type || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Complexion</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.complexion || "—"}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-[#e2e8f0] pt-2 mt-2">
-                      <span className="text-[#64748b]">Gotra</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.gotra || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Rashi</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.rashi || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Nakshatra</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.nakshatra || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Manglik Status</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.manglik_status || "—"}</span>
-                    </div>
-                  </div>
-                </div>
+        {/* Languages & Location Cards Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-[#f8fafc] border border-slate-200/60 rounded-2xl p-4 space-y-2 shadow-sm text-left">
+            <Globe className="h-5 w-5 text-[#0f172a] stroke-[2.2]" />
+            <div>
+              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
+                Languages
+              </p>
+              <p className="text-xs font-bold text-[#0f172a] mt-0.5 truncate">
+                {profile.languages?.join(", ") || "English"}
+              </p>
+            </div>
+          </div>
 
-                <div className="space-y-3">
-                  <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                    <Briefcase className="h-3.5 w-3.5 text-[#0f172a]" /> Professional details
-                  </h4>
-                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl space-y-2.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Qualification</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.highest_qualification || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Field of Study</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.field_of_study || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Institution</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.institution || "—"}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-[#e2e8f0] pt-2 mt-2">
-                      <span className="text-[#64748b]">Employment Type</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.employment_type?.replace(/_/g, " ") || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Job Title</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.job_title || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Income Range</span>
-                      <span className="font-semibold text-[#0f172a] uppercase">{profile.matrimony_details.income_range?.replace(/_/g, " ") || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Work Location</span>
-                      <span className="font-semibold text-[#0f172a]">{profile.matrimony_details.work_location || "—"}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div className="bg-[#f8fafc] border border-slate-200/60 rounded-2xl p-4 space-y-2 shadow-sm text-left">
+            <MapPin className="h-5 w-5 text-[#0f172a] stroke-[2.2]" />
+            <div>
+              <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
+                Location
+              </p>
+              <p className="text-xs font-bold text-[#0f172a] mt-0.5 truncate">
+                {profile.address || "Not set"}
+              </p>
+            </div>
+          </div>
+        </div>
 
-              {/* Family background */}
-              <div className="space-y-2.5">
-                <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-[#0f172a]" /> Family unit details
-                </h4>
-                <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-0.5">Father's Name</p>
-                      <p className="font-semibold text-[#0f172a]">{profile.matrimony_details.father_name || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-0.5">Father's Occupation</p>
-                      <p className="font-semibold text-[#0f172a]">{profile.matrimony_details.father_occupation || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-0.5">Mother's Name</p>
-                      <p className="font-semibold text-[#0f172a]">{profile.matrimony_details.mother_name || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-0.5">Mother's Occupation</p>
-                      <p className="font-semibold text-[#0f172a]">{profile.matrimony_details.mother_occupation || "—"}</p>
-                    </div>
-                  </div>
-                  {profile.matrimony_details.family_background && (
-                    <div className="border-t border-[#e2e8f0] pt-2">
-                      <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Family Background</p>
-                      <p className="font-medium text-[#64748b] leading-relaxed">{profile.matrimony_details.family_background}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {/* 3. Contact Details Card */}
+        <div className="bg-[#e0ebff] border-0 sm:border sm:border-[#bfdbfe]/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-none text-left">
+          <div className="flex items-center gap-2 text-[#1e40af]">
+            <Lock className="h-4.5 w-4.5 stroke-[2.2]" />
+            <span className="text-[10px] uppercase font-extrabold tracking-wider">Contact Details</span>
+          </div>
+          
+          <div className="space-y-3">
+            <div>
+              <p className="text-[9px] uppercase font-bold text-[#1e3a8a]/70 tracking-wider">
+                Phone Number
+              </p>
+              <p className="text-xs font-bold text-[#1e3a8a] mt-0.5 font-mono">
+                {profile.connection_status === "approved" && profile.contact_number
+                  ? `•••• •••• ${profile.contact_number.slice(-3)}`
+                  : "•••• •••• •••"
+                }
+              </p>
+            </div>
 
-              <div className="grid sm:grid-cols-2 gap-6">
-                <div className="space-y-2.5">
-                  <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                    <Coffee className="h-3.5 w-3.5 text-[#0f172a]" /> Lifestyle details
-                  </h4>
-                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs space-y-2.5">
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Diet</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.diet || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Smoking</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.smoking || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#64748b]">Drinking</span>
-                      <span className="font-semibold text-[#0f172a] capitalize">{profile.matrimony_details.drinking || "—"}</span>
-                    </div>
-                  </div>
-                </div>
+            <div>
+              <p className="text-[9px] uppercase font-bold text-[#1e3a8a]/70 tracking-wider">
+                Home Address
+              </p>
+              <p className="text-xs font-bold text-[#1e3a8a] mt-0.5">
+                {profile.connection_status === "approved" && profile.address
+                  ? `•••••••••, ${profile.address.split(",").pop()?.trim()}`
+                  : "•••••••••, Restricted"
+                }
+              </p>
+            </div>
+          </div>
 
-                <div className="space-y-2.5">
-                  <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
-                    <Star className="h-3.5 w-3.5 text-[#0f172a]" /> Languages & Hobbies
-                  </h4>
-                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs space-y-3">
-                    {profile.languages && profile.languages.length > 0 && (
-                      <div>
-                        <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Languages Spoken</p>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {profile.languages.map((l: string) => (
-                            <Badge key={l} variant="secondary" className="text-[9px] font-semibold bg-[#eceef0] text-[#0f172a] rounded">
-                              {l}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {profile.hobbies && profile.hobbies.length > 0 && (
-                      <div>
-                        <p className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Hobbies</p>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {profile.hobbies.map((h: string) => (
-                            <Badge key={h} variant="secondary" className="text-[9px] font-semibold bg-[#eceef0] text-[#0f172a] rounded">
-                              {h}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
+          {(profile.connection_status === "none" || !profile.connection_status) && (
+            <button
+              onClick={() => handleConnect(profile.profile_id)}
+              disabled={connecting}
+              className="w-full bg-black hover:bg-slate-900 text-white font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition-colors shadow-sm cursor-pointer mt-2"
+            >
+              {connecting ? "Requesting..." : "Request Access"}
+            </button>
           )}
         </div>
+
+        {/* 4. Instagram-style Photo Gallery (Connected users only) */}
+        {profile.connection_status === "approved" && profile.matrimony_details?.additional_photos && profile.matrimony_details.additional_photos.length > 0 && (
+          <div className="bg-transparent border-0 rounded-none p-0 shadow-none sm:bg-white sm:border sm:border-[#e2e8f0] sm:rounded-3xl sm:p-6 sm:shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+              <Camera className="h-4.5 w-4.5 text-[#0f172a]" /> Photo Gallery
+            </h3>
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              {profile.matrimony_details.additional_photos.map((photo: string, index: number) => (
+                <div 
+                  key={index} 
+                  className="aspect-square rounded-2xl overflow-hidden border border-[#e2e8f0] bg-slate-50 cursor-pointer relative group shadow-sm hover:shadow-md transition-all duration-350"
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  <img 
+                    src={getImageUrl(photo)} 
+                    alt={`Gallery ${index}`} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Lightbox Dialog */}
+      <Dialog open={!!selectedPhoto} onOpenChange={(open) => !open && setSelectedPhoto(null)}>
+        <DialogContent className="max-w-3xl p-2 border-none bg-black/90 text-white flex items-center justify-center rounded-2xl shadow-2xl overflow-hidden focus:outline-none">
+          {selectedPhoto && (
+            <div className="relative max-h-[85vh] w-full flex items-center justify-center">
+              <img 
+                src={getImageUrl(selectedPhoto)} 
+                alt="Enlarged gallery view" 
+                className="max-h-[80vh] max-w-full object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

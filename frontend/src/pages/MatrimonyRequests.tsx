@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
@@ -23,7 +24,8 @@ import {
   Briefcase,
   Sparkles,
   Heart,
-  Search
+  Search,
+  MessageCircle
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -304,6 +306,16 @@ export default function MatrimonyRequests() {
                           </Button>
                         </div>
                       )}
+                      {req.status === "approved" && (
+                        <div className="flex gap-2">
+                          <Link to={`/matrimony/chat?profile_id=${req.sender?.id}`}>
+                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 h-9 gap-1.5 rounded-lg flex items-center shadow-sm">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>Chat Now</span>
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   )
                 })
@@ -358,6 +370,16 @@ export default function MatrimonyRequests() {
                           {cancellingId === req.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                           <span>{t("cancel_request")}</span>
                         </Button>
+                      )}
+                      {req.status === "approved" && (
+                        <div className="flex gap-2">
+                          <Link to={`/matrimony/chat?profile_id=${req.receiver?.id}`}>
+                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 h-9 gap-1.5 rounded-lg flex items-center shadow-sm">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>Chat Now</span>
+                            </Button>
+                          </Link>
+                        </div>
                       )}
                     </div>
                   )
@@ -555,9 +577,19 @@ export default function MatrimonyRequests() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                      <DialogTitle className="text-xl font-bold text-[#0f172a]">
-                        {selectedProfile.full_name}
-                      </DialogTitle>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <DialogTitle className="text-xl font-bold text-[#0f172a]">
+                          {selectedProfile.full_name}
+                        </DialogTitle>
+                        {selectedProfile.username && (
+                          <Link
+                            to={`/${selectedProfile.username}`}
+                            className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            (View Profile Page)
+                          </Link>
+                        )}
+                      </div>
                       {selectedProfile.username && (
                         <p className="text-xs text-[#64748b] font-mono leading-none">
                           @{selectedProfile.username}
@@ -607,15 +639,7 @@ export default function MatrimonyRequests() {
                   <h4 className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5 text-[#0f172a]" /> Contact details
                   </h4>
-                  <div className="grid sm:grid-cols-2 gap-4 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
-                        Contact Number
-                      </p>
-                      <p className="font-semibold text-[#0f172a]">
-                        {selectedProfile.contact_number || "Hidden until connected"}
-                      </p>
-                    </div>
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-xl text-xs">
                     <div>
                       <p className="text-[10px] uppercase font-bold text-[#64748b] tracking-wider mb-1">
                         Home Address

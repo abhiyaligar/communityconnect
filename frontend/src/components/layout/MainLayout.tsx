@@ -10,6 +10,7 @@ import {
   CheckSquare,
   Heart,
   MessageSquare,
+  MessageCircle,
   Shield,
   Settings,
   HelpCircle,
@@ -79,6 +80,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       ? [{ to: "/matrimony/gallery", label: "Manage Gallery", icon: Camera }]
       : []
     ),
+    ...(isVerifiedAdult ? [{ to: "/matrimony/chat", label: "Chat", icon: MessageCircle }] : []),
     ...(isVerifiedAdult ? [{ to: "/matrimony/requests", label: "Requests", icon: MessageSquare }] : []),
     ...(isAdmin ? [{ to: "/admin/create-admin", label: "Operators", icon: Plus }] : [])
   ]
@@ -91,6 +93,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const bottomNavLinks = [
     { to: isAdmin ? "/admin/dashboard" : "/dashboard", label: "Home", icon: Home },
+    ...(isVerifiedAdult ? [{ to: "/matrimony/chat", label: "Chat", icon: MessageCircle }] : []),
     ...(isAdmin
       ? [
         { to: "/admin/matrimony", label: "Matrimonial", icon: Heart },
@@ -272,83 +275,90 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
-        <header className="h-16 border-b border-[#e2e8f0] bg-white sticky top-0 z-30 flex items-center justify-between px-6">
-          {/* Left: Mobile App Name & Logo / Desktop Search */}
-          <div className="flex items-center gap-4 flex-1">
-            {/* Mobile/Tablet App Brand Header */}
-            <NavLink to="/dashboard" className="flex lg:hidden items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg border border-[#e2e8f0]/80 bg-[#f8fafc] flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300">
-                <svg className="h-4.5 w-4.5 text-[#0f172a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <circle cx="12" cy="12" r="3.5" className="fill-[#0f172a]/10" />
-                  <circle cx="12" cy="4.5" r="2" />
-                  <circle cx="5" cy="9.5" r="2" />
-                  <circle cx="19" cy="9.5" r="2" />
-                  <circle cx="8" cy="18.5" r="2" />
-                  <circle cx="16" cy="18.5" r="2" />
-                  <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
-                </svg>
-              </div>
-              <span className="font-bold text-base tracking-tight text-[#0f172a]">
-                CommunityConnect
-              </span>
-            </NavLink>
+        {!((location.pathname === "/matrimony/chat") || (/^\/[^/]+$/.test(location.pathname) && !["/dashboard", "/registry", "/profile", "/settings", "/matrimony", "/verification", "/login", "/register", "/forgot-password", "/pending-verification"].includes(location.pathname))) && (
+          <header className="h-16 border-b border-[#e2e8f0] bg-white sticky top-0 z-30 flex items-center justify-between px-6">
+            {/* Left: Mobile App Name & Logo / Desktop Search */}
+            <div className="flex items-center gap-4 flex-1">
+              {/* Mobile/Tablet App Brand Header */}
+              <NavLink to="/dashboard" className="flex lg:hidden items-center gap-2 group">
+                <div className="w-8 h-8 rounded-lg border border-[#e2e8f0]/80 bg-[#f8fafc] flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                  <svg className="h-4.5 w-4.5 text-[#0f172a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <circle cx="12" cy="12" r="3.5" className="fill-[#0f172a]/10" />
+                    <circle cx="12" cy="4.5" r="2" />
+                    <circle cx="5" cy="9.5" r="2" />
+                    <circle cx="19" cy="9.5" r="2" />
+                    <circle cx="8" cy="18.5" r="2" />
+                    <circle cx="16" cy="18.5" r="2" />
+                    <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+                  </svg>
+                </div>
+                <span className="font-bold text-base tracking-tight text-[#0f172a]">
+                  CommunityConnect
+                </span>
+              </NavLink>
 
-          </div>
+            </div>
 
-          {/* Right: Mobile Requests Indicator & Desktop Profile Card */}
-          <div className="flex items-center gap-4">
-            {/* Settings button - visible on both mobile and desktop ONLY on Profile page */}
-            {isProfileTab && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/settings")}
-                className="text-[#64748b] hover:text-[#0f172a] h-9 w-9"
-                title="Settings"
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-            )}
-
-            {/* Mobile/Tablet Requests Notification Icon */}
-            {!isAdmin && isVerifiedAdult && (
-              <div className="lg:hidden">
+            {/* Right: Mobile Requests Indicator & Desktop Profile Card */}
+            <div className="flex items-center gap-4">
+              {/* Settings button - visible on both mobile and desktop ONLY on Profile page */}
+              {isProfileTab && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigate("/matrimony/requests")}
-                  className="text-[#64748b] hover:text-[#0f172a] h-9 w-9 relative"
+                  onClick={() => navigate("/settings")}
+                  className="text-[#64748b] hover:text-[#0f172a] h-9 w-9"
+                  title="Settings"
                 >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              )}
+
+              {/* Mobile/Tablet Requests Notification Icon */}
+              {!isAdmin && isVerifiedAdult && (
+                <div className="lg:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate("/matrimony/requests")}
+                    className="text-[#64748b] hover:text-[#0f172a] h-9 w-9 relative"
+                  >
+                    <Bell className="h-5 w-5" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Desktop right panel layout */}
+              <div className="hidden lg:flex items-center gap-4">
+                <Button variant="ghost" size="icon" className="text-[#64748b] hover:text-[#0f172a] h-9 w-9">
                   <Bell className="h-5 w-5" />
                 </Button>
+
+                <Button variant="ghost" size="icon" className="text-[#64748b] hover:text-[#0f172a] h-9 w-9">
+                  <Lock className="h-5 w-5" />
+                </Button>
+
+                <Avatar
+                  className="h-8 w-8 border-2 border-[#e2e8f0] cursor-pointer hover:border-[#0f172a] transition-colors"
+                  onClick={() => navigate("/profile")}
+                >
+                  <AvatarImage src={user?.profile_photo_url} />
+                  <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
               </div>
-            )}
-
-            {/* Desktop right panel layout */}
-            <div className="hidden lg:flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="text-[#64748b] hover:text-[#0f172a] h-9 w-9">
-                <Bell className="h-5 w-5" />
-              </Button>
-
-              <Button variant="ghost" size="icon" className="text-[#64748b] hover:text-[#0f172a] h-9 w-9">
-                <Lock className="h-5 w-5" />
-              </Button>
-
-              <Avatar
-                className="h-8 w-8 border-2 border-[#e2e8f0] cursor-pointer hover:border-[#0f172a] transition-colors"
-                onClick={() => navigate("/profile")}
-              >
-                <AvatarImage src={user?.profile_photo_url} />
-                <AvatarFallback className="text-xs bg-[#f1f5f9] text-[#0f172a] font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Main Content Body */}
-        <main className="flex-1 overflow-x-hidden p-3 md:p-8 pb-24 lg:pb-8 max-w-[1280px] w-full mx-auto">
+        <main className={cn(
+          "flex-1 overflow-x-hidden w-full mx-auto",
+          ((location.pathname === "/matrimony/chat") || (/^\/[^/]+$/.test(location.pathname) && !["/dashboard", "/registry", "/profile", "/settings", "/matrimony", "/verification", "/login", "/register", "/forgot-password", "/pending-verification"].includes(location.pathname)))
+            ? "p-0 max-w-full"
+            : "p-3 md:p-8 pb-24 lg:pb-8 max-w-[1280px]"
+        )}>
           {children}
         </main>
       </div>
@@ -356,6 +366,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Bottom Navigation for Mobile & Tablet */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#e2e8f0] h-16 shadow-lg">
         <div className={cn("grid h-full w-full items-center px-4 max-w-md mx-auto", {
+          "grid-cols-5": bottomNavLinks.length === 5,
           "grid-cols-4": bottomNavLinks.length === 4,
           "grid-cols-3": bottomNavLinks.length === 3,
           "grid-cols-2": bottomNavLinks.length === 2,

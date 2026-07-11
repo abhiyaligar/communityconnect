@@ -287,11 +287,13 @@ async def onboard_profile(
             institution=payload.institution,
             employment_type=safe_enum(EmploymentType, payload.employment_type),
             job_title=payload.job_title,
+            company_name=payload.company_name,
             income_range=safe_enum(IncomeRange, payload.income_range),
             work_location=payload.work_location,
             
             # Horoscope
             gotra=payload.gotra,
+            sub_caste=payload.sub_caste,
             rashi=payload.rashi,
             nakshatra=payload.nakshatra,
             manglik_status=safe_enum(ManglikStatus, payload.manglik_status),
@@ -514,7 +516,7 @@ async def get_profile_by_username(
         "gender": profile.gender.value if profile.gender else None,
         "marital_status": profile.marital_status.value if profile.marital_status else None,
         "profile_photo_url": profile.profile_photo_url,
-        "contact_number": profile.contact_number if (connection_status == "approved" or current_user.id == profile.user_id) else None,
+        "contact_number": profile.contact_number if current_user.id == profile.user_id else None,
         "address": profile.address if (connection_status == "approved" or current_user.id == profile.user_id) else None,
         "occupation": profile.occupation,
         "connection_status": connection_status,
@@ -534,12 +536,16 @@ async def get_profile_by_username(
             "institution": profile.matrimony_profile.institution,
             "employment_type": profile.matrimony_profile.employment_type,
             "job_title": profile.matrimony_profile.job_title,
+            "company_name": profile.matrimony_profile.company_name,
             "income_range": profile.matrimony_profile.income_range,
             "work_location": profile.matrimony_profile.work_location,
             "gotra": profile.matrimony_profile.gotra,
+            "sub_caste": profile.matrimony_profile.sub_caste,
             "rashi": profile.matrimony_profile.rashi,
             "nakshatra": profile.matrimony_profile.nakshatra,
             "manglik_status": profile.matrimony_profile.manglik_status,
+            "birth_time": profile.matrimony_profile.birth_time,
+            "birth_place": profile.matrimony_profile.birth_place,
             "diet": profile.matrimony_profile.diet,
             "smoking": profile.matrimony_profile.smoking,
             "drinking": profile.matrimony_profile.drinking,
@@ -551,7 +557,8 @@ async def get_profile_by_username(
             "family_type": profile.matrimony_profile.family_type,
             "family_values": profile.matrimony_profile.family_values,
             "family_financial_status": profile.matrimony_profile.family_financial_status,
-            "family_background": f"Father: {profile.matrimony_profile.father_name} ({profile.matrimony_profile.father_occupation}). Mother: {profile.matrimony_profile.mother_name} ({profile.matrimony_profile.mother_occupation})."
+            "family_background": f"Father: {profile.matrimony_profile.father_name} ({profile.matrimony_profile.father_occupation}). Mother: {profile.matrimony_profile.mother_name} ({profile.matrimony_profile.mother_occupation}).",
+            "additional_photos": profile.matrimony_profile.additional_photos if (connection_status == "approved" or current_user.id == profile.user_id) else []
         }
         
     return res

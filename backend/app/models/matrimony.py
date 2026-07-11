@@ -35,11 +35,13 @@ class MatrimonyProfile(Base):
     
     # Horoscope & Community
     gotra = Column(String(100), nullable=True)
+    sub_caste = Column(String(100), nullable=True)
     rashi = Column(String(50), nullable=True)
     nakshatra = Column(String(100), nullable=True)
     manglik_status = Column(String(50), nullable=True)
     birth_time = Column(String(20), nullable=True)
     birth_place = Column(String(255), nullable=True)
+    company_name = Column(String(255), nullable=True)
     
     # Family Background
     father_name = Column(String(100), nullable=True)

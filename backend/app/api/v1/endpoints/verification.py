@@ -109,13 +109,24 @@ async def get_pending_verifications(
                 "contact_number": user_profile.contact_number if user_profile else None,
                 "address": user_profile.address if user_profile else None,
                 "occupation": user_profile.occupation if user_profile else None,
+                "social_links": user_profile.social_links if user_profile else None,
             } if user_profile else None,
             "matrimony": {
                 "opted_in": matrimony.opted_in if matrimony else False,
                 "height_cm": matrimony.height_cm if matrimony else None,
                 "employment_type": matrimony.employment_type if matrimony and matrimony.employment_type else None,
+                "company_name": matrimony.company_name if matrimony and matrimony.company_name else None,
                 "gotra": matrimony.gotra if matrimony else None,
+                "sub_caste": matrimony.sub_caste if matrimony else None,
                 "highest_qualification": matrimony.highest_qualification if matrimony and matrimony.highest_qualification else None,
+                "rashi": matrimony.rashi if matrimony else None,
+                "nakshatra": matrimony.nakshatra if matrimony else None,
+                "manglik_status": matrimony.manglik_status if matrimony else None,
+                "birth_time": matrimony.birth_time if matrimony else None,
+                "birth_place": matrimony.birth_place if matrimony else None,
+                "father_name": matrimony.father_name if matrimony else None,
+                "mother_name": matrimony.mother_name if matrimony else None,
+                "family_values": matrimony.family_values if matrimony else None,
             } if matrimony else None
         })
 
