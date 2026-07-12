@@ -63,7 +63,11 @@ async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
 # CORS Middleware — use settings.CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=[
+        "https://ladmatrimony.in",
+        "https://www.ladmatrimony.in",
+        "https://ladmatrimonyy.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
