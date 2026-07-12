@@ -12,7 +12,7 @@ import { handleApiError, getImageUrl } from "@/lib/utils"
 import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart, Lock } from "lucide-react"
 import { TokenResponse } from "@/types"
 
-type Step = "email" | "otp" | "core" | "matrimony" | "success"
+type Step = "email" | "otp" | "core-personal" | "core-address" | "core-id" | "matrimony" | "success"
 
 interface FormData {
   // Auth
@@ -165,7 +165,7 @@ export default function Register() {
 
   // Load regions when on the core onboarding step
   useEffect(() => {
-    if (step === "core") {
+    if (step.startsWith("core")) {
       api.get("/admin/regions?limit=100")
         .then((res) => setRegions(res.data))
         .catch((err) => console.error("Failed to load regions", err))
@@ -191,7 +191,7 @@ export default function Register() {
       } catch (err: any) {
         if (err.response?.status === 404) {
           // Token exists but no profile, load the core step directly
-          setStep("core")
+          setStep("core-personal")
         }
       }
     }
@@ -249,7 +249,7 @@ export default function Register() {
       })
       // We are now authenticated (role: unverified), but need to onboard
       localStorage.setItem("access_token", res.data.access_token)
-      setStep("core")
+      setStep("core-personal")
     } catch (err: unknown) {
       setError(handleApiError(err, "Invalid code."))
     } finally {
@@ -257,13 +257,32 @@ export default function Register() {
     }
   }
 
-  const handleNextToMatrimony = (e: React.FormEvent) => {
+  const handleNextToAddress = (e: React.FormEvent) => {
     e.preventDefault()
-    
+    if (!form.full_name || !form.date_of_birth || !form.gender || !form.phone_number) {
+      setError("Please fill in all required fields.")
+      return
+    }
+    setError("")
+    setStep("core-address")
+  }
+
+  const handleNextToId = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.region_id) {
+      setError("Please select your region/area.")
+      return
+    }
     if (!form.profile_photo_url || form.profile_photo_url === "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde") {
       setError("A profile photo upload is compulsory. Please upload a photo to proceed.")
       return
     }
+    setError("")
+    setStep("core-id")
+  }
+
+  const handleNextToMatrimony = (e: React.FormEvent) => {
+    e.preventDefault()
 
     const hasSocial = form.linkedin?.trim() || form.instagram?.trim() || form.facebook?.trim() || form.twitter?.trim()
     if (!hasSocial) {
@@ -542,17 +561,114 @@ export default function Register() {
             </>
           )}
 
-          {/* STEP 3: CORE PROFILE */}
-          {step === "core" && (
+          {/* STEP 3: PERSONAL INFO */}
+          {step === "core-personal" && (
             <>
               <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
-                <CardTitle className="text-xl">Your Profile</CardTitle>
-                <CardDescription className="text-xs">Tell us a bit about yourself.</CardDescription>
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
+                  <User className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Personal Details</CardTitle>
+                <CardDescription className="text-xs">Step 1 of 3 — Your basic information.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
-                <form onSubmit={handleNextToMatrimony} className="space-y-5">
-                  {/* Centered Avatar Image Upload */}
-                  <div className="flex flex-col items-center justify-center pb-6 border-b border-border/40 stagger-fade-in-3">
+                <form onSubmit={handleNextToAddress} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Full Name *</Label>
+                    <Input 
+                      value={form.full_name} 
+                      onChange={(e) => setF("full_name")(e.target.value)} 
+                      className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                      required 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Date of Birth *</Label>
+                    <Input 
+                      type="date" 
+                      value={form.date_of_birth} 
+                      onChange={(e) => setF("date_of_birth")(e.target.value)} 
+                      className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-left w-full block"
+                      required 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gender *</Label>
+                    <Select value={form.gender} onValueChange={setF("gender")} required>
+                      <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Marital Status *</Label>
+                    <Select value={form.marital_status} onValueChange={setF("marital_status")} required>
+                      <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Phone Number *</Label>
+                    <div className="relative flex items-center">
+                      <span className="text-xs font-semibold text-muted-foreground mr-2 select-none border-b border-border h-10 flex items-center px-1 sm:px-2 bg-transparent sm:bg-secondary/45 sm:border sm:rounded-l-md sm:border-r-0 shrink-0">
+                        +91
+                      </span>
+                      <Input 
+                        type="tel" 
+                        placeholder="9876543210" 
+                        value={form.phone_number.startsWith("+91") ? form.phone_number.slice(3) : form.phone_number} 
+                        onChange={(e) => {
+                          const rawVal = e.target.value.replace(/\D/g, "");
+                          const limitedVal = rawVal.slice(0, 10);
+                          setForm((f) => ({ ...f, phone_number: limitedVal ? `+91${limitedVal}` : "" }));
+                        }} 
+                        className="flex-1 bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-r-md sm:rounded-l-none h-10 px-0 sm:px-3"
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
+                  <div className="pt-2 flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => { setStep("otp"); setError("") }}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer hover-scale">
+                      Continue <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          )}
+
+          {/* STEP 4: ADDRESS & PHOTO */}
+          {step === "core-address" && (
+            <>
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+                <CardTitle className="text-xl">Location & Photo</CardTitle>
+                <CardDescription className="text-xs">Step 2 of 3 — Where you're from and your profile picture.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
+                <form onSubmit={handleNextToId} className="space-y-5">
+                  {/* Profile Photo Upload */}
+                  <div className="flex flex-col items-center justify-center pb-6 border-b border-border/40">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                       {form.profile_photo_url ? (
                         <img
@@ -583,230 +699,187 @@ export default function Register() {
                     {loading && <p className="text-[10px] text-muted-foreground mt-2 animate-pulse font-medium">Uploading photo...</p>}
                   </div>
 
-                  <div className="space-y-4 stagger-fade-in-3">
-                    {/* Full Name */}
-                    <div className="space-y-2">
-                      <Label>Full Name *</Label>
-                      <Input 
-                        value={form.full_name} 
-                        onChange={(e) => setF("full_name")(e.target.value)} 
-                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
-                        required 
-                      />
-                    </div>
-                    
-                    {/* Date of Birth */}
-                    <div className="space-y-2">
-                      <Label>Date of Birth *</Label>
-                      <Input 
-                        type="date" 
-                        value={form.date_of_birth} 
-                        onChange={(e) => setF("date_of_birth")(e.target.value)} 
-                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-left w-full block"
-                        required 
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Region / Area *</Label>
+                    <Select value={form.region_id} onValueChange={setF("region_id")} required>
+                      <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select Area" /></SelectTrigger>
+                      <SelectContent>
+                        {regions.map((reg) => (
+                          <SelectItem key={reg.id} value={reg.id}>
+                            {reg.name} ({reg.pin_code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    {/* Gender */}
-                    <div className="space-y-2">
-                      <Label>Gender *</Label>
-                      <Select value={form.gender} onValueChange={setF("gender")} required>
-                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Current Location / Address *</Label>
+                    <Input 
+                      placeholder="Current Address" 
+                      value={form.address} 
+                      onChange={(e) => setF("address")(e.target.value)} 
+                      className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
+                      required 
+                    />
+                  </div>
 
-                    {/* Marital Status */}
-                    <div className="space-y-2">
-                      <Label>Marital Status *</Label>
-                      <Select value={form.marital_status} onValueChange={setF("marital_status")} required>
-                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="single">Single</SelectItem>
-                          <SelectItem value="married">Married</SelectItem>
-                          <SelectItem value="divorced">Divorced</SelectItem>
-                          <SelectItem value="widowed">Widowed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
-                    {/* Phone Number */}
-                    <div className="space-y-2">
-                      <Label>Phone Number *</Label>
-                      <div className="relative flex items-center">
-                        <span className="text-xs font-semibold text-muted-foreground mr-2 select-none border-b border-border h-10 flex items-center px-1 sm:px-2 bg-transparent sm:bg-secondary/45 sm:border sm:rounded-l-md sm:border-r-0 shrink-0">
-                          +91
-                        </span>
-                        <Input 
-                          type="tel" 
-                          placeholder="9876543210" 
-                          value={form.phone_number.startsWith("+91") ? form.phone_number.slice(3) : form.phone_number} 
-                          onChange={(e) => {
-                            const rawVal = e.target.value.replace(/\D/g, "");
-                            const limitedVal = rawVal.slice(0, 10);
-                            setForm((f) => ({ ...f, phone_number: limitedVal ? `+91${limitedVal}` : "" }));
-                          }} 
-                          className="flex-1 bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-r-md sm:rounded-l-none h-10 px-0 sm:px-3"
-                          required 
-                        />
-                      </div>
-                    </div>
+                  <div className="pt-2 flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => { setStep("core-personal"); setError("") }}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer hover-scale">
+                      Continue <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          )}
 
-                    {/* Aadhar Number */}
-                    <div className="space-y-2">
-                      <Label>Aadhar Number *</Label>
-                      <Input 
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="1234 5678 9012"
-                        value={form.aadhar_number.replace(/(\d{4})(?=\d)/g, "$1 ").trim()}
-                        onChange={(e) => {
-                          const rawVal = e.target.value.replace(/\D/g, "");
-                          const limitedVal = rawVal.slice(0, 12);
-                          setForm((f) => ({ ...f, aadhar_number: limitedVal }));
-                        }}
-                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 font-mono tracking-wider"
-                        required
-                      />
-                      {form.aadhar_number.length > 0 && form.aadhar_number.length < 12 && (
-                        <p className="text-[10px] text-amber-600">Aadhar must be 12 digits</p>
-                      )}
-                      <p className="text-[10px] text-muted-foreground">Your Aadhar details will be deleted 8 days after verification.</p>
-                    </div>
+          {/* STEP 5: ID VERIFICATION & SOCIAL */}
+          {step === "core-id" && (
+            <>
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Identity & Social</CardTitle>
+                <CardDescription className="text-xs">Step 3 of 3 — Verify your identity and add social links.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
+                <form onSubmit={handleNextToMatrimony} className="space-y-5">
+                  {/* Aadhar Number */}
+                  <div className="space-y-2">
+                    <Label>Aadhar Number *</Label>
+                    <Input 
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="1234 5678 9012"
+                      value={form.aadhar_number.replace(/(\d{4})(?=\d)/g, "$1 ").trim()}
+                      onChange={(e) => {
+                        const rawVal = e.target.value.replace(/\D/g, "");
+                        const limitedVal = rawVal.slice(0, 12);
+                        setForm((f) => ({ ...f, aadhar_number: limitedVal }));
+                      }}
+                      className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 font-mono tracking-wider"
+                      required
+                    />
+                    {form.aadhar_number.length > 0 && form.aadhar_number.length < 12 && (
+                      <p className="text-[10px] text-amber-600">Aadhar must be 12 digits</p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">Your Aadhar details will be deleted 8 days after verification.</p>
+                  </div>
 
-                    {/* Aadhar Card Upload */}
-                    <div className="space-y-2">
-                      <Label>Aadhar Card Image *</Label>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => document.getElementById("aadhar-upload")?.click()}
-                          disabled={loading}
-                          className="text-xs h-9"
-                        >
-                          {form.aadhar_card_url ? "Change Image" : "Upload Image"}
-                        </Button>
-                        {form.aadhar_card_url && (
-                          <span className="text-[10px] text-green-600 font-medium">Uploaded</span>
-                        )}
-                      </div>
-                      <input
-                        id="aadhar-upload"
-                        type="file"
-                        accept="image/png, image/jpeg, image/jpg, image/webp"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          if (file.size > 20 * 1024 * 1024) {
-                            setError("Image file is too large. Maximum size is 20MB.")
-                            return
-                          }
-                          const formData = new FormData()
-                          formData.append("file", file)
-                          setError("")
-                          setLoading(true)
-                          try {
-                            const res = await api.post("/uploads/image", formData, {
-                              headers: { "Content-Type": "multipart/form-data" }
-                            })
-                            setForm((f) => ({ ...f, aadhar_card_url: res.data.url }))
-                          } catch (err: any) {
-                            setError(handleApiError(err, "Failed to upload aadhar card image."))
-                          } finally {
-                            setLoading(false)
-                          }
-                        }}
-                        className="hidden"
+                  {/* Aadhar Card Upload */}
+                  <div className="space-y-2">
+                    <Label>Aadhar Card Image *</Label>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById("aadhar-upload")?.click()}
                         disabled={loading}
-                      />
-                      <p className="text-[10px] text-muted-foreground">Upload a clear image of your Aadhar card. This is mandatory for verification.</p>
+                        className="text-xs h-9"
+                      >
+                        {form.aadhar_card_url ? "Change Image" : "Upload Image"}
+                      </Button>
+                      {form.aadhar_card_url && (
+                        <span className="text-[10px] text-green-600 font-medium">Uploaded</span>
+                      )}
                     </div>
+                    <input
+                      id="aadhar-upload"
+                      type="file"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (file.size > 20 * 1024 * 1024) {
+                          setError("Image file is too large. Maximum size is 20MB.")
+                          return
+                        }
+                        const formData = new FormData()
+                        formData.append("file", file)
+                        setError("")
+                        setLoading(true)
+                        try {
+                          const res = await api.post("/uploads/image", formData, {
+                            headers: { "Content-Type": "multipart/form-data" }
+                          })
+                          setForm((f) => ({ ...f, aadhar_card_url: res.data.url }))
+                        } catch (err: any) {
+                          setError(handleApiError(err, "Failed to upload aadhar card image."))
+                        } finally {
+                          setLoading(false)
+                        }
+                      }}
+                      className="hidden"
+                      disabled={loading}
+                    />
+                    <p className="text-[10px] text-muted-foreground">Upload a clear image of your Aadhar card. This is mandatory for verification.</p>
+                  </div>
 
-                    {/* Region / Area */}
+                  {/* Social Media Links */}
+                  <div className="space-y-4 pt-2 border-t border-border/40">
+                    <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Social Media (Add at least one)</h3>
+                    
                     <div className="space-y-2">
-                      <Label>Region / Area *</Label>
-                      <Select value={form.region_id} onValueChange={setF("region_id")} required>
-                        <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"><SelectValue placeholder="Select Area" /></SelectTrigger>
-                        <SelectContent>
-                          {regions.map((reg) => (
-                            <SelectItem key={reg.id} value={reg.id}>
-                              {reg.name} ({reg.pin_code})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Current Location / Address */}
-                    <div className="space-y-2">
-                      <Label>Current Location / Address *</Label>
+                      <Label>LinkedIn Profile URL (Mandatory if employed)</Label>
                       <Input 
-                        placeholder="Current Address" 
-                        value={form.address} 
-                        onChange={(e) => setF("address")(e.target.value)} 
-                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
-                        required 
+                        placeholder="https://www.linkedin.com/in/username" 
+                        value={form.linkedin} 
+                        onChange={(e) => setF("linkedin")(e.target.value)} 
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                       />
                     </div>
 
-                    {/* Social Media Links */}
-                    <div className="space-y-4 pt-4 border-t border-border/40">
-                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Social Media (Add at least one)</h3>
-                      
+                    <div className="space-y-2">
+                      <Label>Instagram Profile URL</Label>
+                      <Input 
+                        placeholder="https://www.instagram.com/username" 
+                        value={form.instagram} 
+                        onChange={(e) => setF("instagram")(e.target.value)} 
+                        className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>LinkedIn Profile URL (Mandatory if employed)</Label>
+                        <Label>Facebook URL</Label>
                         <Input 
-                          placeholder="https://www.linkedin.com/in/username" 
-                          value={form.linkedin} 
-                          onChange={(e) => setF("linkedin")(e.target.value)} 
+                          placeholder="https://facebook.com/username" 
+                          value={form.facebook} 
+                          onChange={(e) => setF("facebook")(e.target.value)} 
                           className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <Label>Instagram Profile URL</Label>
+                        <Label>Twitter / X URL</Label>
                         <Input 
-                          placeholder="https://www.instagram.com/username" 
-                          value={form.instagram} 
-                          onChange={(e) => setF("instagram")(e.target.value)} 
+                          placeholder="https://x.com/username" 
+                          value={form.twitter} 
+                          onChange={(e) => setF("twitter")(e.target.value)} 
                           className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                         />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Facebook URL</Label>
-                          <Input 
-                            placeholder="https://facebook.com/username" 
-                            value={form.facebook} 
-                            onChange={(e) => setF("facebook")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Twitter / X URL</Label>
-                          <Input 
-                            placeholder="https://x.com/username" 
-                            value={form.twitter} 
-                            onChange={(e) => setF("twitter")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                          />
-                        </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
-                  <div className="pt-4 stagger-fade-in-4">
-                    <Button type="submit" className="w-full h-11 sm:h-10 text-xs cursor-pointer hover-scale">
-                      Next Step <ArrowRight className="h-4 w-4 ml-2" />
+                  <div className="pt-2 flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => { setStep("core-address"); setError("") }}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer hover-scale">
+                      Next: Matrimony <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                    <Button type="button" variant="ghost" className="text-xs text-muted-foreground" onClick={handleOnboard}>
+                      Skip Matrimony
                     </Button>
                   </div>
                 </form>
@@ -1038,7 +1111,7 @@ export default function Register() {
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
                   <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("core")}>
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("core-id")}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
                     <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>

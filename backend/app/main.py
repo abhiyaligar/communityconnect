@@ -1,9 +1,8 @@
-"""
-CommunityConnect Backend - FastAPI Application Entry Point
 
-Creates and configures the FastAPI application with CORS,
-routers, and startup/shutdown lifecycle events.
-"""
+# CommunityConnect Backend - FastAPI Application Entry Point
+
+# Creates and configures the FastAPI application with CORS,
+# routers, and startup/shutdown lifecycle events.
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -67,6 +66,7 @@ app.add_middleware(
         "https://ladmatrimony.in",
         "https://www.ladmatrimony.in",
         "https://ladmatrimonyy.vercel.app",
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
