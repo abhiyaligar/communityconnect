@@ -24,6 +24,8 @@ from app.models.enums import UserRole, VerificationStatus
 from app.schemas.verification import VerificationReview, EscalationRequest
 from app.utils.email import send_verification_status_email
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -237,7 +239,6 @@ async def approve_verification(
         try:
             await send_verification_status_email(target_user.email, full_name, "approved")
         except Exception:
-            logger = logging.getLogger(__name__)
             logger.error(f"Failed to send approval email to {target_user.email}")
 
     await db.commit()
