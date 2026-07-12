@@ -3,6 +3,7 @@ CommunityConnect Backend - Verification Operations Endpoints
 """
 
 import uuid
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
@@ -21,6 +22,7 @@ from app.models.region import LocalAdminRegion
 from app.models.verification import VerificationRequest, VerificationApproval
 from app.models.enums import UserRole, VerificationStatus
 from app.schemas.verification import VerificationReview, EscalationRequest
+from app.utils.email import send_verification_status_email
 
 router = APIRouter()
 
@@ -157,7 +159,8 @@ async def approve_verification(
         select(VerificationRequest)
         .where(VerificationRequest.id == request_id)
         .options(
-            selectinload(VerificationRequest.target_user).selectinload(User.local_admin_regions)
+            selectinload(VerificationRequest.target_user).selectinload(User.local_admin_regions),
+            selectinload(VerificationRequest.target_user).selectinload(User.profile),
         )
     )
     result = await db.execute(stmt)
@@ -229,6 +232,13 @@ async def approve_verification(
         target_user.aadhar_verified_at = now
         target_user.aadhar_data_delete_at = now + timedelta(days=8)
 
+        # Send approval email
+        full_name = target_user.profile.full_name if target_user.profile else target_user.email.split("@")[0].replace(".", " ").title()
+        try:
+            await send_verification_status_email(target_user.email, full_name, "approved")
+        except Exception:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send approval email to {target_user.email}")
 
     await db.commit()
     return {"message": "Verification approval recorded successfully."}
@@ -247,7 +257,9 @@ async def reject_verification(
     stmt = (
         select(VerificationRequest)
         .where(VerificationRequest.id == request_id)
-        .options(selectinload(VerificationRequest.target_user))
+        .options(
+            selectinload(VerificationRequest.target_user).selectinload(User.profile)
+        )
     )
     result = await db.execute(stmt)
     req = result.scalars().first()
@@ -267,6 +279,14 @@ async def reject_verification(
 
     req.status = VerificationStatus.rejected
     req.target_user.role = UserRole.unverified
+
+    # Send rejection email
+    target_user = req.target_user
+    full_name = target_user.profile.full_name if target_user.profile else target_user.email.split("@")[0].replace(".", " ").title()
+    try:
+        await send_verification_status_email(target_user.email, full_name, "rejected", review.comments)
+    except Exception:
+        logger.error(f"Failed to send rejection email to {target_user.email}")
 
     await db.commit()
     return {"message": "Verification request rejected."}

@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { Navbar } from "@/components/layout/Navbar"
 import { ThemeProvider } from "@/contexts/ThemeContext"
 import { LanguageProvider } from "@/contexts/LanguageContext"
 import { Toaster } from "sonner"
@@ -36,6 +35,7 @@ import AdminVerification from "@/pages/admin/AdminVerification"
 import AdminMatrimony from "@/pages/admin/AdminMatrimony"
 import CreateAdmin from "@/pages/admin/CreateAdmin"
 import AdminSuggestions from "@/pages/admin/AdminSuggestions"
+import AdminMembership from "@/pages/admin/AdminMembership"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,12 +56,7 @@ function AppRoutes() {
         {/* Public Routes */}
         <Route
           path="/"
-          element={
-            <>
-              <Navbar />
-              <Landing />
-            </>
-          }
+          element={<Landing />}
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -206,6 +201,7 @@ function AppRoutes() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="verification" element={<AdminVerification />} />
           <Route path="matrimony" element={<AdminMatrimony />} />
+          <Route path="membership" element={<AdminMembership />} />
           <Route
             path="create-admin"
             element={
@@ -244,7 +240,7 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+    <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <AuthProvider>

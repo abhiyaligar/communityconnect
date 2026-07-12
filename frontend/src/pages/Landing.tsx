@@ -30,7 +30,15 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center">
-              <Heart className="h-4 w-4 text-white fill-white" />
+              <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="3.5" className="fill-white/10" />
+                <circle cx="12" cy="4.5" r="2" />
+                <circle cx="5" cy="9.5" r="2" />
+                <circle cx="19" cy="9.5" r="2" />
+                <circle cx="8" cy="18.5" r="2" />
+                <circle cx="16" cy="18.5" r="2" />
+                <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+              </svg>
             </div>
             <span className="font-extrabold text-lg tracking-tight">Lad Matrimony</span>
           </Link>
@@ -181,7 +189,15 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#0f172a] flex items-center justify-center">
-              <Heart className="h-4 w-4 text-white fill-white" />
+              <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="3.5" className="fill-white/10" />
+                <circle cx="12" cy="4.5" r="2" />
+                <circle cx="5" cy="9.5" r="2" />
+                <circle cx="19" cy="9.5" r="2" />
+                <circle cx="8" cy="18.5" r="2" />
+                <circle cx="16" cy="18.5" r="2" />
+                <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
+              </svg>
             </div>
             <span className="font-bold text-[#0f172a]">Lad Matrimony</span>
           </div>

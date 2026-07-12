@@ -20,6 +20,7 @@ from app.models.region import AdminRegion, LocalAdminRegion
 from app.models.verification import VerificationRequest
 from app.models.matrimony import MatrimonyProfile
 from app.models.enums import UserRole, Gender, MaritalStatus, VerificationStatus
+from app.models.membership import Membership, MembershipStatus
 from app.schemas.admin import AdminCreate, ProfileAdminUpdate, RegionCreate, RegionResponse
 
 router = APIRouter()
@@ -162,11 +163,17 @@ async def get_admin_dashboard_stats(
     mat_res = await db.execute(mat_stmt)
     matrimony_opt_ins = mat_res.scalar() or 0
 
+    # 5. Active memberships
+    mem_stmt = select(func.count(Membership.id)).where(Membership.status == MembershipStatus.active)
+    mem_res = await db.execute(mem_stmt)
+    active_memberships = mem_res.scalar() or 0
+
     return {
         "total_users": total_users,
         "verified_users": verified_users,
         "pending_verifications": pending_verifications,
-        "matrimony_opt_ins": matrimony_opt_ins
+        "matrimony_opt_ins": matrimony_opt_ins,
+        "active_memberships": active_memberships
     }
 
 

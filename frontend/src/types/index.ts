@@ -80,6 +80,12 @@ export interface AuthUser {
     additional_photos: string[]
     visibility: string
   }
+  membership?: {
+    has_membership: boolean
+    status: string | null
+    start_date: string | null
+    end_date: string | null
+  }
   wards?: Array<{
     profile_id: string
     full_name: string
@@ -145,6 +151,7 @@ export interface AdminDashboardStats {
   verified_users: number
   pending_verifications: number
   matrimony_opt_ins: number
+  active_memberships: number
 }
 
 export interface UserProfile {

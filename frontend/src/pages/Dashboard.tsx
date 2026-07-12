@@ -4,6 +4,7 @@ import { useTranslation } from "@/contexts/LanguageContext"
 import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import { useNavigate, Link } from "react-router-dom"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -387,11 +388,14 @@ export default function Dashboard() {
                 </button>
 
                 {/* Profile Photo */}
-                <img
-                  src={getImageUrl(featuredProfile?.profile_photo_url)}
-                  alt={featuredProfile?.full_name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                />
+                <div className="absolute inset-0" onContextMenu={(e) => e.preventDefault()}>
+                  <img
+                    src={getImageUrl(featuredProfile?.profile_photo_url)}
+                    alt={featuredProfile?.full_name}
+                    draggable={false}
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none select-none"
+                  />
+                </div>
 
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10" />
@@ -480,12 +484,16 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {/* Big Profile Image */}
                 <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl overflow-hidden border border-[#e2e8f0] shadow-md bg-slate-50">
-                  <img
-                    src={getImageUrl(selectedMatch.profile?.profile_photo_url)}
-                    alt={selectedMatch.profile?.full_name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                  {selectedMatch.profile?.profile_photo_url ? (
+                    <ProtectedImage
+                      src={getImageUrl(selectedMatch.profile.profile_photo_url)}
+                      alt={selectedMatch.profile.full_name || ""}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#f1f5f9]" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none z-10" />
                 </div>
 
                 <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">

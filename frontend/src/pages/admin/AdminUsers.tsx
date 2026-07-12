@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog"
-import { Search, Pencil, CheckCircle, XCircle, Loader2, Shield, Trash2 } from "lucide-react"
+import { Search, Pencil, CheckCircle, XCircle, Loader2, Shield, Trash2, CreditCard } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 
@@ -25,6 +25,13 @@ export default function AdminUsers() {
   const [editTarget, setEditTarget] = useState<UserProfile | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserProfile | null>(null)
   const [editForm, setEditForm] = useState<Partial<UserProfile & { is_active: boolean; role: string }>>({})
+  const [editMembership, setEditMembership] = useState({
+    has_membership: false,
+    start_date: "",
+    end_date: "",
+    status: "active",
+  })
+  const [membershipLoading, setMembershipLoading] = useState(false)
 
   // Determine if active user is an admin
   const isUserAdmin = currentUser?.role === "community_admin" || currentUser?.role === "local_admin"
@@ -135,11 +142,56 @@ export default function AdminUsers() {
       is_active: u.user?.is_active ?? true,
       role: u.user?.role || "unverified",
     })
+    if (currentUser?.role === "community_admin" && u.user_id) {
+      setMembershipLoading(true)
+      api.get(`/membership/admin/user/${u.user_id}`)
+        .then((res) => {
+          const m = res.data
+          setEditMembership({
+            has_membership: m.has_membership,
+            start_date: m.start_date || "",
+            end_date: m.end_date || "",
+            status: m.status || "active",
+          })
+        })
+        .catch(() => {
+          setEditMembership({ has_membership: false, start_date: "", end_date: "", status: "active" })
+        })
+        .finally(() => setMembershipLoading(false))
+    } else {
+      setEditMembership({ has_membership: false, start_date: "", end_date: "", status: "active" })
+    }
   }
 
   const handleSave = () => {
     if (!editTarget?.user_id) return
     updateMutation.mutate({ userId: editTarget.user_id, data: editForm })
+  }
+
+  const handleSaveMembership = async () => {
+    if (!editTarget?.user_id) return
+    const data: Record<string, unknown> = {}
+    if (editMembership.start_date) data.start_date = editMembership.start_date
+    if (editMembership.end_date) data.end_date = editMembership.end_date
+    data.status = editMembership.status
+
+    try {
+      if (editMembership.has_membership) {
+        await api.put(`/membership/update?user_id=${editTarget.user_id}`, data)
+      } else {
+        await api.post("/membership/create", {
+          user_id: editTarget.user_id,
+          username: editTarget.username || editTarget.full_name,
+          start_date: editMembership.start_date,
+          end_date: editMembership.end_date,
+          status: editMembership.status,
+        })
+      }
+      toast.success("Membership saved successfully.")
+      queryClient.invalidateQueries({ queryKey: ["admin-membership"] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Failed to save membership.")
+    }
   }
 
   const roleBadge = (role: string) => {
@@ -405,8 +457,48 @@ export default function AdminUsers() {
                 </SelectContent>
               </Select>
             </div>
+
+            {currentUser?.role === "community_admin" && (
+              <>
+                <div className="col-span-2 border-t border-[#e2e8f0] pt-4 mt-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CreditCard className="h-4 w-4 text-[#64748b]" />
+                    <span className="text-[9px] uppercase font-bold text-[#64748b] tracking-wider">Membership</span>
+                    {membershipLoading && <Loader2 className="h-3 w-3 animate-spin text-[#64748b]" />}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={editMembership.start_date}
+                    onChange={(e) => setEditMembership({ ...editMembership, start_date: e.target.value })}
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">End Date</Label>
+                  <Input
+                    type="date"
+                    value={editMembership.end_date}
+                    onChange={(e) => setEditMembership({ ...editMembership, end_date: e.target.value })}
+                    className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] p-2.5 rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="block text-[9px] uppercase font-bold text-[#64748b] tracking-wider mb-1">Membership Status</Label>
+                  <Select value={editMembership.status} onValueChange={(v) => setEditMembership({ ...editMembership, status: v })}>
+                    <SelectTrigger className="w-full bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-white text-[#0f172a] border border-[#e2e8f0]">
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
-          <DialogFooter className="pt-4 border-t border-[#e2e8f0]">
+          <DialogFooter className="pt-4 border-t border-[#e2e8f0] gap-2">
             <Button
               variant="outline"
               onClick={() => setEditTarget(null)}
@@ -414,14 +506,26 @@ export default function AdminUsers() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-9 rounded-lg flex items-center gap-1.5"
-            >
-              {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              <span>Save Changes</span>
-            </Button>
+            <div className="flex gap-2">
+              {currentUser?.role === "community_admin" && (
+                <Button
+                  onClick={handleSaveMembership}
+                  disabled={membershipLoading}
+                  className="bg-[#6366f1] text-white hover:bg-[#4f46e5] text-xs font-semibold px-4 h-9 rounded-lg flex items-center gap-1.5"
+                >
+                  {membershipLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
+                  <span>Save Membership</span>
+                </Button>
+              )}
+              <Button
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="bg-[#0f172a] text-white hover:bg-[#1e293b] text-xs font-semibold px-4 h-9 rounded-lg flex items-center gap-1.5"
+              >
+                {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                <span>Save Changes</span>
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

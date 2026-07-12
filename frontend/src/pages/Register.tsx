@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
-import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import api from "@/lib/api"
 import { handleApiError, getImageUrl } from "@/lib/utils"
-import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart, Sun, Moon, Lock } from "lucide-react"
+import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart, Lock } from "lucide-react"
 import { TokenResponse } from "@/types"
 
 type Step = "email" | "otp" | "core" | "matrimony" | "success"
@@ -67,7 +66,6 @@ interface FormData {
 
 export default function Register() {
   const { login } = useAuth()
-  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
   const location = useLocation()
@@ -380,26 +378,10 @@ export default function Register() {
       {/* Simple Background */}
       <div className="absolute inset-0 bg-background -z-10" />
 
-      {/* Floating Theme Toggle */}
-      <button
-        type="button"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="absolute top-6 right-6 p-2.5 rounded-xl border border-border bg-card/50 text-foreground hover:bg-secondary transition-all duration-300 shadow-sm backdrop-blur-sm z-50 cursor-pointer"
-        aria-label="Toggle Theme"
-      >
-        {theme === "dark" ? (
-          <Sun className="h-4.5 w-4.5 text-amber-500 animate-pulse" />
-        ) : (
-          <Moon className="h-4.5 w-4.5 text-slate-700" />
-        )}
-      </button>
-
       <div className="w-full max-w-xl relative z-10">
         <div className="flex flex-col items-center mb-8 sm:mb-10 text-center stagger-fade-in-1">
           <Link to="/" className="flex flex-col items-center group">
-            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md ${
-              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
-            }`}>
+            <div className="w-14 h-14 rounded-2xl border border-border/80 bg-card/60 flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md">
               <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
                 <circle cx="12" cy="4.5" r="2" />
@@ -421,9 +403,7 @@ export default function Register() {
           {step === "email" && (
             <>
               <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
-                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
-                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
-                }`}>
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
                   <Mail className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Create Account</CardTitle>
@@ -523,9 +503,7 @@ export default function Register() {
           {step === "otp" && (
             <>
               <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
-                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
-                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
-                }`}>
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Verify Email</CardTitle>
@@ -840,9 +818,7 @@ export default function Register() {
           {step === "matrimony" && (
             <>
               <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
-                <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto mb-4 hidden sm:flex ${
-                  theme === "dark" ? "bg-neutral-800 border-neutral-700 text-foreground" : "bg-secondary border-border text-foreground"
-                }`}>
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
                   <Heart className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-xl">Matrimony (Optional)</CardTitle>
@@ -851,9 +827,7 @@ export default function Register() {
               <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
                 <form onSubmit={handleOnboard} className="space-y-6">
                   
-                  <div className={`flex items-center space-x-3 p-3.5 rounded-lg border ${
-                    theme === "dark" ? "border-neutral-800 bg-neutral-900/40" : "border-border bg-secondary/35"
-                  }`}>
+                  <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />
                     <Label htmlFor="create_matrimony" className="font-semibold cursor-pointer text-sm text-foreground">
                       Yes, create my Matrimony Profile

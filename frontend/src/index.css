@@ -55,50 +55,6 @@
     --sidebar-ring: 222 47% 11%;
   }
 
-  .dark {
-    --background: 222 47% 11%; /* #0F172A */
-    --foreground: 210 20% 98%; /* #F8FAFC */
-
-    --card: 222 47% 17%; /* #1e293b */
-    --card-foreground: 210 20% 98%;
-
-    --popover: 222 47% 17%;
-    --popover-foreground: 210 20% 98%;
-
-    --primary: 210 20% 98%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 222 47% 17%;
-    --secondary-foreground: 210 20% 98%;
-
-    --muted: 222 47% 17%;
-    --muted-foreground: 215 16% 65%; /* #94a3b8 */
-
-    --accent: 222 47% 17%;
-    --accent-foreground: 210 20% 98%;
-
-    --destructive: 0 75% 42%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 215 25% 27%; /* #334155 */
-    --input: 215 25% 27%;
-    --ring: 210 20% 98%;
-
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 215 16% 65%;
-    --sidebar-primary: 210 20% 98%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 47% 17%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 215 25% 27%;
-    --sidebar-ring: 210 20% 98%;
-  }
   * {
     @apply border-border outline-ring/50;
   }

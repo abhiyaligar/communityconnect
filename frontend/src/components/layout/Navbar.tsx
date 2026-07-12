@@ -9,12 +9,9 @@ import {
   Home,
   Heart,
   Shield,
-  Sun,
-  Moon,
 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { useTheme } from "@/contexts/ThemeContext"
 
 export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin } = useAuth()
@@ -25,12 +22,6 @@ export function Navbar() {
   const handleLogout = async () => {
     await logout()
     navigate("/login")
-  }
-
-  const { theme, setTheme } = useTheme()
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
   }
 
   const initials = user?.full_name
@@ -85,16 +76,6 @@ export function Navbar() {
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <Link to="/profile">
@@ -131,17 +112,8 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Toggle & Theme toggle */}
+          {/* Mobile Menu Toggle */}
           <div className="flex items-center gap-1 md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
             <button
               className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}

@@ -10,6 +10,7 @@ import {
   Shield,
   ChevronRight,
   MessageSquareText,
+  CreditCard,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ const adminLinks = [
   { to: "/admin/users", label: "Members", icon: Users },
   { to: "/admin/verification", label: "Verification", icon: CheckSquare },
   { to: "/admin/matrimony", label: "Matrimony", icon: Heart },
+  { to: "/admin/membership", label: "Membership", icon: CreditCard },
 ]
 
 const communityAdminLinks = [

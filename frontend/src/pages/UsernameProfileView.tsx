@@ -20,6 +20,7 @@ import {
 import api from "@/lib/api"
 import { toast } from "sonner"
 import { getImageUrl } from "@/lib/utils"
+import { ProtectedImage } from "@/components/ProtectedImage"
 
 export default function UsernameProfileView() {
   const { username } = useParams()
@@ -111,11 +112,14 @@ export default function UsernameProfileView() {
         </div>
 
         {/* Hero Cover Image */}
-        <img
-          src={getImageUrl(profile.profile_photo_url)}
-          alt={profile.full_name}
-          className="w-full h-full object-cover"
-        />
+        <div className="absolute inset-0" onContextMenu={(e) => e.preventDefault()}>
+          <img
+            src={getImageUrl(profile.profile_photo_url)}
+            alt={profile.full_name}
+            draggable={false}
+            className="w-full h-full object-cover pointer-events-none select-none"
+          />
+        </div>
 
         {/* Dark overlay with info */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10" />
@@ -313,9 +317,9 @@ export default function UsernameProfileView() {
                   className="aspect-square rounded-2xl overflow-hidden border border-[#e2e8f0] bg-slate-50 cursor-pointer relative group shadow-sm hover:shadow-md transition-all duration-350"
                   onClick={() => setSelectedPhoto(photo)}
                 >
-                  <img 
-                    src={getImageUrl(photo)} 
-                    alt={`Gallery ${index}`} 
+                  <ProtectedImage
+                    src={getImageUrl(photo)}
+                    alt={`Gallery ${index}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
@@ -331,9 +335,9 @@ export default function UsernameProfileView() {
         <DialogContent className="max-w-3xl p-2 border-none bg-black/90 text-white flex items-center justify-center rounded-2xl shadow-2xl overflow-hidden focus:outline-none">
           {selectedPhoto && (
             <div className="relative max-h-[85vh] w-full flex items-center justify-center">
-              <img 
-                src={getImageUrl(selectedPhoto)} 
-                alt="Enlarged gallery view" 
+              <ProtectedImage
+                src={getImageUrl(selectedPhoto)}
+                alt="Enlarged gallery view"
                 className="max-h-[80vh] max-w-full object-contain rounded-lg"
               />
             </div>

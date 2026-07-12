@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import { getImageUrl } from "@/lib/utils"
-import { Edit, Check, Heart, ImageIcon } from "lucide-react"
+import { Edit, Check, Heart, ImageIcon, Shield } from "lucide-react"
 
 export default function Profile() {
   const navigate = useNavigate()
@@ -32,12 +33,21 @@ export default function Profile() {
     <div className="max-w-md mx-auto pt-8 pb-16 px-4 flex flex-col items-center text-center space-y-6 animate-fade-in text-[#0f172a]">
 
       {/* Avatar */}
-      <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
-        <AvatarImage src={getImageUrl(photoUrl)} />
-        <AvatarFallback className="text-3xl bg-[#f1f5f9] text-[#0f172a] font-bold">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
+      {photoUrl ? (
+        <ProtectedImage
+          src={getImageUrl(photoUrl)}
+          alt={fullName}
+          className="h-28 w-28 rounded-full border-4 border-white shadow-lg object-cover"
+          wrapperClassName="h-28 w-28 rounded-full border-4 border-white shadow-lg"
+        />
+      ) : (
+        <Avatar className="h-28 w-28 border-4 border-white shadow-lg">
+          <AvatarImage src="" />
+          <AvatarFallback className="text-3xl bg-[#f1f5f9] text-[#0f172a] font-bold">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      )}
 
       {/* Name + @username + Verified badge */}
       <div className="space-y-1.5">
@@ -83,6 +93,33 @@ export default function Profile() {
         </Button>
       </div>
 
+      {/* Membership Status */}
+      <div className="w-full pt-2">
+        <div className="flex items-center gap-2 justify-center text-[#64748b] mb-2">
+          <Shield className="h-3.5 w-3.5" />
+          <p className="text-[10px] uppercase font-bold tracking-wider">Membership</p>
+        </div>
+        <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 py-3 flex items-center justify-between">
+          <span className="text-xs font-semibold text-[#64748b]">Status</span>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+            user?.membership?.has_membership && user?.membership?.status === "active"
+              ? "bg-[#10b981]/10 text-[#10b981]"
+              : "bg-[#ef4444]/10 text-[#ef4444]"
+          }`}>
+            {user?.membership?.has_membership
+              ? user?.membership?.status === "active"
+                ? "Active"
+                : "Inactive"
+              : "No Membership"}
+          </span>
+        </div>
+        {user?.membership?.has_membership && (
+          <div className="flex items-center justify-between gap-4 mt-1.5 text-[10px] text-[#64748b] font-medium px-4">
+            <span>Valid: {user.membership.start_date} — {user.membership.end_date}</span>
+          </div>
+        )}
+      </div>
+
       {/* Gallery Photos */}
       {galleryPhotos.length > 0 && (
         <div className="w-full pt-6 space-y-3">
@@ -97,7 +134,7 @@ export default function Profile() {
                 key={i}
                 className="aspect-square rounded-xl overflow-hidden bg-[#f1f5f9]"
               >
-                <img
+                <ProtectedImage
                   src={getImageUrl(url)}
                   alt={`Gallery photo ${i + 1}`}
                   className="w-full h-full object-cover"

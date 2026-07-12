@@ -7,6 +7,7 @@ import { Globe, Lock, Loader2 } from "lucide-react"
 import api from "@/lib/api"
 import { toast } from "sonner"
 import { getImageUrl, handleApiError } from "@/lib/utils"
+import { ProtectedImage } from "@/components/ProtectedImage"
 
 export default function EditProfile() {
   const navigate = useNavigate()
@@ -135,7 +136,7 @@ export default function EditProfile() {
           <p className={labelCls}>Profile Photo</p>
           <div className="flex items-center gap-4">
             {photoUrl ? (
-              <img src={getImageUrl(photoUrl)} alt="Preview" className="w-16 h-16 rounded-full object-cover border border-[#e2e8f0]" />
+              <ProtectedImage src={getImageUrl(photoUrl)} alt="Preview" className="w-16 h-16 rounded-full object-cover border border-[#e2e8f0]" wrapperClassName="shrink-0" />
             ) : (
               <div className="w-16 h-16 rounded-full bg-[#f1f5f9] border border-[#e2e8f0] flex items-center justify-center text-[10px] text-[#64748b]">No photo</div>
             )}

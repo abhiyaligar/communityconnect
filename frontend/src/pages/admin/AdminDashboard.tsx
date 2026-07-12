@@ -23,7 +23,8 @@ import {
   Shield,
   MapPin,
   Plus,
-  Search
+  Search,
+  CreditCard,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -151,6 +152,14 @@ export default function AdminDashboard() {
       color: "text-rose-500",
       bg: "bg-rose-500/10 border-rose-500/25",
       desc: "Active opted-in profiles"
+    },
+    {
+      title: "Active Memberships",
+      value: stats.active_memberships,
+      icon: CreditCard,
+      color: "text-[#6366f1]",
+      bg: "bg-[#6366f1]/10 border-[#6366f1]/25",
+      desc: "Members with active subscription"
     }
   ]
 
@@ -308,6 +317,28 @@ export default function AdminDashboard() {
                         onClick={() => navigate("/admin/matrimony")}
                       >
                         <span>Browse</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    {/* Action Row 3: Membership Management */}
+                    <div className="flex items-center justify-between p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#6366f1]/10 flex items-center justify-center text-[#6366f1]">
+                          <CreditCard className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-[#0f172a]">Membership Access Control</p>
+                          <p className="text-[10px] text-[#64748b]">{statsData.active_memberships} active subscriptions</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="link"
+                        className="text-[#0f172a] hover:text-[#64748b] text-xs font-bold p-0 flex items-center gap-1.5"
+                        onClick={() => navigate("/admin/membership")}
+                      >
+                        <span>Manage</span>
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </div>

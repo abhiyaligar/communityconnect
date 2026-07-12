@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import api from "@/lib/api"
 import { handleApiError, getImageUrl } from "@/lib/utils"
 import { ArrowLeft, Loader2, Save, Heart, User, Briefcase, Star, Users, Coffee, Eye, Camera, Shield } from "lucide-react"
@@ -615,11 +616,11 @@ export default function EditMatrimony() {
                         <span>✓ Verified:</span> <span className="font-semibold text-emerald-700">{coApproverName}</span>
                       </p>
                       {coApproverApproved ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold py-0.5 rounded px-2">
+                        <Badge className="bg-emerald-500/10 text-emerald-600  border border-emerald-500/20 text-[10px] font-bold py-0.5 rounded px-2">
                           Verified & Confirmed ✓
                         </Badge>
                       ) : (
-                        <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px] font-bold py-0.5 rounded px-2">
+                        <Badge className="bg-amber-500/10 text-amber-600  border border-amber-500/20 text-[10px] font-bold py-0.5 rounded px-2">
                           Pending Guardian Confirmation ⏳
                         </Badge>
                       )}
@@ -676,12 +677,20 @@ export default function EditMatrimony() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto border border-border bg-card">
           <DialogHeader className="pb-4 border-b border-border">
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-              <Avatar className="h-16 w-16 border border-border">
-                <AvatarImage src={getImageUrl(user.profile_photo_url)} />
-                <AvatarFallback className="text-xl font-bold bg-muted text-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              {user.profile_photo_url ? (
+                <ProtectedImage
+                  src={getImageUrl(user.profile_photo_url)}
+                  alt={user.full_name || ""}
+                  className="h-16 w-16 rounded-full border border-border object-cover"
+                  wrapperClassName="h-16 w-16 rounded-full border border-border shrink-0"
+                />
+              ) : (
+                <Avatar className="h-16 w-16 border border-border">
+                  <AvatarFallback className="text-xl font-bold bg-muted text-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div className="space-y-1">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <DialogTitle className="text-xl font-bold">{user.full_name}</DialogTitle>
@@ -888,7 +897,7 @@ export default function EditMatrimony() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {previewPayload.additional_photos.map((url: string, i: number) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
-                      <img src={getImageUrl(url)} alt={`Gallery Preview ${i + 1}`} className="w-full h-full object-cover" />
+                      <ProtectedImage src={getImageUrl(url)} alt={`Gallery Preview ${i + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

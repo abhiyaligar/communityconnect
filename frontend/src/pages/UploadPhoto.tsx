@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ArrowLeft, Camera, Loader2 } from "lucide-react"
 import { getImageUrl, handleApiError } from "@/lib/utils"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import api from "@/lib/api"
 import { toast } from "sonner"
 
@@ -83,7 +84,7 @@ export default function UploadPhoto() {
         <CardContent className="p-6 space-y-6">
           <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc] text-center space-y-6">
             {photoUrl ? (
-              <img
+              <ProtectedImage
                 src={getImageUrl(photoUrl)}
                 alt="Profile Preview"
                 className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-lg"

@@ -38,6 +38,7 @@ class User(Base):
     local_admin_regions = relationship("LocalAdminRegion", back_populates="user", cascade="all, delete-orphan")
     approvals = relationship("VerificationApproval", back_populates="approver_user", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="actor", cascade="all, delete-orphan")
+    membership = relationship("Membership", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, phone_number={self.phone_number}, role={self.role})>"

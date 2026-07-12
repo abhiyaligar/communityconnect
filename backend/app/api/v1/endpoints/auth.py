@@ -21,7 +21,7 @@ import httpx
 from app.schemas.auth import TokenResponse, UserLogin, ForgotPasswordRequest, ResetPasswordRequest
 from app.schemas.user import UserCreate
 from pydantic import BaseModel, EmailStr
-from app.utils.email import send_verification_email, send_reset_password_email
+from app.utils.email import send_verification_email, send_reset_password_email, send_account_activation_email
 
 from app.core.limiter import limiter
 
@@ -164,7 +164,11 @@ async def verify_email_code(payload: EmailOTPVerify, request: Request, response:
     await db.delete(verification)
     await db.commit()
 
-    # 4. Generate Tokens
+    # 4. Send account activation email
+    name = email.split("@")[0].replace(".", " ").title()
+    await send_account_activation_email(email, name)
+
+    # 5. Generate Tokens
     access_token = create_jwt_token(
         {"sub": str(user.id), "role": user.role.value, "type": "access"}
     )

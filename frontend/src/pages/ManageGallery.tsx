@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Camera, Trash, Loader2, Heart, Shield, ChevronLeft } from "lucide-react"
 import { getImageUrl, handleApiError } from "@/lib/utils"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import api from "@/lib/api"
 import { toast } from "sonner"
 
@@ -138,7 +139,7 @@ export default function ManageGallery() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {additionalPhotos.map((url: string, index: number) => (
             <div key={index} className="group relative aspect-[4/5] rounded-xl overflow-hidden bg-[#f8fafc] border border-[#e2e8f0] shadow-sm">
-              <img
+              <ProtectedImage
                 src={getImageUrl(url)}
                 alt={`Candidate ${index + 1}`}
                 className="w-full h-full object-cover"

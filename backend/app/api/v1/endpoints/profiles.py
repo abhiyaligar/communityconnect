@@ -27,6 +27,7 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.matrimony import MatrimonyProfile
+from app.models.membership import Membership
 from app.models.enums import (
     Gender, MaritalStatus, BodyType, Complexion, EducationLevel,
     EmploymentType, IncomeRange, ManglikStatus, Diet, ActivityLevel, ProfileVisibility
@@ -91,6 +92,11 @@ async def get_my_profile(
     )
     wards_res = await db.execute(wards_stmt)
     wards = wards_res.scalars().all()
+
+    # Fetch membership info
+    membership_stmt = select(Membership).where(Membership.user_id == current_user.id)
+    membership_res = await db.execute(membership_stmt)
+    membership = membership_res.scalars().first()
 
     return {
         "id": str(current_user.id),
@@ -161,7 +167,13 @@ async def get_my_profile(
                 "approved": w.family_co_approver_approved
             }
             for w in wards
-        ]
+        ],
+        "membership": {
+            "has_membership": membership is not None,
+            "status": membership.status.value if membership else None,
+            "start_date": membership.start_date.isoformat() if membership else None,
+            "end_date": membership.end_date.isoformat() if membership else None,
+        }
     }
 
 

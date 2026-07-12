@@ -1,17 +1,15 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { Mail, Lock, Loader2, ShieldCheck, ArrowLeft, Sun, Moon, CheckCircle } from "lucide-react"
+import { Mail, Lock, Loader2, ShieldCheck, ArrowLeft, CheckCircle } from "lucide-react"
 
 type Step = "request" | "reset" | "success"
 
 export default function ForgotPassword() {
-  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
   const [step, setStep] = useState<Step>("request")
@@ -85,27 +83,11 @@ export default function ForgotPassword() {
       {/* Simple Background */}
       <div className="absolute inset-0 bg-background -z-10" />
 
-      {/* Floating Theme Toggle */}
-      <button
-        type="button"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="absolute top-6 right-6 p-2.5 rounded-xl border border-border bg-card/50 text-foreground hover:bg-secondary transition-all duration-300 shadow-sm backdrop-blur-sm z-50 cursor-pointer"
-        aria-label="Toggle Theme"
-      >
-        {theme === "dark" ? (
-          <Sun className="h-4.5 w-4.5 text-amber-500 animate-pulse" />
-        ) : (
-          <Moon className="h-4.5 w-4.5 text-slate-700" />
-        )}
-      </button>
-
       <div className="w-full max-w-[420px] relative z-10 flex flex-col items-center">
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8 text-center">
           <Link to="/" className="flex flex-col items-center group">
-            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 backdrop-blur-md ${
-              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
-            }`}>
+            <div className="w-14 h-14 rounded-2xl border border-border/80 bg-card/60 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 backdrop-blur-md">
               <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
                 <circle cx="12" cy="4.5" r="2" />
@@ -186,7 +168,7 @@ export default function ForgotPassword() {
               <div className="space-y-1.5 pb-6">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Enter Reset Details</h2>
                 {successMsg && (
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+                  <p className="text-xs text-emerald-600 font-semibold bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
                     {successMsg}
                   </p>
                 )}

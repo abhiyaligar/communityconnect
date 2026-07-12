@@ -2,19 +2,17 @@ import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTranslation } from "@/contexts/LanguageContext"
-import { useTheme } from "@/contexts/ThemeContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { Mail, Lock, Loader2, Shield, ShieldCheck, BadgeCheck, Sun, Moon } from "lucide-react"
+import { Mail, Lock, Loader2, Shield, ShieldCheck, BadgeCheck } from "lucide-react"
 import { TokenResponse } from "@/types"
 
 export default function Login() {
   const { login } = useAuth()
   const { t } = useTranslation()
-  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState("")
@@ -80,27 +78,11 @@ export default function Login() {
       {/* Simple Background */}
       <div className="absolute inset-0 bg-background -z-10" />
 
-      {/* Floating Theme Toggle */}
-      <button
-        type="button"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        className="absolute top-6 right-6 p-2.5 rounded-xl border border-border bg-card/50 text-foreground hover:bg-secondary transition-all duration-300 shadow-sm backdrop-blur-sm z-50 cursor-pointer"
-        aria-label="Toggle Theme"
-      >
-        {theme === "dark" ? (
-          <Sun className="h-4.5 w-4.5 text-amber-500 animate-pulse" />
-        ) : (
-          <Moon className="h-4.5 w-4.5 text-slate-700" />
-        )}
-      </button>
-
       <div className="w-full max-w-[420px] relative z-10 flex flex-col items-center">
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8 sm:mb-10 text-center stagger-fade-in-1">
           <Link to="/" className="flex flex-col items-center group">
-            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md ${
-              theme === "dark" ? "border-neutral-800 bg-neutral-900/60" : "border-border/80 bg-card/60"
-            }`}>
+            <div className="w-14 h-14 rounded-2xl border border-border/80 bg-card/60 flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300 backdrop-blur-md">
               <svg className="h-7 w-7 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <circle cx="12" cy="12" r="3.5" className="fill-foreground/10" />
                 <circle cx="12" cy="4.5" r="2" />

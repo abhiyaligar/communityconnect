@@ -4,6 +4,7 @@ import api from "@/lib/api"
 import { MatrimonyEntry, GuardianRecommendation } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import {
   Heart,
   MapPin,
@@ -195,12 +196,20 @@ export default function Matrimony() {
         {/* Profile Info Row */}
         <div className={`space-y-4 ${isRecSection ? 'pt-4' : ''}`}>
           <div className="flex gap-4 items-start">
-            <Avatar className="h-14 w-14 border-2 border-white shadow-md shrink-0">
-              <AvatarImage src={getImageUrl(prof?.profile_photo_url)} />
-              <AvatarFallback className="bg-[#f1f5f9] text-[#0f172a] font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            {prof?.profile_photo_url ? (
+              <ProtectedImage
+                src={getImageUrl(prof.profile_photo_url)}
+                alt={prof.full_name || ""}
+                className="h-14 w-14 rounded-full border-2 border-white shadow-md object-cover"
+                wrapperClassName="h-14 w-14 rounded-full border-2 border-white shadow-md shrink-0"
+              />
+            ) : (
+              <Avatar className="h-14 w-14 border-2 border-white shadow-md shrink-0">
+                <AvatarFallback className="bg-[#f1f5f9] text-[#0f172a] font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div className="space-y-1 min-w-0 pr-12">
               <h3 className="font-bold text-[#0f172a] text-lg leading-tight truncate">
                 {prof?.full_name}
@@ -470,12 +479,20 @@ export default function Matrimony() {
               <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
-                      <AvatarImage src={getImageUrl(selectedMatch.profile?.profile_photo_url)} />
-                      <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
-                        {selectedMatch.profile?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    {selectedMatch.profile?.profile_photo_url ? (
+                      <ProtectedImage
+                        src={getImageUrl(selectedMatch.profile.profile_photo_url)}
+                        alt={selectedMatch.profile.full_name || ""}
+                        className="h-16 w-16 rounded-full border border-[#e2e8f0] shadow-md object-cover"
+                        wrapperClassName="h-16 w-16 rounded-full border border-[#e2e8f0] shadow-md shrink-0"
+                      />
+                    ) : (
+                      <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
+                        <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
+                          {selectedMatch.profile?.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <DialogTitle className="text-xl font-bold text-[#0f172a]">

@@ -7,6 +7,7 @@ import { useTranslation } from "@/contexts/LanguageContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProtectedImage } from "@/components/ProtectedImage"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
@@ -595,12 +596,20 @@ export default function MatrimonyRequests() {
               <DialogHeader className="pb-4 border-b border-[#e2e8f0] text-left">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
-                      <AvatarImage src={selectedProfile.profile_photo_url} />
-                      <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
-                        {selectedProfile.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    {selectedProfile.profile_photo_url ? (
+                      <ProtectedImage
+                        src={selectedProfile.profile_photo_url}
+                        alt={selectedProfile.full_name || ""}
+                        className="h-16 w-16 rounded-full border border-[#e2e8f0] shadow-md object-cover"
+                        wrapperClassName="h-16 w-16 rounded-full border border-[#e2e8f0] shadow-md shrink-0"
+                      />
+                    ) : (
+                      <Avatar className="h-16 w-16 border border-[#e2e8f0] shadow-md">
+                        <AvatarFallback className="text-xl bg-[#f1f5f9] font-bold text-[#0f172a]">
+                          {selectedProfile.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <DialogTitle className="text-xl font-bold text-[#0f172a]">
