@@ -83,7 +83,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     ),
     ...(isVerifiedAdult ? [{ to: "/matrimony/chat", label: "Chat", icon: MessageCircle }] : []),
     ...(isVerifiedAdult ? [{ to: "/matrimony/requests", label: "Requests", icon: MessageSquare }] : []),
-    ...(isAdmin ? [{ to: "/admin/create-admin", label: "Operators", icon: Plus }] : [])
+    ...(isAdmin ? [{ to: "/admin/create-admin", label: "Operators", icon: Plus }] : []),
+    ...(user?.role === "community_admin" ? [{ to: "/admin/settings", label: "Settings", icon: Settings }] : [])
   ]
 
 

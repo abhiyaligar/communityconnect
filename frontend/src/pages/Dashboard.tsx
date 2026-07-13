@@ -297,6 +297,20 @@ export default function Dashboard() {
     )
   }
 
+  // Membership Banner
+  const membership = user?.membership
+  const membershipBanner = membership?.has_membership
+    ? membership.status === "active"
+      ? {
+          label: `Membership active till ${new Date(membership.end_date!).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`,
+          color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20"
+        }
+      : {
+          label: `Membership expired on ${new Date(membership.end_date!).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`,
+          color: "bg-red-500/10 text-red-700 border-red-500/20"
+        }
+    : null
+
   // ==================== 2. STANDARD USER: ELIGIBLE MATRIMONY MATCHES ====================
   if (isEligibleForMatches) {
     const currentMatch = matchesList && matchesList.length > 0 ? matchesList[activeIndex % matchesList.length] : null
@@ -315,6 +329,15 @@ export default function Dashboard() {
               {t("welcome")}, {user?.full_name?.split(" ")[0] || "User"}
             </h1>
           </div>
+
+          {/* Membership Banner */}
+          {membershipBanner && (
+            <div className="px-5 pb-1">
+              <div className={`text-[11px] font-semibold px-4 py-2 rounded-xl border ${membershipBanner.color}`}>
+                {membershipBanner.label}
+              </div>
+            </div>
+          )}
 
           {/* Pending Guardian Co-Approvals */}
           {pendingGuardianRequests.length > 0 && (
@@ -759,7 +782,12 @@ export default function Dashboard() {
 
   // ==================== 3. STANDARD USER: NOT OPTED IN PROMO CARD ====================
   return (
-    <div className="space-y-8 animate-fade-in text-[#0f172a] max-w-xl mx-auto py-12">
+    <div className="space-y-6 animate-fade-in text-[#0f172a] max-w-xl mx-auto py-12">
+      {membershipBanner && (
+        <div className={`text-[11px] font-semibold px-4 py-2 rounded-xl border ${membershipBanner.color}`}>
+          {membershipBanner.label}
+        </div>
+      )}
       <div className="bg-white border border-[#e2e8f0] rounded-3xl p-8 text-center space-y-6 shadow-sm relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-rose-500/5 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full bg-emerald-500/5 blur-3xl" />
