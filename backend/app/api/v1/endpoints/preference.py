@@ -74,6 +74,7 @@ async def save_preferences(
         "strict_diet", "preferred_diet",
         "strict_education", "preferred_education",
         "strict_employment", "preferred_employment",
+        "preferred_hobbies",
     ]:
         val = getattr(payload, field, None)
         if val is not None:
@@ -81,7 +82,7 @@ async def save_preferences(
 
     for field in [
         "strict_income_min", "strict_income_max", "preferred_income",
-        "manglik",
+        "manglik", "about_partner",
     ]:
         val = getattr(payload, field, None)
         if val is not None:

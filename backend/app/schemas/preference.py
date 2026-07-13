@@ -47,6 +47,9 @@ class MatrimonyPreferenceCreate(BaseModel):
     strict_employment: Optional[List[str]] = None
     preferred_employment: Optional[List[str]] = None
 
+    preferred_hobbies: Optional[List[str]] = None
+    about_partner: Optional[str] = None
+
 
 class MatrimonyPreferenceOut(BaseModel):
     profile_id: UUID
@@ -80,6 +83,8 @@ class MatrimonyPreferenceOut(BaseModel):
     preferred_education: Optional[list] = None
     strict_employment: Optional[list] = None
     preferred_employment: Optional[list] = None
+    preferred_hobbies: Optional[list] = None
+    about_partner: Optional[str] = None
 
     class Config:
         from_attributes = True

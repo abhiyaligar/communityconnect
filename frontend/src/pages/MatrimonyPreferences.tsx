@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import api from "@/lib/api"
 import { handleApiError } from "@/lib/utils"
-import { ArrowRight, ArrowLeft, Loader2, Heart } from "lucide-react"
+import { ArrowRight, ArrowLeft, Loader2, Heart, Sparkles } from "lucide-react"
 
 const RASHI_OPTIONS = [
   { value: "aries", label: "Mesh (Aries)" },
@@ -39,6 +39,25 @@ const EDUCATION_OPTIONS = [
   { value: "doctorate", label: "Doctorate" },
   { value: "diploma", label: "Diploma" },
   { value: "high_school", label: "High School" },
+]
+
+const HOBBIES_OPTIONS = [
+  { value: "reading", label: "Reading" },
+  { value: "traveling", label: "Traveling" },
+  { value: "cooking", label: "Cooking" },
+  { value: "music", label: "Music" },
+  { value: "sports", label: "Sports" },
+  { value: "dancing", label: "Dancing" },
+  { value: "photography", label: "Photography" },
+  { value: "gardening", label: "Gardening" },
+  { value: "painting", label: "Painting" },
+  { value: "gaming", label: "Gaming" },
+  { value: "yoga", label: "Yoga" },
+  { value: "fitness", label: "Fitness" },
+  { value: "movies", label: "Movies" },
+  { value: "hiking", label: "Hiking" },
+  { value: "writing", label: "Writing" },
+  { value: "meditation", label: "Meditation" },
 ]
 
 const DIET_OPTIONS = [
@@ -194,6 +213,9 @@ export default function MatrimonyPreferences() {
   const [prefWeightMax, setPrefWeightMax] = useState("")
 
   const [manglik, setManglik] = useState("any")
+  const [preferredHobbies, setPreferredHobbies] = useState<string[]>([])
+  const [aboutPartner, setAboutPartner] = useState("")
+  const [prefStep, setPrefStep] = useState(1)
 
   // Fetch existing preferences on mount
   useEffect(() => {
@@ -231,6 +253,8 @@ export default function MatrimonyPreferences() {
         if (d.preferred_weight_min) setPrefWeightMin(String(d.preferred_weight_min))
         if (d.preferred_weight_max) setPrefWeightMax(String(d.preferred_weight_max))
         if (d.manglik) setManglik(d.manglik)
+        if (d.preferred_hobbies) setPreferredHobbies(d.preferred_hobbies)
+        if (d.about_partner) setAboutPartner(d.about_partner)
       } catch (err: any) {
         // 404 = no prefs yet, that's fine
         if (err.response?.status !== 404) {
@@ -274,6 +298,8 @@ export default function MatrimonyPreferences() {
     preferred_weight_min: prefWeightMin ? parseInt(prefWeightMin) : null,
     preferred_weight_max: prefWeightMax ? parseInt(prefWeightMax) : null,
     manglik,
+    preferred_hobbies: preferredHobbies.length ? preferredHobbies : null,
+    about_partner: aboutPartner || null,
   })
 
   const handleSave = async (e: React.FormEvent) => {
@@ -321,185 +347,265 @@ export default function MatrimonyPreferences() {
         <Card className="w-full border border-border bg-card shadow-sm">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-xl">Your Preferences</CardTitle>
-            <CardDescription className="text-xs">All fields are optional</CardDescription>
+            <CardDescription className="text-xs">Step {prefStep} of 5 — All fields are optional</CardDescription>
+            <div className="flex justify-center gap-1.5 mt-3">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div key={s} className={`h-1.5 w-8 rounded-full transition-colors ${s === prefStep ? "bg-foreground" : "bg-muted"}`} />
+              ))}
+            </div>
           </CardHeader>
           <CardContent className="pt-4 pb-6">
-            <form onSubmit={handleSave} className="space-y-5">
+            <form onSubmit={handleSave}>
+              {/* Step 1: Zodiac / Rashi */}
+              {prefStep === 1 && (
+                <div className="space-y-5">
+                  <TierMultiField
+                    label="Zodiac / Rashi"
+                    strictValue={strictRashi}
+                    onStrictChange={setStrictRashi}
+                    prefValue={prefRashi}
+                    onPrefChange={setPrefRashi}
+                    options={RASHI_OPTIONS}
+                  />
 
-              {/* Zodiac / Rashi */}
-              <TierMultiField
-                label="Zodiac / Rashi"
-                strictValue={strictRashi}
-                onStrictChange={setStrictRashi}
-                prefValue={prefRashi}
-                onPrefChange={setPrefRashi}
-                options={RASHI_OPTIONS}
-              />
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
-              {/* Gotra */}
-              <TierMultiField
-                label="Gotra"
-                strictValue={strictGotra}
-                onStrictChange={(v) => setStrictGotra(v.map((x) => x))}
-                prefValue={prefGotra}
-                onPrefChange={(v) => setPrefGotra(v.map((x) => x))}
-                options={[
-                  { value: "kashyap", label: "Kashyap" },
-                  { value: "bhardwaj", label: "Bhardwaj" },
-                  { value: "vashistha", label: "Vashistha" },
-                  { value: "atrey", label: "Atrey" },
-                  { value: "jaimini", label: "Jaimini" },
-                  { value: "other", label: "Other" },
-                ]}
-              />
-
-              {/* Nakshatra */}
-              <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
-                <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Nakshatra</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory</span>
-                    <Input placeholder="e.g. Ashwini, Bharani" value={strictNakshatra.join(", ")} onChange={(e) => setStrictNakshatra(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Preferred</span>
-                    <Input placeholder="e.g. Ashwini, Bharani" value={prefNakshatra.join(", ")} onChange={(e) => setPrefNakshatra(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={handleSkip}>
+                      Skip All
+                    </Button>
+                    <Button type="button" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setPrefStep(2)}>
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Sub Caste */}
-              <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
-                <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Sub Caste</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory</span>
-                    <Input placeholder="e.g. Shakdwipi" value={strictSubCaste.join(", ")} onChange={(e) => setStrictSubCaste(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Preferred</span>
-                    <Input placeholder="e.g. Shakdwipi" value={prefSubCaste.join(", ")} onChange={(e) => setPrefSubCaste(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
-                  </div>
-                </div>
-              </div>
+              {/* Step 2: Gotra, Nakshatra, Sub Caste, Manglik */}
+              {prefStep === 2 && (
+                <div className="space-y-5">
+                  <TierMultiField
+                    label="Gotra"
+                    strictValue={strictGotra}
+                    onStrictChange={(v) => setStrictGotra(v.map((x) => x))}
+                    prefValue={prefGotra}
+                    onPrefChange={(v) => setPrefGotra(v.map((x) => x))}
+                    options={[
+                      { value: "kashyap", label: "Kashyap" },
+                      { value: "bhardwaj", label: "Bhardwaj" },
+                      { value: "vashistha", label: "Vashistha" },
+                      { value: "atrey", label: "Atrey" },
+                      { value: "jaimini", label: "Jaimini" },
+                      { value: "other", label: "Other" },
+                    ]}
+                  />
 
-              {/* Income */}
-              <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
-                <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Income Range</h4>
-                <div>
-                  <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory Range</span>
-                  <div className="flex items-center gap-2">
-                    <Select value={strictIncomeMin} onValueChange={setStrictIncomeMin}>
-                      <SelectTrigger className="h-9 text-xs flex-1"><SelectValue placeholder="Min Income" /></SelectTrigger>
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Nakshatra</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory</span>
+                        <Input placeholder="e.g. Ashwini, Bharani" value={strictNakshatra.join(", ")} onChange={(e) => setStrictNakshatra(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Preferred</span>
+                        <Input placeholder="e.g. Ashwini, Bharani" value={prefNakshatra.join(", ")} onChange={(e) => setPrefNakshatra(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Sub Caste</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory</span>
+                        <Input placeholder="e.g. Shakdwipi" value={strictSubCaste.join(", ")} onChange={(e) => setStrictSubCaste(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Preferred</span>
+                        <Input placeholder="e.g. Shakdwipi" value={prefSubCaste.join(", ")} onChange={(e) => setPrefSubCaste(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} className="h-9 text-xs" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Manglik Status</h4>
+                    <Select value={manglik} onValueChange={setManglik}>
+                      <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Any" /></SelectTrigger>
                       <SelectContent>
-                        {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                        <SelectItem value="any">Any / Don't Care</SelectItem>
+                        <SelectItem value="manglik">Must be Manglik</SelectItem>
+                        <SelectItem value="non_manglik">Must be Non-Manglik</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-xs text-muted-foreground">to</span>
-                    <Select value={strictIncomeMax} onValueChange={setStrictIncomeMax}>
-                      <SelectTrigger className="h-9 text-xs flex-1"><SelectValue placeholder="Max Income" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any</SelectItem>
-                        {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                  </div>
+
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => setPrefStep(1)}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="button" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setPrefStep(3)}>
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
-                <div>
-                  <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Flexible</span>
-                  <Select value={prefIncome} onValueChange={setPrefIncome}>
-                    <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Any" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any</SelectItem>
-                      {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+              )}
+
+              {/* Step 3: Physical & Lifestyle */}
+              {prefStep === 3 && (
+                <div className="space-y-5">
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Income Range</h4>
+                    <div>
+                      <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory Range</span>
+                      <div className="flex items-center gap-2">
+                        <Select value={strictIncomeMin} onValueChange={setStrictIncomeMin}>
+                          <SelectTrigger className="h-9 text-xs flex-1"><SelectValue placeholder="Min Income" /></SelectTrigger>
+                          <SelectContent>
+                            {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-xs text-muted-foreground">to</span>
+                        <Select value={strictIncomeMax} onValueChange={setStrictIncomeMax}>
+                          <SelectTrigger className="h-9 text-xs flex-1"><SelectValue placeholder="Max Income" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">Any</SelectItem>
+                            {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Flexible</span>
+                      <Select value={prefIncome} onValueChange={setPrefIncome}>
+                        <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Any" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any</SelectItem>
+                          {INCOME_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <TierRangeField
+                    label="Age (Years)"
+                    strictMin={strictAgeMin} strictMax={strictAgeMax}
+                    onStrictMin={setStrictAgeMin} onStrictMax={setStrictAgeMax}
+                    prefMin={prefAgeMin} prefMax={prefAgeMax}
+                    onPrefMin={setPrefAgeMin} onPrefMax={setPrefAgeMax}
+                  />
+
+                  <TierRangeField
+                    label="Height (cm)"
+                    strictMin={strictHeightMin} strictMax={strictHeightMax}
+                    onStrictMin={setStrictHeightMin} onStrictMax={setStrictHeightMax}
+                    prefMin={prefHeightMin} prefMax={prefHeightMax}
+                    onPrefMin={setPrefHeightMin} onPrefMax={setPrefHeightMax}
+                    unit="cm"
+                  />
+
+                  <TierRangeField
+                    label="Weight (kg)"
+                    strictMin={strictWeightMin} strictMax={strictWeightMax}
+                    onStrictMin={setStrictWeightMin} onStrictMax={setStrictWeightMax}
+                    prefMin={prefWeightMin} prefMax={prefWeightMax}
+                    onPrefMin={setPrefWeightMin} onPrefMax={setPrefWeightMax}
+                    unit="kg"
+                  />
+
+                  <TierMultiField
+                    label="Diet"
+                    strictValue={strictDiet}
+                    onStrictChange={setStrictDiet}
+                    prefValue={prefDiet}
+                    onPrefChange={setPrefDiet}
+                    options={DIET_OPTIONS}
+                  />
+
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => setPrefStep(2)}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="button" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setPrefStep(4)}>
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Age */}
-              <TierRangeField
-                label="Age (Years)"
-                strictMin={strictAgeMin} strictMax={strictAgeMax}
-                onStrictMin={setStrictAgeMin} onStrictMax={setStrictAgeMax}
-                prefMin={prefAgeMin} prefMax={prefAgeMax}
-                onPrefMin={setPrefAgeMin} onPrefMax={setPrefAgeMax}
-              />
+              {/* Step 4: Education & Employment */}
+              {prefStep === 4 && (
+                <div className="space-y-5">
+                  <TierMultiField
+                    label="Education"
+                    strictValue={strictEducation}
+                    onStrictChange={setStrictEducation}
+                    prefValue={prefEducation}
+                    onPrefChange={setPrefEducation}
+                    options={EDUCATION_OPTIONS}
+                  />
 
-              {/* Height */}
-              <TierRangeField
-                label="Height (cm)"
-                strictMin={strictHeightMin} strictMax={strictHeightMax}
-                onStrictMin={setStrictHeightMin} onStrictMax={setStrictHeightMax}
-                prefMin={prefHeightMin} prefMax={prefHeightMax}
-                onPrefMin={setPrefHeightMin} onPrefMax={setPrefHeightMax}
-                unit="cm"
-              />
+                  <TierMultiField
+                    label="Employment Type"
+                    strictValue={strictEmployment}
+                    onStrictChange={setStrictEmployment}
+                    prefValue={prefEmployment}
+                    onPrefChange={setPrefEmployment}
+                    options={EMPLOYMENT_OPTIONS}
+                  />
 
-              {/* Weight */}
-              <TierRangeField
-                label="Weight (kg)"
-                strictMin={strictWeightMin} strictMax={strictWeightMax}
-                onStrictMin={setStrictWeightMin} onStrictMax={setStrictWeightMax}
-                prefMin={prefWeightMin} prefMax={prefWeightMax}
-                onPrefMin={setPrefWeightMin} onPrefMax={setPrefWeightMax}
-                unit="kg"
-              />
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
-              {/* Diet */}
-              <TierMultiField
-                label="Diet"
-                strictValue={strictDiet}
-                onStrictChange={setStrictDiet}
-                prefValue={prefDiet}
-                onPrefChange={setPrefDiet}
-                options={DIET_OPTIONS}
-              />
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => setPrefStep(3)}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="button" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setPrefStep(5)}>
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-              {/* Manglik */}
-              <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
-                <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Manglik Status</h4>
-                <Select value={manglik} onValueChange={setManglik}>
-                  <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Any" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any / Don't Care</SelectItem>
-                    <SelectItem value="manglik">Must be Manglik</SelectItem>
-                    <SelectItem value="non_manglik">Must be Non-Manglik</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Step 5: Hobbies & About Partner + Submit */}
+              {prefStep === 5 && (
+                <div className="space-y-5">
+                  <TierMultiField
+                    label="Preferred Hobbies"
+                    strictValue={[]}
+                    onStrictChange={() => {}}
+                    prefValue={preferredHobbies}
+                    onPrefChange={setPreferredHobbies}
+                    options={HOBBIES_OPTIONS}
+                  />
 
-              {/* Education */}
-              <TierMultiField
-                label="Education"
-                strictValue={strictEducation}
-                onStrictChange={setStrictEducation}
-                prefValue={prefEducation}
-                onPrefChange={setPrefEducation}
-                options={EDUCATION_OPTIONS}
-              />
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">About the Partner I'm Looking For</h4>
+                    <textarea
+                      value={aboutPartner}
+                      onChange={(e) => setAboutPartner(e.target.value)}
+                      placeholder="Describe the kind of person you're looking for — values, personality, interests..."
+                      className="w-full min-h-[100px] bg-transparent border border-border rounded-md p-3 text-xs resize-y focus:outline-none focus:ring-1 focus:ring-foreground"
+                    />
+                  </div>
 
-              {/* Employment */}
-              <TierMultiField
-                label="Employment Type"
-                strictValue={strictEmployment}
-                onStrictChange={setStrictEmployment}
-                prefValue={prefEmployment}
-                onPrefChange={setPrefEmployment}
-                options={EMPLOYMENT_OPTIONS}
-              />
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
-              {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-
-              <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={handleSkip}>
-                  Skip
-                </Button>
-                <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  {loading ? "Saving..." : "Save & Continue"}
-                </Button>
-              </div>
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs" onClick={() => setPrefStep(4)}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {loading ? "Saving..." : "Save & Continue"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>

@@ -62,6 +62,7 @@ interface FormData {
   family_values: string
   family_financial_status: string
   diet: string
+  hobbies: string
 }
 
 export default function Register() {
@@ -116,6 +117,7 @@ export default function Register() {
     family_values: "",
     family_financial_status: "",
     diet: "",
+    hobbies: "",
   })
 
   const setF = (field: keyof FormData) => (val: string | boolean) =>
@@ -379,6 +381,7 @@ export default function Register() {
         family_values: form.family_values || undefined,
         family_financial_status: form.family_financial_status || undefined,
         diet: form.diet || undefined,
+        hobbies: form.hobbies ? form.hobbies.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
       })
       
       // Update AuthContext and redirect
@@ -1192,6 +1195,16 @@ export default function Register() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label>Hobbies (comma-separated)</Label>
+                        <Input
+                          placeholder="e.g. Reading, Hiking, Cooking"
+                          value={form.hobbies}
+                          onChange={(e) => setF("hobbies")(e.target.value)}
+                          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -1243,44 +1256,54 @@ function BirthTimePicker({ value, onChange }: { value: string; onChange: (val: s
     return { hour: m[1], minute: m[2], period: m[3].toUpperCase() }
   }
 
-  const bt = parse(value)
+  const [local, setLocal] = useState(parse(value))
 
-  const handleChange = (field: "hour" | "minute" | "period", v: string) => {
-    const h = field === "hour" ? v : bt.hour
-    const m = field === "minute" ? v : bt.minute
-    const p = field === "period" ? v : bt.period
-    if (h && m && p) {
-      onChange(`${h.padStart(2, "0")}:${m} ${p}`)
-    } else {
-      onChange("")
+  useEffect(() => {
+    const parsed = parse(value)
+    setLocal(parsed)
+  }, [value])
+
+  const setField = (field: "hour" | "minute" | "period", v: string) => {
+    const next = { ...local, [field]: v }
+    setLocal(next)
+    if (next.hour && next.minute && next.period) {
+      onChange(`${next.hour.padStart(2, "0")}:${next.minute} ${next.period}`)
     }
   }
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="flex-1">
-        <Select value={bt.hour} onValueChange={(v) => handleChange("hour", v)} required>
-          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="HH" /></SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
-              <SelectItem key={h} value={h}>{h}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="w-14">
+        <Input
+          placeholder="HH"
+          maxLength={2}
+          value={local.hour}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\D/g, "").slice(0, 2)
+            if (v === "" || (parseInt(v) >= 1 && parseInt(v) <= 12)) {
+              setField("hour", v)
+            }
+          }}
+          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs text-center"
+        />
       </div>
       <span className="text-muted-foreground text-xs font-bold -mt-3">:</span>
-      <div className="flex-1">
-        <Select value={bt.minute} onValueChange={(v) => handleChange("minute", v)} required>
-          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="MM" /></SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((m) => (
-              <SelectItem key={m} value={m}>{m}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="w-14">
+        <Input
+          placeholder="MM"
+          maxLength={2}
+          value={local.minute}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\D/g, "").slice(0, 2)
+            if (v === "" || (parseInt(v) >= 0 && parseInt(v) <= 59)) {
+              setField("minute", v.padStart(2, "0"))
+            }
+          }}
+          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs text-center"
+        />
       </div>
       <div className="w-16">
-        <Select value={bt.period} onValueChange={(v) => handleChange("period", v)} required>
+        <Select value={local.period} onValueChange={(v) => setField("period", v)} required>
           <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="AM">AM</SelectItem>
