@@ -37,16 +37,25 @@ export default function Matrimony() {
   const [maxAge, setMaxAge] = useState("")
   const [selectedMatch, setSelectedMatch] = useState<MatrimonyEntry | null>(null)
   const [connectingId, setConnectingId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [hasMorePage, setHasMorePage] = useState(true)
 
   const oppositeGender = user?.gender === "male" ? "female" : user?.gender === "female" ? "male" : null
 
   const { data: profiles, isLoading, refetch } = useQuery({
-    queryKey: ["matrimony"],
+    queryKey: ["matrimony", page],
     queryFn: async () => {
-      const res = await api.get<MatrimonyEntry[]>("/matrimony/matches")
+      const res = await api.get<MatrimonyEntry[]>(`/matrimony/matches?page=${page}&limit=5`)
+      if (res.data.length < 5) setHasMorePage(false)
+      else setHasMorePage(true)
       return res.data
     },
   })
+
+  useEffect(() => {
+    setPage(1)
+    setHasMorePage(true)
+  }, [search, maritalFilter, minAge, maxAge])
 
   const { data: myRecommendations, refetch: refetchRecs } = useQuery({
     queryKey: ["matrimony", "my-recommendations"],
@@ -467,6 +476,31 @@ export default function Matrimony() {
                 <span>No matrimonial profiles matches your search criteria.</span>
               </div>
             )}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-center gap-4 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="text-xs font-semibold"
+            >
+              Previous
+            </Button>
+            <span className="text-xs text-[#64748b] font-medium">
+              Page {page}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!hasMorePage}
+              onClick={() => setPage((p) => p + 1)}
+              className="text-xs font-semibold"
+            >
+              Next
+            </Button>
           </div>
         </div>
       )}

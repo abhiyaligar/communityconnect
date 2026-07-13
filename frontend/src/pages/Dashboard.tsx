@@ -139,8 +139,12 @@ export default function Dashboard() {
     }
   }
 
-  const handleDismiss = () => {
+  const handleDismiss = async () => {
     if (matchesList && matchesList.length > 0) {
+      const currentMatch = matchesList[activeIndex % matchesList.length]
+      try {
+        await api.post("/matrimony/dislike", null, { params: { target_profile_id: currentMatch.profile_id } })
+      } catch { }
       setSwipeDirection("left")
       setTimeout(() => {
         setActiveIndex((prev) => (prev + 1) % matchesList.length)
