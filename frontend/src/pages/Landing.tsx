@@ -74,6 +74,10 @@ export default function Landing() {
             <Heart className="h-3 w-3 text-[#0f172a]" />
             Find Your Life Partner Within The Community
           </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 border border-green-200 text-[10px] sm:text-xs font-bold text-green-700 mb-6">
+            <span className="text-green-600">✨</span>
+            Your 1st Match Is On Us — Completely Free
+          </div>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight mb-6 text-[#0f172a]">
             Your Community, Your Match
           </h1>

@@ -254,6 +254,13 @@ export default function Register() {
       setError("Please fill in all required fields.")
       return
     }
+    const dob = new Date(form.date_of_birth)
+    const today = new Date()
+    const minAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate())
+    if (dob > minAge) {
+      setError("You must be at least 18 years old to register.")
+      return
+    }
     setError("")
     setStep("core-address")
   }
@@ -883,6 +890,11 @@ export default function Register() {
               </CardHeader>
               <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
                 <form onSubmit={handleNextToMatrimony2} className="space-y-6">
+
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                    <span className="text-green-600 text-xs">✨</span>
+                    <p className="text-[10px] font-semibold text-green-700">Your 1st match is on us — completely free!</p>
+                  </div>
                   
                   <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />

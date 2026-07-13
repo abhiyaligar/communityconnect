@@ -142,27 +142,28 @@ interface RangeFieldProps {
   onPrefMin: (v: string) => void
   onPrefMax: (v: string) => void
   unit?: string
+  min?: number
 }
 
-function TierRangeField({ label, strictMin, strictMax, onStrictMin, onStrictMax, prefMin, prefMax, onPrefMin, onPrefMax, unit }: RangeFieldProps) {
+function TierRangeField({ label, strictMin, strictMax, onStrictMin, onStrictMax, prefMin, prefMax, onPrefMin, onPrefMax, unit, min }: RangeFieldProps) {
   return (
     <div className="space-y-3 p-4 rounded-lg border border-border bg-card/40">
       <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">{label}</h4>
       <div>
         <span className="text-[11px] font-medium text-foreground/80 block mb-1.5">Compulsory Range</span>
         <div className="flex items-center gap-2">
-          <Input type="number" placeholder="Min" value={strictMin} onChange={(e) => onStrictMin(e.target.value)} className="h-9 text-xs" />
+          <Input type="number" placeholder="Min" min={min} value={strictMin} onChange={(e) => onStrictMin(e.target.value)} className="h-9 text-xs" />
           <span className="text-muted-foreground text-xs">to</span>
-          <Input type="number" placeholder="Max" value={strictMax} onChange={(e) => onStrictMax(e.target.value)} className="h-9 text-xs" />
+          <Input type="number" placeholder="Max" min={min} value={strictMax} onChange={(e) => onStrictMax(e.target.value)} className="h-9 text-xs" />
           {unit && <span className="text-xs text-muted-foreground w-6">{unit}</span>}
         </div>
       </div>
       <div>
         <span className="text-[11px] font-medium text-muted-foreground block mb-1.5">Flexible Range</span>
         <div className="flex items-center gap-2">
-          <Input type="number" placeholder="Min" value={prefMin} onChange={(e) => onPrefMin(e.target.value)} className="h-9 text-xs" />
+          <Input type="number" placeholder="Min" min={min} value={prefMin} onChange={(e) => onPrefMin(e.target.value)} className="h-9 text-xs" />
           <span className="text-muted-foreground text-xs">to</span>
-          <Input type="number" placeholder="Max" value={prefMax} onChange={(e) => onPrefMax(e.target.value)} className="h-9 text-xs" />
+          <Input type="number" placeholder="Max" min={min} value={prefMax} onChange={(e) => onPrefMax(e.target.value)} className="h-9 text-xs" />
           {unit && <span className="text-xs text-muted-foreground w-6">{unit}</span>}
         </div>
       </div>
@@ -495,6 +496,7 @@ export default function MatrimonyPreferences() {
                     onStrictMin={setStrictAgeMin} onStrictMax={setStrictAgeMax}
                     prefMin={prefAgeMin} prefMax={prefAgeMax}
                     onPrefMin={setPrefAgeMin} onPrefMax={setPrefAgeMax}
+                    min={18}
                   />
 
                   <TierRangeField
