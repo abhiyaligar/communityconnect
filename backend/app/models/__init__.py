@@ -7,6 +7,7 @@ from app.models.family import FamilyUnit
 from app.models.profile import Profile
 from app.models.verification import VerificationRequest, VerificationApproval
 from app.models.matrimony import MatrimonyProfile, ConnectionRequest, GuardianRecommendation
+from app.models.preference import MatrimonyPreference
 from app.models.memorial import MemorialRecord
 from app.models.audit import AuditLog
 from app.models.email_verification import EmailVerification
@@ -38,6 +39,7 @@ __all__ = [
     "ProfileLike",
     "ProfileDislike",
     "GuardianRecommendation",
+    "MatrimonyPreference",
     "ChatMessage",
     "Suggestion",
     "SuggestionType",

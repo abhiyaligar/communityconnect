@@ -17,6 +17,7 @@ import EditProfile from "@/pages/EditProfile"
 import ManageGallery from "@/pages/ManageGallery"
 import Settings from "@/pages/Settings"
 import Matrimony from "@/pages/Matrimony"
+import MatrimonyPreferences from "@/pages/MatrimonyPreferences"
 import EditMatrimony from "@/pages/EditMatrimony"
 import MatrimonyRequests from "@/pages/MatrimonyRequests"
 import Chat from "@/pages/Chat"
@@ -72,6 +73,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["unverified"]}>
               <PendingVerification />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/preferences"
+          element={
+            <ProtectedRoute allowedRoles={["unverified", "verified_adult"]}>
+              <MatrimonyPreferences />
             </ProtectedRoute>
           }
         />

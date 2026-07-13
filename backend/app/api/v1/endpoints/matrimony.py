@@ -32,6 +32,7 @@ from app.api.deps import get_current_user, RoleChecker, require_active_membershi
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.matrimony import MatrimonyProfile, ConnectionRequest, GuardianRecommendation
+from app.models.preference import MatrimonyPreference
 from app.models.enums import UserRole, Gender, ConnectionRequestStatus
 from sqlalchemy import or_, and_, select
 from sqlalchemy.sql import func
@@ -120,6 +121,64 @@ async def get_matrimony_matches(
     
     result = await db.execute(stmt)
     matches = result.scalars().all()
+
+    # 4.1. Apply preference-based strict filtering
+    pref_stmt = (
+        select(MatrimonyPreference)
+        .where(MatrimonyPreference.profile_id == my_profile.id)
+    )
+    pref_res = await db.execute(pref_stmt)
+    preference = pref_res.scalars().first()
+
+    if preference:
+        def matches_pref(target: MatrimonyProfile) -> bool:
+            p = target.profile
+            if not p:
+                return False
+
+            # Rashi
+            if preference.strict_rashi and target.rashi:
+                if target.rashi.lower() not in [r.lower() for r in preference.strict_rashi]:
+                    return False
+
+            # Nakshatra
+            if preference.strict_nakshatra and target.nakshatra:
+                if target.nakshatra.lower() not in [n.lower() for n in preference.strict_nakshatra]:
+                    return False
+
+            # Gotra
+            if preference.strict_gotra and target.gotra:
+                if target.gotra.lower() not in [g.lower() for g in preference.strict_gotra]:
+                    return False
+
+            # Sub caste
+            if preference.strict_sub_caste and target.sub_caste:
+                if target.sub_caste.lower() not in [s.lower() for s in preference.strict_sub_caste]:
+                    return False
+
+            # Diet
+            if preference.strict_diet and target.diet:
+                if target.diet.lower() not in [d.lower() for d in preference.strict_diet]:
+                    return False
+
+            # Education
+            if preference.strict_education and target.highest_qualification:
+                if target.highest_qualification.lower() not in [e.lower() for e in preference.strict_education]:
+                    return False
+
+            # Employment
+            if preference.strict_employment and target.employment_type:
+                if target.employment_type.lower() not in [e.lower() for e in preference.strict_employment]:
+                    return False
+
+            # Manglik
+            if preference.manglik and preference.manglik != "any" and target.manglik_status:
+                if target.manglik_status.lower() != preference.manglik.lower():
+                    return False
+
+            return True
+
+        matches = [m for m in matches if matches_pref(m)]
 
     # 4.5. Fetch all connection requests involving current user's profile OR their wards' profiles
     ward_ids = [w.profile_id for w in approved_wards]

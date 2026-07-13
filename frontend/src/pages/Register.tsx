@@ -387,7 +387,8 @@ export default function Register() {
       await login(token, "unknown", "unverified") 
       
       setStep("success")
-      setTimeout(() => navigate("/pending-verification"), 2000)
+      const goTo = (form.marital_status === "single" && form.create_matrimony) ? "/preferences" : "/pending-verification"
+      setTimeout(() => navigate(goTo), 2000)
     } catch (err: unknown) {
       setError(handleApiError(err, "Onboarding failed."))
     } finally {

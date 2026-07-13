@@ -46,6 +46,15 @@ class Profile(Base):
         cascade="all, delete-orphan"
     )
 
+    # Matrimony preferences
+    matrimony_preference = relationship(
+        "MatrimonyPreference",
+        foreign_keys="[MatrimonyPreference.profile_id]",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
     # Memorial record
     memorial_record = relationship(
         "MemorialRecord",
