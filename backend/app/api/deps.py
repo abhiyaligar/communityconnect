@@ -85,6 +85,41 @@ async def get_current_user(
     return user
 
 
+async def require_active_membership(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    if current_user.role in (UserRole.community_admin, UserRole.local_admin):
+        return current_user
+
+    from datetime import date
+    from app.models.membership import Membership, MembershipStatus
+
+    stmt = select(Membership).where(Membership.user_id == current_user.id)
+    result = await db.execute(stmt)
+    membership = result.scalars().first()
+
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Active membership required to access this feature."
+        )
+
+    if membership.status != MembershipStatus.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your membership is not active."
+        )
+
+    if membership.end_date < date.today():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your membership has expired."
+        )
+
+    return current_user
+
+
 class RoleChecker:
     """
     FastAPI dependency factory class to enforce RBAC requirements.

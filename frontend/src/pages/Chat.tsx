@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useQuery, useMutation } from "@tanstack/react-query"
+import { useAuth } from "@/contexts/AuthContext"
 import api from "@/lib/api"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,8 @@ import {
   Loader2,
   ShieldAlert,
   Check,
-  CheckCheck
+  CheckCheck,
+  Lock
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -45,6 +47,7 @@ interface ChatMessage {
 }
 
 export default function Chat() {
+  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const messageEndRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +55,25 @@ export default function Chat() {
   const selectedProfileId = searchParams.get("profile_id") || ""
   const [inputText, setInputText] = useState("")
   const [showWarning, setShowWarning] = useState(false)
+
+  // Membership gate
+  const membership = user?.membership
+  const isAdmin = user?.role === "community_admin" || user?.role === "local_admin"
+  const hasActiveMembership = isAdmin || (membership?.has_membership && membership?.status === "active")
+
+  if (!hasActiveMembership) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 px-6 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border border-[#e2e8f0]">
+          <Lock className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold text-[#0f172a]">Membership Required</h2>
+        <p className="text-xs text-[#64748b] max-w-sm leading-relaxed">
+          An active membership is required to access chat. Please purchase a membership plan to connect with other verified members.
+        </p>
+      </div>
+    )
+  }
 
   // Mobile layout state: "list" or "chat"
   const [viewMode, setViewMode] = useState<"list" | "chat">(

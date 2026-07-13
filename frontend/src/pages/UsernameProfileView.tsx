@@ -62,6 +62,24 @@ export default function UsernameProfileView() {
   }
 
   if (error || !profile) {
+    const is403 = (error as any)?.response?.status === 403
+    if (is403) {
+      return (
+        <div className="max-w-md mx-auto w-full text-center py-20 space-y-4 text-slate-900">
+          <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
+            <Lock className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold">Membership Required</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            An active membership is required to view profile details. Please purchase a membership plan to connect with other verified members.
+          </p>
+          <Button onClick={() => navigate("/dashboard")} className="bg-slate-900 text-white text-xs font-bold mt-2">
+            Return to Dashboard
+          </Button>
+        </div>
+      )
+    }
+
     return (
       <div className="max-w-md mx-auto w-full text-center py-20 space-y-4 text-slate-900">
         <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">

@@ -23,7 +23,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_active_membership
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.matrimony import MatrimonyProfile
@@ -488,10 +488,11 @@ async def update_matrimony_profile(
 async def get_profile_by_username(
     username: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _: User = Depends(require_active_membership)
 ):
     """
-    Looks up a profile by username.
+    Looks up a profile by username. Requires active membership (admins bypass).
     """
     stmt = (
         select(Profile)

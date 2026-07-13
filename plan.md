@@ -39,7 +39,7 @@
 
 **File:** `backend/app/api/deps.py`
 - New dependency `require_active_membership`:
-  - Admins bypass the check
+  - `community_admin` and `local_admin` bypass the check
   - Checks `current_user.membership` exists, `status == "active"`, and `end_date >= today`
   - Returns `403` with message if not met
 
@@ -51,7 +51,6 @@
 | `GET /chat/{id}/messages` | `chat.py` | Same |
 | `POST /chat/messages` | `chat.py` | Same |
 | `GET /profiles/by-username/{username}` | `profiles.py` | Same |
-| `GET /matrimony/entries` | `matrimony.py` | Same |
 | `POST /matrimony/requests` | `matrimony.py` | Same |
 
 ### 2c. Frontend — Show Locked State
@@ -188,7 +187,7 @@ created_at TIMESTAMP
 ## Implementation Order
 
 1. ✅ Fix `logger` undefined name (flake8 failure)
-2. ⬜ Phase 1: Auto-create free 1-month membership in auth.py (with toggle)
+2. ✅ Phase 1: Auto-create free 1-month membership in auth.py (with toggle + admin UI)
 3. ⬜ Phase 2a: Create `require_active_membership` dependency
 4. ⬜ Phase 2b: Apply dependency to chat + profile endpoints
 5. ⬜ Phase 2c: Frontend membership gate UI (Chat, ProfileView, Dashboard)

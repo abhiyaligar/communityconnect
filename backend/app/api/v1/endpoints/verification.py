@@ -97,10 +97,10 @@ async def get_pending_verifications(
         target_role_val = "local_admin" if is_ladmin else req.target_user.role.value
         
         # Mask aadhar number: show only last 4 digits
-    aadhar_raw = req.target_user.aadhar_number if req.target_user else None
-    aadhar_masked = f"XXXX XXXX {aadhar_raw[-4:]}" if aadhar_raw and len(aadhar_raw) == 12 else None
+        aadhar_raw = req.target_user.aadhar_number if req.target_user else None
+        aadhar_masked = f"XXXX XXXX {aadhar_raw[-4:]}" if aadhar_raw and len(aadhar_raw) == 12 else None
 
-    response_data.append({
+        response_data.append({
             "request_id": str(req.id),
             "user_id": str(req.target_user_id),
             "status": req.status.value,

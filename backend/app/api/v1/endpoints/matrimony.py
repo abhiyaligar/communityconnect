@@ -28,7 +28,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.db.session import get_db
-from app.api.deps import get_current_user, RoleChecker
+from app.api.deps import get_current_user, RoleChecker, require_active_membership
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.matrimony import MatrimonyProfile, ConnectionRequest, GuardianRecommendation
@@ -258,10 +258,11 @@ async def get_matrimony_matches(
 async def create_connection_request(
     payload: ConnectionRequestCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _: User = Depends(require_active_membership)
 ):
     """
-    Creates a new matrimonial connection request.
+    Creates a new matrimonial connection request. Requires active membership (admins bypass).
     """
     # 1. Fetch sender profile
     stmt_sender = (

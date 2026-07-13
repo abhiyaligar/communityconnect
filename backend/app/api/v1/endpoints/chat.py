@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import or_, and_, func
 
 from app.db.session import get_db
-from app.api.deps import get_current_user, RoleChecker
+from app.api.deps import get_current_user, RoleChecker, require_active_membership
 from app.core.limiter import limiter
 from app.models.user import User
 from app.models.profile import Profile
@@ -86,7 +86,8 @@ async def check_connection(
 @router.get("/sessions", response_model=List[ChatSessionOut])
 async def get_chat_sessions(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin])),
+    _: User = Depends(require_active_membership)
 ):
     """
     Returns list of connected profiles (approved connections only) with their last message and unread count.
@@ -164,7 +165,8 @@ async def get_chat_messages(
     limit: int = Query(50, ge=1, le=200, description="Max messages to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin])),
+    _: User = Depends(require_active_membership)
 ):
     """
     Returns paginated messages with the given profile, sorted by created_at. Marks all incoming messages from this profile as read.
@@ -218,7 +220,8 @@ async def send_chat_message(
     request: Request,
     payload: ChatMessageCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin]))
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult, UserRole.local_admin, UserRole.community_admin])),
+    _: User = Depends(require_active_membership)
 ):
     """
     Creates and sends a new message. Validate connection approval first. Sanitize/redact contact numbers and addresses.
