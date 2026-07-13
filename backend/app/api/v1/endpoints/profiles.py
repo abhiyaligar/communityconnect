@@ -173,7 +173,9 @@ async def get_my_profile(
             "status": membership.status.value if membership else None,
             "start_date": membership.start_date.isoformat() if membership else None,
             "end_date": membership.end_date.isoformat() if membership else None,
-        }
+        },
+        "terms_accepted_at": current_user.terms_accepted_at.isoformat() if current_user.terms_accepted_at else None,
+        "nda_accepted_at": current_user.nda_accepted_at.isoformat() if current_user.nda_accepted_at else None,
     }
 
 

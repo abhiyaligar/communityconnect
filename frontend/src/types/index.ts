@@ -86,6 +86,8 @@ export interface AuthUser {
     start_date: string | null
     end_date: string | null
   }
+  terms_accepted_at?: string | null
+  nda_accepted_at?: string | null
   wards?: Array<{
     profile_id: string
     full_name: string

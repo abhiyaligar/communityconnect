@@ -73,6 +73,9 @@ export default function Register() {
   const [step, setStep] = useState<Step>((location.state?.step as Step) || "email")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [acceptNda, setAcceptNda] = useState(false)
+  const [acceptInfo, setAcceptInfo] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -336,6 +339,12 @@ export default function Register() {
       return
     }
 
+    // Legal agreements
+    if (!acceptTerms || !acceptNda || !acceptInfo) {
+      setError("You must accept all legal agreements to proceed.")
+      return
+    }
+
     setError("")
     setLoading(true)
     try {
@@ -382,6 +391,11 @@ export default function Register() {
         family_financial_status: form.family_financial_status || undefined,
         diet: form.diet || undefined,
         hobbies: form.hobbies ? form.hobbies.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+      })
+
+      // Accept legal agreements
+      await api.post("/legal/accept", null, {
+        params: { accept_terms: true, accept_nda: true },
       })
       
       // Update AuthContext and redirect
@@ -1210,11 +1224,57 @@ export default function Register() {
 
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
+                  {/* Legal Agreements */}
+                  <div className="space-y-3 border border-[#e2e8f0] rounded-lg p-4 bg-[#f8fafc]">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Legal Agreements</p>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="reg-terms"
+                        checked={acceptTerms}
+                        onCheckedChange={(v) => setAcceptTerms(v === true)}
+                      />
+                      <label htmlFor="reg-terms" className="text-xs text-[#334155] leading-relaxed cursor-pointer">
+                        I have read and agree to the{" "}
+                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0f172a] underline font-semibold">
+                          Terms & Conditions
+                        </a>
+                        .
+                      </label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="reg-nda"
+                        checked={acceptNda}
+                        onCheckedChange={(v) => setAcceptNda(v === true)}
+                      />
+                      <label htmlFor="reg-nda" className="text-xs text-[#334155] leading-relaxed cursor-pointer">
+                        I have read and agree to the{" "}
+                        <a href="/nda" target="_blank" rel="noopener noreferrer" className="text-[#0f172a] underline font-semibold">
+                          Non-Disclosure Agreement
+                        </a>
+                        .
+                      </label>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="reg-info"
+                        checked={acceptInfo}
+                        onCheckedChange={(v) => setAcceptInfo(v === true)}
+                      />
+                      <label htmlFor="reg-info" className="text-xs text-[#334155] leading-relaxed cursor-pointer">
+                        I voluntarily consent to the collection, storage, and verification of my personal information as per the{" "}
+                        <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong>. I understand that any abnormality or
+                        inconsistency found may result in account rejection. I acknowledge that the platform is not liable for outcomes
+                        of connections made, and my account may be terminated for fake profiles, harassment, or misuse.
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="flex gap-3 pt-4">
                     <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("matrimony-2")}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
-                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading || !acceptTerms || !acceptNda || !acceptInfo}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {loading ? "Submitting..." : "Complete Setup"}
                     </Button>

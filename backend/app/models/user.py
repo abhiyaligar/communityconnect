@@ -40,5 +40,9 @@ class User(Base):
     audit_logs = relationship("AuditLog", back_populates="actor", cascade="all, delete-orphan")
     membership = relationship("Membership", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
+    # Legal agreements
+    terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    nda_accepted_at = Column(DateTime(timezone=True), nullable=True)
+
     def __repr__(self):
         return f"<User(id={self.id}, phone_number={self.phone_number}, role={self.role})>"

@@ -50,6 +50,9 @@ const queryClient = new QueryClient({
 
 import { MainLayout } from "@/components/layout/MainLayout"
 import Registry from "@/pages/Registry"
+import Terms from "@/pages/Terms"
+import NDA from "@/pages/NDA"
+import LegalAccept from "@/pages/LegalAccept"
 
 function AppRoutes() {
   return (
@@ -64,6 +67,20 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* Public Legal Pages */}
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/nda" element={<NDA />} />
+
+        {/* Legal Acceptance (requires auth) */}
+        <Route
+          path="/legal/accept"
+          element={
+            <ProtectedRoute allowedRoles={["unverified", "verified_adult", "minor", "local_admin", "community_admin"]}>
+              <LegalAccept />
+            </ProtectedRoute>
+          }
+        />
 
 
 

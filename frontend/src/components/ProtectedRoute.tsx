@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { UserRole } from "@/types"
 
@@ -15,6 +15,7 @@ export function ProtectedRoute({
   requireAuth = true,
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -84,6 +85,21 @@ export function ProtectedRoute({
     if (user.role === "community_admin" || user.role === "local_admin")
       return <Navigate to="/admin/dashboard" replace />
     return <Navigate to="/dashboard" replace />
+  }
+
+  // Legal agreement check — redirect to accept page if not accepted (skip for legal routes)
+  if (
+    user &&
+    !user.terms_accepted_at &&
+    !user.nda_accepted_at &&
+    !location.pathname.startsWith("/legal/") &&
+    !location.pathname.startsWith("/pending-verification") &&
+    !location.pathname.startsWith("/register") &&
+    !location.pathname.startsWith("/login") &&
+    !location.pathname.startsWith("/terms") &&
+    !location.pathname.startsWith("/nda")
+  ) {
+    return <Navigate to="/legal/accept" replace />
   }
 
   return <>{children}</>
