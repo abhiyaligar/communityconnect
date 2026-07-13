@@ -29,38 +29,46 @@ TERMS_DEFAULT = """# Terms & Conditions
 ## 1. Acceptance of Terms
 By accessing and using this platform, you agree to be bound by these Terms & Conditions.
 
-## 2. User Eligibility
+## 2. Platform Purpose — Matrimonial Site Only
+This is a **matrimonial platform** designed exclusively for individuals seeking serious matrimonial alliances. It is **not a dating site**. Users are expected to use this platform solely for the purpose of finding a life partner. Any use of the platform for casual dating, hookups, or non-matrimonial purposes is strictly prohibited and will result in immediate account termination.
+
+## 3. User Eligibility
 You must be at least 18 years of age to use this service. By registering, you confirm that you meet this requirement.
 
-## 3. Account Registration
-You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account.
+## 4. Account Registration
+You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account. Your IP address is recorded at the time of account creation for security and compliance purposes.
 
-## 4. User Conduct
+## 5. User Conduct
 You agree not to:
 - Provide false or misleading information
 - Harass, abuse, or harm other users
 - Use the platform for any unlawful purpose
 - Share inappropriate or offensive content
 - Create fake accounts or impersonate others
+- Use the platform for dating, casual relationships, or any non-matrimonial purpose
 
-## 5. Voluntary Consent & Data Collection (DPDP Act, 2023)
+## 6. No Verification of User Claims
+The platform does **not independently verify, validate, or guarantee** any information, claims, or representations made by users unless specifically stated otherwise. Users are responsible for conducting their own due diligence before entering into any matrimonial arrangement. The platform acts solely as a medium for connection and does not endorse any user profile.
+
+## 7. Voluntary Consent & Data Collection (DPDP Act, 2023)
 You voluntarily consent to the collection, storage, verification, and processing of your personal information including but not limited to identity documents, photographs, contact details, family information, and matrimonial preferences as per the **Digital Personal Data Protection Act, 2023 (DPDP Act)**. Any abnormality, inconsistency, or false information found during verification may result in immediate rejection of your account without notice.
 
-## 6. Privacy
+## 8. Privacy
 Your personal data is handled in accordance with the DPDP Act, 2023. We implement reasonable security safeguards to protect your data.
 
-## 7. Limitation of Liability
+## 9. Limitation of Liability
 The platform is provided "as is" without warranties of any kind. The platform is not responsible for any outcomes, decisions, or consequences arising from connections made through this service, including but not limited to matrimonial alliances, financial arrangements, or personal interactions.
 
-## 8. Account Termination
+## 10. Account Termination
 We reserve the right to suspend or terminate accounts without prior notice for:
 - Fake or fraudulent profiles
+- Using the platform for dating or non-matrimonial purposes
 - Harassment or abusive behavior towards other users
 - Misuse of the platform or its features
 - Violation of any terms herein
 - Providing false information during registration or verification
 
-## 9. Grievance Officer
+## 11. Grievance Officer
 For any complaints, grievances, or inquiries regarding your data or this platform, please contact:
 
 **Grievance Officer:**  
@@ -68,7 +76,7 @@ Email: grievance@ladmatrimony.in
 Address: Lad Matrimony, Bengaluru, Karnataka, India  
 Response Time: Within 24 hours of receipt
 
-## 10. Modifications
+## 12. Modifications
 We reserve the right to modify these terms at any time. Users will be notified of material changes via email or platform notification.
 
 *Last updated: July 2026*

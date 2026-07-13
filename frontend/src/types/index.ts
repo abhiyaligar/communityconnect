@@ -88,6 +88,7 @@ export interface AuthUser {
   }
   terms_accepted_at?: string | null
   nda_accepted_at?: string | null
+  ip_address?: string | null
   wards?: Array<{
     profile_id: string
     full_name: string

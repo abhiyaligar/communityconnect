@@ -154,7 +154,8 @@ async def verify_email_code(payload: EmailOTPVerify, request: Request, response:
         email=email,
         password_hash=hash_password(payload.password),
         role=UserRole.unverified,
-        is_active=True
+        is_active=True,
+        ip_address=request.client.host if request.client else None,
     )
     db.add(user)
     await db.flush()
@@ -351,8 +352,9 @@ async def get_google_auth_url():
 
 @router.post("/google/callback", response_model=TokenResponse)
 async def google_callback(
-    request: GoogleCallbackRequest,
+    payload: GoogleCallbackRequest,
     response: Response,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -369,7 +371,7 @@ async def google_callback(
     async with httpx.AsyncClient() as client:
         token_url = "https://oauth2.googleapis.com/token"
         data = {
-            "code": request.code,
+            "code": payload.code,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
             "redirect_uri": settings.GOOGLE_REDIRECT_URI,
@@ -426,7 +428,8 @@ async def google_callback(
             email=email,
             password_hash=hash_password(random_password),
             role=UserRole.unverified,
-            is_active=True
+            is_active=True,
+            ip_address=request.client.host if request.client else None,
         )
         db.add(user)
         await db.flush()

@@ -44,5 +44,8 @@ class User(Base):
     terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
     nda_accepted_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Registration metadata
+    ip_address = Column(String(45), nullable=True)
+
     def __repr__(self):
         return f"<User(id={self.id}, phone_number={self.phone_number}, role={self.role})>"

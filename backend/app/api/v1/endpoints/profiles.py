@@ -176,6 +176,7 @@ async def get_my_profile(
         },
         "terms_accepted_at": current_user.terms_accepted_at.isoformat() if current_user.terms_accepted_at else None,
         "nda_accepted_at": current_user.nda_accepted_at.isoformat() if current_user.nda_accepted_at else None,
+        "ip_address": current_user.ip_address,
     }
 
 
