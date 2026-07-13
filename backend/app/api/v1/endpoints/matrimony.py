@@ -31,10 +31,11 @@ from app.db.session import get_db
 from app.api.deps import get_current_user, RoleChecker, require_active_membership
 from app.models.user import User
 from app.models.profile import Profile
+from app.models.interaction import ProfileDislike
 from app.models.matrimony import MatrimonyProfile, ConnectionRequest, GuardianRecommendation
 from app.models.preference import MatrimonyPreference
 from app.models.enums import UserRole, Gender, ConnectionRequestStatus
-from sqlalchemy import or_, and_, select
+from sqlalchemy import or_, and_, select, exists
 from sqlalchemy.sql import func
 from app.schemas.matrimony import ConnectionRequestCreate, ConnectionAction, ConnectionRequestOut, CoApproverAction
 
@@ -102,17 +103,42 @@ async def get_matrimony_matches(
             target_genders.append(Gender.male)
 
     # 4. Fetch all matches (opted in, not the current user)
+    # Exclude profiles already requested (as sender or receiver) and disliked profiles
+    requested_exists = exists(ConnectionRequest).where(
+        or_(
+            and_(
+                ConnectionRequest.sender_profile_id == my_profile.id,
+                ConnectionRequest.receiver_profile_id == MatrimonyProfile.profile_id,
+            ),
+            and_(
+                ConnectionRequest.receiver_profile_id == my_profile.id,
+                ConnectionRequest.sender_profile_id == MatrimonyProfile.profile_id,
+            ),
+        )
+    )
+
+    disliked_exists = exists(ProfileDislike).where(
+        and_(
+            ProfileDislike.user_profile_id == my_profile.id,
+            ProfileDislike.disliked_profile_id == MatrimonyProfile.profile_id,
+        )
+    )
+
     query = (
         select(MatrimonyProfile)
         .join(Profile, MatrimonyProfile.profile_id == Profile.id)
         .where(
             MatrimonyProfile.opted_in == True,
-            MatrimonyProfile.profile_id != my_profile.id
+            MatrimonyProfile.profile_id != my_profile.id,
+            ~requested_exists,
+            ~disliked_exists,
         )
     )
 
     if target_genders:
         query = query.where(Profile.gender.in_(target_genders))
+
+    query = query.order_by(func.random())
 
     offset_val = (page - 1) * limit
     query = query.offset(offset_val).limit(limit)
@@ -914,3 +940,34 @@ async def get_recommendations_for_me(
         out.append(entry)
 
     return out
+
+
+@router.post("/dislike", status_code=status.HTTP_201_CREATED)
+async def dislike_profile(
+    target_profile_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(RoleChecker([UserRole.verified_adult])),
+):
+    result = await db.execute(
+        select(Profile).where(Profile.user_id == current_user.id)
+    )
+    my_profile = result.scalars().first()
+    if not my_profile:
+        raise HTTPException(status_code=404, detail="Profile not found.")
+
+    existing = await db.execute(
+        select(ProfileDislike).where(
+            ProfileDislike.user_profile_id == my_profile.id,
+            ProfileDislike.disliked_profile_id == target_profile_id,
+        )
+    )
+    if existing.scalars().first():
+        return {"message": "Already disliked."}
+
+    dislike = ProfileDislike(
+        user_profile_id=my_profile.id,
+        disliked_profile_id=target_profile_id,
+    )
+    db.add(dislike)
+    await db.commit()
+    return {"message": "Profile disliked."}

@@ -75,12 +75,12 @@ FAMILY_VALUES = ["traditional", "moderate", "liberal"]
 FAMILY_FINANCIAL = ["lower_middle", "middle", "upper_middle", "affluent"]
 DIETS = [d.value for d in Diet]
 MANGALIK_STATUSES = [m.value for m in ManglikStatus]
-BODY_TYPES = [b.value for b in BodyType]
-COMPLEXIONS = [c.value for c in Complexion]
+BODY_TYPES = [b for b in BodyType]
+COMPLEXIONS = [c for c in Complexion]
 EDUCATION_LEVELS = [e.value for e in EducationLevel]
 EMPLOYMENT_TYPES = [e.value for e in EmploymentType]
 INCOME_RANGES = [r.value for r in IncomeRange]
-ACTIVITY_LEVELS = [a.value for a in ActivityLevel]
+ACTIVITY_LEVELS = [a for a in ActivityLevel]
 VISIBILITIES = [v.value for v in ProfileVisibility]
 
 HOBBIES_POOL = [
@@ -353,7 +353,7 @@ async def seed():
             # idx=3 male
             dict(rashi=male_rashis[3], gotra=GOTRAS[3], nakshatra=NAKSHATRAS[3],
                  manglik=ManglikStatus.dont_know, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[3], complexion=COMPLEXIONS[3],
+                 body_type=BODY_TYPES[3], complexion=COMPLEXIONS[0],
                  education=EDUCATION_LEVELS[3], employment=EMPLOYMENT_TYPES[3],
                  income=INCOME_RANGES[3], height=185, weight=85,
                  smoke=ACTIVITY_LEVELS[0], drink=ACTIVITY_LEVELS[0], activity=ACTIVITY_LEVELS[2],
@@ -363,7 +363,7 @@ async def seed():
             # idx=4 male
             dict(rashi=male_rashis[4], gotra=GOTRAS[4], nakshatra=NAKSHATRAS[4],
                  manglik=ManglikStatus.no, diet=Diet.non_vegetarian,
-                 body_type=BODY_TYPES[4], complexion=COMPLEXIONS[4],
+                 body_type=BODY_TYPES[0], complexion=COMPLEXIONS[1],
                  education=EDUCATION_LEVELS[4], employment=EMPLOYMENT_TYPES[4],
                  income=INCOME_RANGES[4], height=172, weight=68,
                  smoke=ACTIVITY_LEVELS[2], drink=ACTIVITY_LEVELS[2], activity=ACTIVITY_LEVELS[0],
@@ -373,8 +373,8 @@ async def seed():
             # idx=5 male
             dict(rashi=male_rashis[5], gotra=GOTRAS[5], nakshatra=NAKSHATRAS[5],
                  manglik=ManglikStatus.yes, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[5], complexion=COMPLEXIONS[5],
-                 education=EDUCATION_LEVELS[5], employment=EMPLOYMENT_TYPES[5],
+                 body_type=BODY_TYPES[1], complexion=COMPLEXIONS[2],
+                 education=EDUCATION_LEVELS[5], employment=EMPLOYMENT_TYPES[4],
                  income=INCOME_RANGES[5], height=178, weight=75,
                  smoke=ACTIVITY_LEVELS[1], drink=ACTIVITY_LEVELS[1], activity=ACTIVITY_LEVELS[2],
                  family_type=FAMILY_TYPES[1], family_values=FAMILY_VALUES[2],
@@ -383,7 +383,7 @@ async def seed():
             # idx=6 male
             dict(rashi=male_rashis[6], gotra=GOTRAS[6], nakshatra=NAKSHATRAS[6],
                  manglik=ManglikStatus.partial, diet=Diet.eggetarian,
-                 body_type=BODY_TYPES[6], complexion=COMPLEXIONS[6],
+                 body_type=BODY_TYPES[2], complexion=COMPLEXIONS[0],
                  education=EDUCATION_LEVELS[6], employment=EMPLOYMENT_TYPES[0],
                  income=INCOME_RANGES[0], height=160, weight=55,
                  smoke=ACTIVITY_LEVELS[0], drink=ACTIVITY_LEVELS[2], activity=ACTIVITY_LEVELS[1],
@@ -393,7 +393,7 @@ async def seed():
             # idx=7 male
             dict(rashi=male_rashis[7], gotra=GOTRAS[7], nakshatra=NAKSHATRAS[7],
                  manglik=ManglikStatus.dont_know, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[7], complexion=COMPLEXIONS[7],
+                 body_type=BODY_TYPES[3], complexion=COMPLEXIONS[1],
                  education=EDUCATION_LEVELS[0], employment=EMPLOYMENT_TYPES[1],
                  income=INCOME_RANGES[1], height=190, weight=95,
                  smoke=ACTIVITY_LEVELS[2], drink=ACTIVITY_LEVELS[0], activity=ACTIVITY_LEVELS[0],
@@ -424,7 +424,7 @@ async def seed():
             # idx=0 female
             dict(rashi=female_rashis[0], gotra=GOTRAS[10], nakshatra=NAKSHATRAS[10],
                  manglik=ManglikStatus.no, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[5], complexion=COMPLEXIONS[3],
+                 body_type=BODY_TYPES[1], complexion=COMPLEXIONS[0],
                  education=EDUCATION_LEVELS[4], employment=EMPLOYMENT_TYPES[4],
                  income=INCOME_RANGES[4], height=158, weight=52,
                  smoke=ACTIVITY_LEVELS[0], drink=ACTIVITY_LEVELS[0], activity=ACTIVITY_LEVELS[2],
@@ -434,7 +434,7 @@ async def seed():
             # idx=1 female
             dict(rashi=female_rashis[1], gotra=GOTRAS[11], nakshatra=NAKSHATRAS[11],
                  manglik=ManglikStatus.yes, diet=Diet.non_vegetarian,
-                 body_type=BODY_TYPES[6], complexion=COMPLEXIONS[4],
+                 body_type=BODY_TYPES[2], complexion=COMPLEXIONS[1],
                  education=EDUCATION_LEVELS[5], employment=EMPLOYMENT_TYPES[0],
                  income=INCOME_RANGES[5], height=162, weight=55,
                  smoke=ACTIVITY_LEVELS[1], drink=ACTIVITY_LEVELS[2], activity=ACTIVITY_LEVELS[0],
@@ -444,7 +444,7 @@ async def seed():
             # idx=2 female
             dict(rashi=female_rashis[2], gotra=GOTRAS[12], nakshatra=NAKSHATRAS[12],
                  manglik=ManglikStatus.partial, diet=Diet.eggetarian,
-                 body_type=BODY_TYPES[7], complexion=COMPLEXIONS[5],
+                 body_type=BODY_TYPES[3], complexion=COMPLEXIONS[2],
                  education=EDUCATION_LEVELS[0], employment=EMPLOYMENT_TYPES[1],
                  income=INCOME_RANGES[0], height=165, weight=58,
                  smoke=ACTIVITY_LEVELS[2], drink=ACTIVITY_LEVELS[1], activity=ACTIVITY_LEVELS[1],
@@ -454,7 +454,7 @@ async def seed():
             # idx=3 female
             dict(rashi=female_rashis[3], gotra=GOTRAS[13], nakshatra=NAKSHATRAS[13],
                  manglik=ManglikStatus.dont_know, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[0], complexion=COMPLEXIONS[6],
+                 body_type=BODY_TYPES[0], complexion=COMPLEXIONS[0],
                  education=EDUCATION_LEVELS[1], employment=EMPLOYMENT_TYPES[2],
                  income=INCOME_RANGES[1], height=170, weight=63,
                  smoke=ACTIVITY_LEVELS[0], drink=ACTIVITY_LEVELS[0], activity=ACTIVITY_LEVELS[2],
@@ -464,7 +464,7 @@ async def seed():
             # idx=4 female
             dict(rashi=female_rashis[4], gotra=GOTRAS[14], nakshatra=NAKSHATRAS[14],
                  manglik=ManglikStatus.no, diet=Diet.non_vegetarian,
-                 body_type=BODY_TYPES[1], complexion=COMPLEXIONS[7],
+                 body_type=BODY_TYPES[1], complexion=COMPLEXIONS[1],
                  education=EDUCATION_LEVELS[2], employment=EMPLOYMENT_TYPES[3],
                  income=INCOME_RANGES[2], height=155, weight=48,
                  smoke=ACTIVITY_LEVELS[1], drink=ACTIVITY_LEVELS[1], activity=ACTIVITY_LEVELS[0],
@@ -494,7 +494,7 @@ async def seed():
             # idx=7 female
             dict(rashi=female_rashis[7], gotra=GOTRAS[1], nakshatra=NAKSHATRAS[17],
                  manglik=ManglikStatus.dont_know, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[4], complexion=COMPLEXIONS[2],
+                 body_type=BODY_TYPES[0], complexion=COMPLEXIONS[2],
                  education=EDUCATION_LEVELS[5], employment=EMPLOYMENT_TYPES[1],
                  income=INCOME_RANGES[5], height=175, weight=70,
                  smoke=ACTIVITY_LEVELS[1], drink=ACTIVITY_LEVELS[1], activity=ACTIVITY_LEVELS[0],
@@ -504,7 +504,7 @@ async def seed():
             # idx=8 female
             dict(rashi=female_rashis[8], gotra=GOTRAS[2], nakshatra=NAKSHATRAS[18],
                  manglik=ManglikStatus.no, diet=Diet.non_vegetarian,
-                 body_type=BODY_TYPES[5], complexion=COMPLEXIONS[3],
+                 body_type=BODY_TYPES[1], complexion=COMPLEXIONS[0],
                  education=EDUCATION_LEVELS[0], employment=EMPLOYMENT_TYPES[2],
                  income=INCOME_RANGES[0], height=160, weight=50,
                  smoke=ACTIVITY_LEVELS[2], drink=ACTIVITY_LEVELS[0], activity=ACTIVITY_LEVELS[1],
@@ -514,7 +514,7 @@ async def seed():
             # idx=9 female
             dict(rashi=female_rashis[9], gotra=GOTRAS[3], nakshatra=NAKSHATRAS[19],
                  manglik=ManglikStatus.yes, diet=Diet.vegetarian,
-                 body_type=BODY_TYPES[6], complexion=COMPLEXIONS[4],
+                 body_type=BODY_TYPES[2], complexion=COMPLEXIONS[1],
                  education=EDUCATION_LEVELS[1], employment=EMPLOYMENT_TYPES[3],
                  income=INCOME_RANGES[1], height=167, weight=62,
                  smoke=ACTIVITY_LEVELS[0], drink=ACTIVITY_LEVELS[2], activity=ACTIVITY_LEVELS[2],
