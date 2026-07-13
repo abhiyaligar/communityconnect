@@ -165,7 +165,7 @@ async def verify_email_code(payload: EmailOTPVerify, request: Request, response:
         from app.services.settings import get_setting
         setting_val = await get_setting(db, "auto_create_free_membership", "true")
         if setting_val.lower() == "true":
-            from datetime import date, timedelta
+            from datetime import date
             from app.models.membership import Membership, MembershipStatus
             membership = Membership(
                 user_id=user.id,
