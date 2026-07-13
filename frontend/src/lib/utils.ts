@@ -8,8 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 
 export function handleApiError(error: unknown, defaultMessage = "An error occurred. Please try again."): string {
   if (axios.isAxiosError(error)) {
-    if (typeof error.response?.data?.detail === "string") {
-      return error.response.data.detail
+    const detail = error.response?.data?.detail
+    if (typeof detail === "string") {
+      return detail
+    }
+    if (Array.isArray(detail)) {
+      return detail.map((e: { msg?: string }) => e.msg).filter(Boolean).join("; ")
     }
   }
   return (error as Error)?.message || defaultMessage
