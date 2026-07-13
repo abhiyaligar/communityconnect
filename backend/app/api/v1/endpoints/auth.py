@@ -378,10 +378,10 @@ async def google_callback(
         try:
             token_res = await client.post(token_url, data=data)
             token_res.raise_for_status()
-        except httpx.HTTPStatusError as e:
+        except httpx.HTTPStatusError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to exchange Google authorization code: {e.response.text}"
+                detail="Failed to authenticate with Google. Please try again."
             )
         
         token_data = token_res.json()

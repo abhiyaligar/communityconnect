@@ -3,9 +3,10 @@
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator, model_validator, ConfigDict
 from typing import Optional, List
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 import re
+from app.models.enums import Rashi
 
 # -----------------
 # Onboarding Schema
@@ -87,6 +88,41 @@ class ProfileOnboard(BaseModel):
         if not v or not v.strip():
             raise ValueError("Aadhar card image upload is compulsory.")
         return v.strip()
+
+    @field_validator("birth_time")
+    @classmethod
+    def validate_birth_time(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        pattern = r"^(1[0-2]|0?[1-9]):[0-5][0-9]\s?(AM|PM|am|pm)$"
+        if not re.match(pattern, v.strip()):
+            raise ValueError("Birth time must be in 12-hour format (e.g. '02:30 PM' or '2:30 PM').")
+        return v.strip().upper()
+
+    @field_validator("rashi")
+    @classmethod
+    def validate_rashi(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        try:
+            Rashi(v.lower())
+        except ValueError:
+            valid = [e.value for e in Rashi]
+            raise ValueError(f"Invalid Rashi. Must be one of: {', '.join(valid)}")
+        return v.lower()
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_date_of_birth(cls, v: date) -> date:
+        year_str = str(v.year)
+        if len(year_str) != 4:
+            raise ValueError("Invalid year in date of birth. Must be a 4-digit year.")
+        if v >= date.today():
+            raise ValueError("Date of birth cannot be in the future.")
+        min_age = date.today() - timedelta(days=18 * 365)
+        if v > min_age:
+            raise ValueError("You must be at least 18 years old to register.")
+        return v
 
     @field_validator("phone_number")
     @classmethod

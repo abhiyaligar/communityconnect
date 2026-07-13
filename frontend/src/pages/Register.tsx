@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import api from "@/lib/api"
 import { handleApiError, getImageUrl } from "@/lib/utils"
-import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Heart, Lock } from "lucide-react"
+import { Mail, ShieldCheck, User, ArrowRight, ArrowLeft, Loader2, CheckCircle, Lock, Briefcase, Users, Star } from "lucide-react"
 import { TokenResponse } from "@/types"
 
-type Step = "email" | "otp" | "core-personal" | "core-address" | "core-id" | "matrimony" | "success"
+type Step = "email" | "otp" | "core-personal" | "core-address" | "core-id" | "matrimony-1" | "matrimony-2" | "matrimony-3" | "success"
 
 interface FormData {
   // Auth
@@ -300,8 +300,25 @@ export default function Register() {
       return
     }
 
+    if (form.marital_status === "married") {
+      handleOnboard(e)
+      return
+    }
+
     setError("")
-    setStep("matrimony")
+    setStep("matrimony-1")
+  }
+
+  const handleNextToMatrimony2 = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setStep("matrimony-2")
+  }
+
+  const handleNextToMatrimony3 = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setStep("matrimony-3")
   }
 
   const handleOnboard = async (e: React.FormEvent) => {
@@ -876,29 +893,31 @@ export default function Register() {
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
                     <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer hover-scale">
-                      Next: Matrimony <ArrowRight className="h-4 w-4 ml-2" />
+                      {form.marital_status === "married" ? "Submit" : "Next: Matrimony"} <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
-                    <Button type="button" variant="ghost" className="text-xs text-muted-foreground" onClick={handleOnboard}>
-                      Skip Matrimony
-                    </Button>
+                    {form.marital_status !== "married" && (
+                      <Button type="button" variant="ghost" className="text-xs text-muted-foreground" onClick={handleOnboard}>
+                        Skip Matrimony
+                      </Button>
+                    )}
                   </div>
                 </form>
               </CardContent>
             </>
           )}
 
-          {/* STEP 4: MATRIMONY & SUBMIT */}
-          {step === "matrimony" && (
+          {/* STEP 6: MATRIMONY - PERSONAL & PROFESSIONAL */}
+          {step === "matrimony-1" && (
             <>
               <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
                 <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
-                  <Heart className="h-6 w-6" />
+                  <Briefcase className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-xl">Matrimony (Optional)</CardTitle>
-                <CardDescription className="text-xs">Find your perfect life partner within the community.</CardDescription>
+                <CardTitle className="text-xl">Matrimony Profile</CardTitle>
+                <CardDescription className="text-xs">Step 1 of 3 — Personal & professional details.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
-                <form onSubmit={handleOnboard} className="space-y-6">
+                <form onSubmit={handleNextToMatrimony2} className="space-y-6">
                   
                   <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />
@@ -909,56 +928,32 @@ export default function Register() {
 
                   {form.create_matrimony && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Matrimony Profile Details</h3>
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Personal & Professional</h3>
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Height (cm) *</Label>
-                          <Input 
-                            type="number" 
-                            placeholder="175" 
-                            value={form.height_cm} 
-                            onChange={(e) => setF("height_cm")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Gotra *</Label>
-                          <Input 
-                            placeholder="e.g. Kashyap" 
-                            value={form.gotra} 
-                            onChange={(e) => setF("gotra")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                            required
-                          />
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Height (cm) *</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="175" 
+                          value={form.height_cm} 
+                          onChange={(e) => setF("height_cm")(e.target.value)} 
+                          className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                          required
+                        />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Sub Caste *</Label>
-                          <Input 
-                            placeholder="e.g. Shakdwipi" 
-                            value={form.sub_caste} 
-                            onChange={(e) => setF("sub_caste")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Education *</Label>
-                          <Select value={form.highest_qualification} onValueChange={setF("highest_qualification")} required>
-                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="bachelors">Bachelor's</SelectItem>
-                              <SelectItem value="masters">Master's</SelectItem>
-                              <SelectItem value="doctorate">Doctorate</SelectItem>
-                              <SelectItem value="diploma">Diploma</SelectItem>
-                              <SelectItem value="high_school">High School</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Education *</Label>
+                        <Select value={form.highest_qualification} onValueChange={setF("highest_qualification")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bachelors">Bachelor's</SelectItem>
+                            <SelectItem value="masters">Master's</SelectItem>
+                            <SelectItem value="doctorate">Doctorate</SelectItem>
+                            <SelectItem value="diploma">Diploma</SelectItem>
+                            <SelectItem value="high_school">High School</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -976,7 +971,7 @@ export default function Register() {
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Company Name * (If employed)</Label>
+                          <Label>Company * (If employed)</Label>
                           <Input 
                             placeholder="e.g. Google" 
                             value={form.company_name} 
@@ -989,7 +984,7 @@ export default function Register() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Profession / Job Title *</Label>
+                          <Label>Job Title *</Label>
                           <Input 
                             placeholder="e.g. Software Engineer" 
                             value={form.job_title} 
@@ -1010,16 +1005,97 @@ export default function Register() {
                         </div>
                       </div>
 
+                      <div className="space-y-2">
+                        <Label>Annual Income Range *</Label>
+                        <Select value={form.income_range} onValueChange={setF("income_range")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="below_3lpa">Below ₹3 LPA</SelectItem>
+                            <SelectItem value="3_to_6lpa">₹3 - 6 LPA</SelectItem>
+                            <SelectItem value="6_to_10lpa">₹6 - 10 LPA</SelectItem>
+                            <SelectItem value="10_to_20lpa">₹10 - 20 LPA</SelectItem>
+                            <SelectItem value="above_20lpa">Above ₹20 LPA</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("core-id")}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer">
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          )}
+
+          {/* STEP 7: MATRIMONY - HOROSCOPE & FAMILY */}
+          {step === "matrimony-2" && (
+            <>
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
+                  <Star className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Matrimony Profile</CardTitle>
+                <CardDescription className="text-xs">Step 2 of 3 — Horoscope & family background.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
+                <form onSubmit={handleNextToMatrimony3} className="space-y-6">
+
+                  {form.create_matrimony && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Horoscope & Family</h3>
+                      
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Rashi *</Label>
+                          <Label>Gotra *</Label>
                           <Input 
-                            placeholder="e.g. Mesh" 
-                            value={form.rashi} 
-                            onChange={(e) => setF("rashi")(e.target.value)} 
+                            placeholder="e.g. Kashyap" 
+                            value={form.gotra} 
+                            onChange={(e) => setF("gotra")(e.target.value)} 
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Sub Caste *</Label>
+                          <Input 
+                            placeholder="e.g. Shakdwipi" 
+                            value={form.sub_caste} 
+                            onChange={(e) => setF("sub_caste")(e.target.value)} 
+                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Rashi *</Label>
+                          <Select value={form.rashi} onValueChange={setF("rashi")} required>
+                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select Rashi" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="aries">Mesh (Aries)</SelectItem>
+                              <SelectItem value="taurus">Vrishabh (Taurus)</SelectItem>
+                              <SelectItem value="gemini">Mithun (Gemini)</SelectItem>
+                              <SelectItem value="cancer">Kark (Cancer)</SelectItem>
+                              <SelectItem value="leo">Simha (Leo)</SelectItem>
+                              <SelectItem value="virgo">Kanya (Virgo)</SelectItem>
+                              <SelectItem value="libra">Tula (Libra)</SelectItem>
+                              <SelectItem value="scorpio">Vrishchik (Scorpio)</SelectItem>
+                              <SelectItem value="sagittarius">Dhanu (Sagittarius)</SelectItem>
+                              <SelectItem value="capricorn">Makar (Capricorn)</SelectItem>
+                              <SelectItem value="aquarius">Kumbh (Aquarius)</SelectItem>
+                              <SelectItem value="pisces">Meen (Pisces)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Nakshatra *</Label>
@@ -1033,38 +1109,24 @@ export default function Register() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Manglik Status *</Label>
-                          <Select value={form.manglik_status} onValueChange={setF("manglik_status")} required>
-                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="manglik">Manglik</SelectItem>
-                              <SelectItem value="non_manglik">Non Manglik</SelectItem>
-                              <SelectItem value="partial">Anshik (Partial)</SelectItem>
-                              <SelectItem value="unknown">Don't Know</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Family Values *</Label>
-                          <Select value={form.family_values} onValueChange={setF("family_values")} required>
-                            <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="orthodox">Orthodox</SelectItem>
-                              <SelectItem value="traditional">Traditional</SelectItem>
-                              <SelectItem value="moderate">Moderate</SelectItem>
-                              <SelectItem value="liberal">Liberal</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Manglik Status *</Label>
+                        <Select value={form.manglik_status} onValueChange={setF("manglik_status")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="manglik">Manglik</SelectItem>
+                            <SelectItem value="non_manglik">Non Manglik</SelectItem>
+                            <SelectItem value="partial">Anshik (Partial)</SelectItem>
+                            <SelectItem value="unknown">Don't Know</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Birth Time *</Label>
                           <Input 
-                            placeholder="e.g. 14:35" 
+                            placeholder="e.g. 02:30 PM" 
                             value={form.birth_time} 
                             onChange={(e) => setF("birth_time")(e.target.value)} 
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
@@ -1111,7 +1173,90 @@ export default function Register() {
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
                   <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("core-id")}>
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("matrimony-1")}>
+                      <ArrowLeft className="h-4 w-4 mr-2" /> Back
+                    </Button>
+                    <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer">
+                      Next <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </>
+          )}
+
+          {/* STEP 8: MATRIMONY - LIFESTYLE & SUBMIT */}
+          {step === "matrimony-3" && (
+            <>
+              <CardHeader className="text-left sm:text-center pb-2 px-0 pt-0 sm:px-6 sm:pt-6">
+                <div className="w-12 h-12 rounded-full border bg-secondary border-border text-foreground flex items-center justify-center mx-auto mb-4 hidden sm:flex">
+                  <Users className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl">Matrimony Profile</CardTitle>
+                <CardDescription className="text-xs">Step 3 of 3 — Lifestyle & family values.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 px-0 pb-0 sm:px-6 sm:pb-6">
+                <form onSubmit={handleOnboard} className="space-y-6">
+
+                  {form.create_matrimony && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Lifestyle & Family</h3>
+
+                      <div className="space-y-2">
+                        <Label>Family Type *</Label>
+                        <Select value={form.family_type} onValueChange={setF("family_type")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="nuclear">Nuclear</SelectItem>
+                            <SelectItem value="joint">Joint</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Family Values *</Label>
+                        <Select value={form.family_values} onValueChange={setF("family_values")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="orthodox">Orthodox</SelectItem>
+                            <SelectItem value="traditional">Traditional</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="liberal">Liberal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Family Financial Status *</Label>
+                        <Select value={form.family_financial_status} onValueChange={setF("family_financial_status")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="upper_class">Upper Class</SelectItem>
+                            <SelectItem value="middle_class">Middle Class</SelectItem>
+                            <SelectItem value="lower_middle_class">Lower Middle Class</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Diet *</Label>
+                        <Select value={form.diet} onValueChange={setF("diet")} required>
+                          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                            <SelectItem value="non_vegetarian">Non-Vegetarian</SelectItem>
+                            <SelectItem value="eggetarian">Eggetarian</SelectItem>
+                            <SelectItem value="vegan">Vegan</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button type="button" variant="outline" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" onClick={() => setStep("matrimony-2")}>
                       <ArrowLeft className="h-4 w-4 mr-2" /> Back
                     </Button>
                     <Button type="submit" className="flex-1 h-11 sm:h-10 text-xs cursor-pointer" disabled={loading}>

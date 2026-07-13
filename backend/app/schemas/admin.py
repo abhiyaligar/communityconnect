@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 import re
 
-from datetime import date
+from datetime import date, timedelta
 from app.models.enums import UserRole
 
 
@@ -45,6 +45,16 @@ class ProfileAdminUpdate(BaseModel):
     profile_photo_url: str
     role: UserRole
     is_active: bool
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_date_of_birth(cls, v: date) -> date:
+        year_str = str(v.year)
+        if len(year_str) != 4:
+            raise ValueError("Invalid year in date of birth. Must be a 4-digit year.")
+        if v >= date.today():
+            raise ValueError("Date of birth cannot be in the future.")
+        return v
 
 
 class RegionCreate(BaseModel):

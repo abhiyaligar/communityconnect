@@ -6,10 +6,13 @@ Handles file uploads, validating formats (jpg, jpeg, png, webp) and size limits 
 """
 
 import os
+import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.services.storage import StorageService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -45,29 +48,29 @@ async def upload_image(
 
     # 3. Validate file size (chunked check to avoid memory overflow)
     try:
-        # Read the file up to MAX_FILE_SIZE + 1
         content = await file.read(MAX_FILE_SIZE + 1)
         if len(content) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="File size exceeds the 15MB limit."
             )
-        # Seek back to start for the storage service to read it
         await file.seek(0)
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        logger.error("File size validation failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error validating file size: {str(e)}"
+            detail="Error validating file size."
         )
 
     # 4. Upload file using Storage Service
     try:
         image_url = await StorageService.upload_image(file)
         return {"url": image_url}
-    except Exception as e:
+    except Exception:
+        logger.error("Image upload failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image: {str(e)}"
+            detail="Failed to upload image. Please try again."
         )
