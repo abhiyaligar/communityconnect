@@ -1125,13 +1125,7 @@ export default function Register() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Birth Time *</Label>
-                          <Input 
-                            placeholder="e.g. 02:30 PM" 
-                            value={form.birth_time} 
-                            onChange={(e) => setF("birth_time")(e.target.value)} 
-                            className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
-                            required
-                          />
+                          <BirthTimePicker value={form.birth_time} onChange={setF("birth_time")} />
                         </div>
                         <div className="space-y-2">
                           <Label>Birth Place *</Label>
@@ -1288,6 +1282,63 @@ export default function Register() {
             </CardContent>
           )}
         </Card>
+      </div>
+    </div>
+  )
+}
+
+function BirthTimePicker({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const parse = (val: string) => {
+    if (!val) return { hour: "", minute: "", period: "" }
+    const m = val.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i)
+    if (!m) return { hour: "", minute: "", period: "" }
+    return { hour: m[1], minute: m[2], period: m[3].toUpperCase() }
+  }
+
+  const bt = parse(value)
+
+  const handleChange = (field: "hour" | "minute" | "period", v: string) => {
+    const h = field === "hour" ? v : bt.hour
+    const m = field === "minute" ? v : bt.minute
+    const p = field === "period" ? v : bt.period
+    if (h && m && p) {
+      onChange(`${h.padStart(2, "0")}:${m} ${p}`)
+    } else {
+      onChange("")
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex-1">
+        <Select value={bt.hour} onValueChange={(v) => handleChange("hour", v)} required>
+          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="HH" /></SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((h) => (
+              <SelectItem key={h} value={h}>{h}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <span className="text-muted-foreground text-xs font-bold -mt-3">:</span>
+      <div className="flex-1">
+        <Select value={bt.minute} onValueChange={(v) => handleChange("minute", v)} required>
+          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="MM" /></SelectTrigger>
+          <SelectContent>
+            {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((m) => (
+              <SelectItem key={m} value={m}>{m}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="w-16">
+        <Select value={bt.period} onValueChange={(v) => handleChange("period", v)} required>
+          <SelectTrigger className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"><SelectValue placeholder="" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="AM">AM</SelectItem>
+            <SelectItem value="PM">PM</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   )
