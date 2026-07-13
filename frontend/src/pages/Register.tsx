@@ -129,7 +129,7 @@ export default function Register() {
   const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
+
     if (file.size > 20 * 1024 * 1024) {
       setError("Image file is too large. Maximum size is 20MB.")
       return
@@ -137,7 +137,7 @@ export default function Register() {
 
     const formData = new FormData()
     formData.append("file", file)
-    
+
     setError("")
     setLoading(true)
     try {
@@ -404,12 +404,12 @@ export default function Register() {
       await api.post("/legal/accept", null, {
         params: { accept_terms: true, accept_nda: true },
       })
-      
+
       // Update AuthContext and redirect
       // We re-fetch /profiles/me to get the newly created profile data
       const token = localStorage.getItem("access_token") || ""
-      await login(token, "unknown", "unverified") 
-      
+      await login(token, "unknown", "unverified")
+
       setStep("success")
       const goTo = (form.marital_status === "single" && form.create_matrimony) ? "/preferences" : "/pending-verification"
       setTimeout(() => navigate(goTo), 2000)
@@ -489,7 +489,7 @@ export default function Register() {
                     </div>
                   </div>
                   {error && <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-                  
+
                   <div className="stagger-fade-in-4 space-y-4 pt-2">
                     <Button type="submit" size="lg" className="w-full h-11 sm:h-10 gap-2 hover-scale cursor-pointer" disabled={loading}>
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -564,22 +564,22 @@ export default function Register() {
                 <form onSubmit={handleNextToAddress} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Full Name *</Label>
-                    <Input 
-                      value={form.full_name} 
-                      onChange={(e) => setF("full_name")(e.target.value)} 
+                    <Input
+                      value={form.full_name}
+                      onChange={(e) => setF("full_name")(e.target.value)}
                       className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
-                      required 
+                      required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Date of Birth *</Label>
-                    <Input 
-                      type="date" 
-                      value={form.date_of_birth} 
-                      onChange={(e) => setF("date_of_birth")(e.target.value)} 
+                    <Input
+                      type="date"
+                      value={form.date_of_birth}
+                      onChange={(e) => setF("date_of_birth")(e.target.value)}
                       className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-left w-full block"
-                      required 
+                      required
                     />
                   </div>
 
@@ -614,17 +614,17 @@ export default function Register() {
                       <span className="text-xs font-semibold text-muted-foreground mr-2 select-none border-b border-border h-10 flex items-center px-1 sm:px-2 bg-transparent sm:bg-secondary/45 sm:border sm:rounded-l-md sm:border-r-0 shrink-0">
                         +91
                       </span>
-                      <Input 
-                        type="tel" 
-                        placeholder="9876543210" 
-                        value={form.phone_number.startsWith("+91") ? form.phone_number.slice(3) : form.phone_number} 
+                      <Input
+                        type="tel"
+                        placeholder="9876543210"
+                        value={form.phone_number.startsWith("+91") ? form.phone_number.slice(3) : form.phone_number}
                         onChange={(e) => {
                           const rawVal = e.target.value.replace(/\D/g, "");
                           const limitedVal = rawVal.slice(0, 10);
                           setForm((f) => ({ ...f, phone_number: limitedVal ? `+91${limitedVal}` : "" }));
-                        }} 
+                        }}
                         className="flex-1 bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-r-md sm:rounded-l-none h-10 px-0 sm:px-3"
-                        required 
+                        required
                       />
                     </div>
                   </div>
@@ -704,12 +704,12 @@ export default function Register() {
 
                   <div className="space-y-2">
                     <Label>Current Location / Address *</Label>
-                    <Input 
-                      placeholder="Current Address" 
-                      value={form.address} 
-                      onChange={(e) => setF("address")(e.target.value)} 
+                    <Input
+                      placeholder="Current Address"
+                      value={form.address}
+                      onChange={(e) => setF("address")(e.target.value)}
                       className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3"
-                      required 
+                      required
                     />
                   </div>
 
@@ -743,7 +743,7 @@ export default function Register() {
                   {/* Aadhar Number */}
                   <div className="space-y-2">
                     <Label>Aadhar Number *</Label>
-                    <Input 
+                    <Input
                       type="text"
                       inputMode="numeric"
                       placeholder="1234 5678 9012"
@@ -815,23 +815,23 @@ export default function Register() {
                   {/* Social Media Links */}
                   <div className="space-y-4 pt-2 border-t border-border/40">
                     <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Social Media (Add at least one)</h3>
-                    
+
                     <div className="space-y-2">
                       <Label>LinkedIn Profile URL (Mandatory if employed)</Label>
-                      <Input 
-                        placeholder="https://www.linkedin.com/in/username" 
-                        value={form.linkedin} 
-                        onChange={(e) => setF("linkedin")(e.target.value)} 
+                      <Input
+                        placeholder="https://www.linkedin.com/in/username"
+                        value={form.linkedin}
+                        onChange={(e) => setF("linkedin")(e.target.value)}
                         className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label>Instagram Profile URL</Label>
-                      <Input 
-                        placeholder="https://www.instagram.com/username" 
-                        value={form.instagram} 
-                        onChange={(e) => setF("instagram")(e.target.value)} 
+                      <Input
+                        placeholder="https://www.instagram.com/username"
+                        value={form.instagram}
+                        onChange={(e) => setF("instagram")(e.target.value)}
                         className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                       />
                     </div>
@@ -839,19 +839,19 @@ export default function Register() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Facebook URL</Label>
-                        <Input 
-                          placeholder="https://facebook.com/username" 
-                          value={form.facebook} 
-                          onChange={(e) => setF("facebook")(e.target.value)} 
+                        <Input
+                          placeholder="https://facebook.com/username"
+                          value={form.facebook}
+                          onChange={(e) => setF("facebook")(e.target.value)}
                           className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label>Twitter / X URL</Label>
-                        <Input 
-                          placeholder="https://x.com/username" 
-                          value={form.twitter} 
-                          onChange={(e) => setF("twitter")(e.target.value)} 
+                        <Input
+                          placeholder="https://x.com/username"
+                          value={form.twitter}
+                          onChange={(e) => setF("twitter")(e.target.value)}
                           className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                         />
                       </div>
@@ -893,9 +893,9 @@ export default function Register() {
 
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
                     <span className="text-green-600 text-xs">✨</span>
-                    <p className="text-[10px] font-semibold text-green-700">Your 1st match is on us — completely free!</p>
+                    <p className="text-[10px] font-semibold text-green-700">Your 1st Month is on us — completely free!</p>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-3.5 rounded-lg border border-border bg-secondary/35">
                     <Checkbox id="create_matrimony" checked={form.create_matrimony} onCheckedChange={(c) => setF("create_matrimony")(!!c)} />
                     <Label htmlFor="create_matrimony" className="font-semibold cursor-pointer text-sm text-foreground">
@@ -906,14 +906,14 @@ export default function Register() {
                   {form.create_matrimony && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                       <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Personal & Professional</h3>
-                      
+
                       <div className="space-y-2">
                         <Label>Height (cm) *</Label>
-                        <Input 
-                          type="number" 
-                          placeholder="175" 
-                          value={form.height_cm} 
-                          onChange={(e) => setF("height_cm")(e.target.value)} 
+                        <Input
+                          type="number"
+                          placeholder="175"
+                          value={form.height_cm}
+                          onChange={(e) => setF("height_cm")(e.target.value)}
                           className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                           required
                         />
@@ -949,10 +949,10 @@ export default function Register() {
                         </div>
                         <div className="space-y-2">
                           <Label>Company * (If employed)</Label>
-                          <Input 
-                            placeholder="e.g. Google" 
-                            value={form.company_name} 
-                            onChange={(e) => setF("company_name")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Google"
+                            value={form.company_name}
+                            onChange={(e) => setF("company_name")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required={["employed", "self_employed", "business"].includes(form.employment_type)}
                           />
@@ -962,20 +962,20 @@ export default function Register() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Job Title *</Label>
-                          <Input 
-                            placeholder="e.g. Software Engineer" 
-                            value={form.job_title} 
-                            onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))} 
+                          <Input
+                            placeholder="e.g. Software Engineer"
+                            value={form.job_title}
+                            onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Work Location *</Label>
-                          <Input 
-                            placeholder="e.g. Bangalore" 
-                            value={form.work_location} 
-                            onChange={(e) => setF("work_location")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Bangalore"
+                            value={form.work_location}
+                            onChange={(e) => setF("work_location")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
@@ -1029,24 +1029,24 @@ export default function Register() {
                   {form.create_matrimony && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                       <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Horoscope & Family</h3>
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Gotra *</Label>
-                          <Input 
-                            placeholder="e.g. Kashyap" 
-                            value={form.gotra} 
-                            onChange={(e) => setF("gotra")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Kashyap"
+                            value={form.gotra}
+                            onChange={(e) => setF("gotra")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Sub Caste *</Label>
-                          <Input 
-                            placeholder="e.g. Shakdwipi" 
-                            value={form.sub_caste} 
-                            onChange={(e) => setF("sub_caste")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Shakdwipi"
+                            value={form.sub_caste}
+                            onChange={(e) => setF("sub_caste")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
@@ -1076,10 +1076,10 @@ export default function Register() {
                         </div>
                         <div className="space-y-2">
                           <Label>Nakshatra *</Label>
-                          <Input 
-                            placeholder="e.g. Ashwini" 
-                            value={form.nakshatra} 
-                            onChange={(e) => setF("nakshatra")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Ashwini"
+                            value={form.nakshatra}
+                            onChange={(e) => setF("nakshatra")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
@@ -1106,10 +1106,10 @@ export default function Register() {
                         </div>
                         <div className="space-y-2">
                           <Label>Birth Place *</Label>
-                          <Input 
-                            placeholder="e.g. Hubli" 
-                            value={form.birth_place} 
-                            onChange={(e) => setF("birth_place")(e.target.value)} 
+                          <Input
+                            placeholder="e.g. Hubli"
+                            value={form.birth_place}
+                            onChange={(e) => setF("birth_place")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
@@ -1119,20 +1119,20 @@ export default function Register() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Father's Name *</Label>
-                          <Input 
-                            placeholder="Father's Full Name" 
-                            value={form.father_name} 
-                            onChange={(e) => setF("father_name")(e.target.value)} 
+                          <Input
+                            placeholder="Father's Full Name"
+                            value={form.father_name}
+                            onChange={(e) => setF("father_name")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Mother's Name *</Label>
-                          <Input 
-                            placeholder="Mother's Full Name" 
-                            value={form.mother_name} 
-                            onChange={(e) => setF("mother_name")(e.target.value)} 
+                          <Input
+                            placeholder="Mother's Full Name"
+                            value={form.mother_name}
+                            onChange={(e) => setF("mother_name")(e.target.value)}
                             className="bg-transparent border-0 border-b border-border rounded-none focus-visible:ring-0 focus-visible:border-primary focus-visible:border-b-2 sm:bg-background sm:border sm:border-border sm:rounded-md h-10 px-0 sm:px-3 text-xs"
                             required
                           />

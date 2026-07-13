@@ -76,13 +76,13 @@ export default function Landing() {
           </div>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-50 border border-green-200 text-[10px] sm:text-xs font-bold text-green-700 mb-6">
             <span className="text-green-600">✨</span>
-            Your 1st Match Is On Us — Completely Free
+            Your 1st Month Is On Us — Completely Free
           </div>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight mb-6 text-[#0f172a]">
             Your Community, Your Match
           </h1>
           <p className="text-sm sm:text-base text-[#64748b] max-w-2xl mx-auto mb-10 leading-relaxed">
-             <span translate="no" className="notranslate">Lad Matrimony</span> helps you discover compatible life partners from within
+            <span translate="no" className="notranslate">Lad Matrimony</span> helps you discover compatible life partners from within
             your trusted community network. Every profile verified, every match meaningful.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -170,7 +170,7 @@ export default function Landing() {
             Ready to find your match?
           </h2>
           <p className="text-sm text-[#64748b] mb-8 max-w-md mx-auto">
-             Join <span translate="no" className="notranslate">Lad Matrimony</span> and connect with verified profiles from your community.
+            Join <span translate="no" className="notranslate">Lad Matrimony</span> and connect with verified profiles from your community.
           </p>
           {isAuthenticated ? (
             <Link to="/matrimony">
