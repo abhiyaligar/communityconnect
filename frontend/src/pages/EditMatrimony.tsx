@@ -653,6 +653,14 @@ export default function EditMatrimony() {
             <div className="flex justify-end gap-3 w-full sm:w-auto">
               <Button
                 type="button"
+                variant="ghost"
+                className="flex-1 sm:flex-none text-xs font-semibold h-10 px-4 rounded-xl text-muted-foreground"
+                onClick={() => navigate("/preferences", { state: { returnTo: "/matrimony/edit" } })}
+              >
+                Edit Preferences
+              </Button>
+              <Button
+                type="button"
                 variant="outline"
                 className="flex-1 sm:flex-none border-[#e2e8f0] text-foreground hover:bg-muted text-xs font-semibold h-10 px-4 rounded-xl"
                 onClick={() => navigate(-1)}

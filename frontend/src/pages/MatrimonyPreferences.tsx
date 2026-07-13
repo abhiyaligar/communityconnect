@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -153,6 +153,8 @@ function TierRangeField({ label, strictMin, strictMax, onStrictMin, onStrictMax,
 
 export default function MatrimonyPreferences() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = (location.state as { returnTo?: string })?.returnTo
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState("")
@@ -280,7 +282,7 @@ export default function MatrimonyPreferences() {
     setLoading(true)
     try {
       await api.post("/matrimony/preferences", buildPayload())
-      navigate("/pending-verification")
+      navigate(returnTo || "/pending-verification")
     } catch (err: unknown) {
       setError(handleApiError(err, "Failed to save preferences."))
     } finally {
@@ -289,7 +291,7 @@ export default function MatrimonyPreferences() {
   }
 
   const handleSkip = async () => {
-    navigate("/pending-verification")
+    navigate(returnTo || "/pending-verification")
   }
 
   if (fetching) {
