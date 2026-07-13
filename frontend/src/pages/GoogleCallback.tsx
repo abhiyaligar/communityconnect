@@ -82,7 +82,7 @@ export default function GoogleCallback() {
                 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
               </svg>
             </div>
-            <span className="font-semibold text-lg tracking-tight text-foreground">Lad Matrimony</span>
+            <span className="font-semibold text-lg tracking-tight text-foreground notranslate" translate="no">Lad Matrimony</span>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default function GoogleCallback() {
                 <div className="space-y-1.5">
                   <CardTitle className="text-xl font-bold tracking-tight">Authenticated Successfully!</CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    Redirecting you to Lad Matrimony...
+                     Redirecting you to <span translate="no" className="notranslate">Lad Matrimony</span>...
                   </CardDescription>
                 </div>
               </div>

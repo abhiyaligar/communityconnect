@@ -131,7 +131,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
             </svg>
           </div>
-          <span className="font-bold text-lg tracking-tight text-[#0f172a]">
+          <span className="font-bold text-lg tracking-tight text-[#0f172a] notranslate" translate="no">
             Lad Matrimony
           </span>
         </NavLink>
@@ -294,7 +294,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
                   </svg>
                 </div>
-                <span className="font-bold text-base tracking-tight text-[#0f172a]">
+                <span className="font-bold text-base tracking-tight text-[#0f172a] notranslate" translate="no">
                   Lad Matrimony
                 </span>
               </NavLink>

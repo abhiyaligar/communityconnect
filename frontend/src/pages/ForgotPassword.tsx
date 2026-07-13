@@ -99,7 +99,7 @@ export default function ForgotPassword() {
               </svg>
             </div>
             <span className="font-extrabold text-3xl tracking-tight text-foreground mt-4 group-hover:opacity-90 transition-opacity">
-              Lad Matrimony
+              <span translate="no" className="notranslate">Lad Matrimony</span>
             </span>
           </Link>
         </div>
