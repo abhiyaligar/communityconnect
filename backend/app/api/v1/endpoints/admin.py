@@ -21,7 +21,10 @@ from app.models.verification import VerificationRequest
 from app.models.matrimony import MatrimonyProfile
 from app.models.enums import UserRole, Gender, MaritalStatus, VerificationStatus
 from app.models.membership import Membership, MembershipStatus
+from app.models.setting import Setting
+from app.services.settings import set_setting
 from app.schemas.admin import AdminCreate, ProfileAdminUpdate, RegionCreate, RegionResponse
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -388,7 +391,35 @@ async def list_regions(
     return res.scalars().all()
 
 
+class SettingUpdateRequest(BaseModel):
+    key: str
+    value: str
 
 
+@router.get("/settings", status_code=status.HTTP_200_OK)
+async def list_settings(
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin]))
+):
+    stmt = select(Setting).order_by(Setting.key)
+    result = await db.execute(stmt)
+    settings = result.scalars().all()
+    return [
+        {"id": str(s.id), "key": s.key, "value": s.value, "updated_at": s.updated_at.isoformat() if s.updated_at else None}
+        for s in settings
+    ]
 
 
+@router.post("/settings", status_code=status.HTTP_200_OK)
+async def update_setting(
+    payload: SettingUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(RoleChecker([UserRole.community_admin]))
+):
+    setting = await set_setting(db, payload.key, payload.value)
+    return {
+        "message": "Setting updated successfully.",
+        "id": str(setting.id),
+        "key": setting.key,
+        "value": setting.value,
+    }

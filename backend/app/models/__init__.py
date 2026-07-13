@@ -14,6 +14,7 @@ from app.models.interaction import ProfileLike, ProfileDislike
 from app.models.chat import ChatMessage
 from app.models.suggestion import Suggestion, SuggestionType
 from app.models.membership import Membership, MembershipStatus
+from app.models.setting import Setting
 
 __all__ = [
     "UserRole",
@@ -41,5 +42,6 @@ __all__ = [
     "Suggestion",
     "SuggestionType",
     "Membership",
+    "Setting",
 ]
 

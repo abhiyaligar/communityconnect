@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.models.enums import UserRole, Gender, MaritalStatus
 from app.models.user import User
 from app.models.profile import Profile
+from app.models.setting import Setting
 
 
 async def seed_admin():
@@ -53,6 +54,10 @@ async def seed_admin():
             occupation="Trust Head",
         )
         session.add(admin_profile)
+
+        # Seed default settings
+        session.add(Setting(key="auto_create_free_membership", value="true"))
+
         await session.commit()
         print("🎉 Community Admin seeded successfully!")
         print(f"Email: {email}")

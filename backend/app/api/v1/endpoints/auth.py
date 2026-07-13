@@ -157,9 +157,25 @@ async def verify_email_code(payload: EmailOTPVerify, request: Request, response:
         is_active=True
     )
     db.add(user)
-    await db.commit()
+    await db.flush()
     await db.refresh(user)
-        
+
+    # Auto-create free 1-month membership (skip community_admin)
+    if user.role != UserRole.community_admin:
+        from app.services.settings import get_setting
+        setting_val = await get_setting(db, "auto_create_free_membership", "true")
+        if setting_val.lower() == "true":
+            from datetime import date, timedelta
+            from app.models.membership import Membership, MembershipStatus
+            membership = Membership(
+                user_id=user.id,
+                username=user.email.split("@")[0],
+                start_date=date.today(),
+                end_date=date.today() + timedelta(days=30),
+                status=MembershipStatus.active,
+            )
+            db.add(membership)
+
     # 3. Clean up OTP
     await db.delete(verification)
     await db.commit()
@@ -413,8 +429,25 @@ async def google_callback(
             is_active=True
         )
         db.add(user)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
+
+        # Auto-create free 1-month membership (skip community_admin)
+        if user.role != UserRole.community_admin:
+            from app.services.settings import get_setting
+            setting_val = await get_setting(db, "auto_create_free_membership", "true")
+            if setting_val.lower() == "true":
+                from datetime import date, timedelta
+                from app.models.membership import Membership, MembershipStatus
+                membership = Membership(
+                    user_id=user.id,
+                    username=user.email.split("@")[0],
+                    start_date=date.today(),
+                    end_date=date.today() + timedelta(days=30),
+                    status=MembershipStatus.active,
+                )
+                db.add(membership)
+                await db.commit()
         
     if not user.is_active:
         raise HTTPException(

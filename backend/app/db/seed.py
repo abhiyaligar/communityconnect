@@ -18,6 +18,7 @@ from app.models.region import AdminRegion, LocalAdminRegion
 from app.models.family import FamilyUnit
 from app.models.profile import Profile
 from app.models.matrimony import MatrimonyProfile
+from app.models.setting import Setting
 
 
 async def seed_data():
@@ -217,6 +218,10 @@ async def seed_data():
             preferences={"min_age": 24, "max_age": 29, "location": "Bengaluru"}
         )
         session.add(matrimony_detail)
+
+        # 7. Seed default settings
+        print("Seeding settings...")
+        session.add(Setting(key="auto_create_free_membership", value="true"))
 
         # Commit everything
         await session.commit()

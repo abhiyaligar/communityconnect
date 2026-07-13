@@ -4,22 +4,32 @@
 
 **Goal:** Every new user gets a free 30-day active membership starting today.
 
+**Toggle Control:**
+- Add a `auto_create_free_membership` boolean setting (stored in DB settings table or env var)
+- Before creating membership, check if toggle is ON
+- Allows turning off the free offer permanently without code changes
+
 **Files to modify:**
 - `backend/app/api/v1/endpoints/auth.py`
   - After user is created in `/register/verify-email` (~line 158), insert:
     ```python
     from datetime import timedelta, date
-    membership = Membership(
-        user_id=user.id,
-        username=user.email.split("@")[0],
-        start_date=date.today(),
-        end_date=date.today() + timedelta(days=30),
-        status=MembershipStatus.active,
-    )
-    db.add(membership)
+    if get_setting("auto_create_free_membership"):  # toggle check
+        membership = Membership(
+            user_id=user.id,
+            username=user.email.split("@")[0],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status=MembershipStatus.active,
+        )
+        db.add(membership)
     ```
   - Same for Google OAuth `/google/callback` after user creation (~line 415)
 - **Skip for admins** (role `community_admin` or `local_admin`)
+
+**DB Setting:**
+- New table or row: `settings(key='auto_create_free_membership', value='true')`
+- Admin endpoint: `POST /admin/settings` to toggle
 
 ---
 
@@ -86,7 +96,44 @@
 
 ---
 
-## Phase 4: Payment Integration (Future — Stripe / Razorpay)
+## Phase 4: Offers & Coupon Code System
+
+**Goal:** Admin can create discount codes (percentage or flat) for membership plans.
+
+### Database Schema
+```sql
+-- offers table
+id UUID PK
+code VARCHAR(50) UNIQUE          -- e.g. "WELCOME15", "FRIEND20"
+discount_type VARCHAR(10)        -- "percent" or "flat"
+discount_value INTEGER           -- 15 (for 15%), or amount in cents for flat
+max_uses INTEGER                 -- total redemption limit (null = unlimited)
+current_uses INTEGER DEFAULT 0
+expires_at DATE                  -- null = never expires
+is_active BOOLEAN DEFAULT true
+created_by UUID FK (admin user)
+created_at TIMESTAMP
+```
+
+### Backend Endpoints
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /admin/offers` | Create a new offer/coupon code (admin only) |
+| `GET /admin/offers` | List all offers with usage stats |
+| `PATCH /admin/offers/{id}` | Update offer (toggle active, change discount, etc.) |
+| `POST /payment/apply-coupon` | Validate & apply coupon code (returns discount info) |
+
+### Flow
+1. Admin creates offer via `POST /admin/offers` with code, discount, expiry, max uses
+2. User enters coupon code on pricing/checkout page
+3. Frontend calls `POST /payment/apply-coupon` to validate
+4. If valid → discount reflected in checkout session
+5. Webhook confirms payment → `current_uses` incremented on the offer
+
+---
+
+## Phase 5: Payment Integration (Future — Stripe / Razorpay)
 
 ### Database Schema
 ```sql
@@ -141,9 +188,10 @@ created_at TIMESTAMP
 ## Implementation Order
 
 1. ✅ Fix `logger` undefined name (flake8 failure)
-2. ⬜ Phase 1: Auto-create free 1-month membership in auth.py
+2. ⬜ Phase 1: Auto-create free 1-month membership in auth.py (with toggle)
 3. ⬜ Phase 2a: Create `require_active_membership` dependency
 4. ⬜ Phase 2b: Apply dependency to chat + profile endpoints
 5. ⬜ Phase 2c: Frontend membership gate UI (Chat, ProfileView, Dashboard)
-6. ⬜ Phase 3: Create Terms.tsx, NdaPolicy.tsx, routes, footer links
-7. ⬜ Phase 4: Payment integration (when Stripe/Razorpay is ready)
+6. ⬜ Phase 3: Create Terms.tsx, NdaPolicy.tsx, routes, footer links (user provides NDA/Terms content)
+7. ⬜ Phase 4: Offers & Coupon Code System
+8. ⬜ Phase 5: Payment integration (when Stripe/Razorpay is ready)
