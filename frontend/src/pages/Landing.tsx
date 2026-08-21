@@ -40,7 +40,7 @@ export default function Landing() {
                 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
               </svg>
             </div>
-            <span className="font-extrabold text-lg tracking-tight notranslate" translate="no">Lad Matrimony</span>
+            <span className="font-extrabold text-lg tracking-tight notranslate" translate="no">Community Connect</span>
           </Link>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
@@ -82,7 +82,7 @@ export default function Landing() {
             Your Community, Your Match
           </h1>
           <p className="text-sm sm:text-base text-[#64748b] max-w-2xl mx-auto mb-10 leading-relaxed">
-            <span translate="no" className="notranslate">Lad Matrimony</span> helps you discover compatible life partners from within
+            <span translate="no" className="notranslate">Community Connect</span> helps you discover compatible life partners from within
             your trusted community network. Every profile verified, every match meaningful.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -170,7 +170,7 @@ export default function Landing() {
             Ready to find your match?
           </h2>
           <p className="text-sm text-[#64748b] mb-8 max-w-md mx-auto">
-            Join <span translate="no" className="notranslate">Lad Matrimony</span> and connect with verified profiles from your community.
+            Join <span translate="no" className="notranslate">Community Connect</span> and connect with verified profiles from your community.
           </p>
           {isAuthenticated ? (
             <Link to="/matrimony">
@@ -203,10 +203,10 @@ export default function Landing() {
                 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2" />
               </svg>
             </div>
-            <span className="font-bold text-[#0f172a] notranslate" translate="no">Lad Matrimony</span>
+            <span className="font-bold text-[#0f172a] notranslate" translate="no">Community Connect</span>
           </div>
           <p className="text-xs text-[#64748b] font-semibold">
-            &copy; {new Date().getFullYear()} <span translate="no" className="notranslate">Lad Matrimony</span>. All rights reserved.
+            &copy; {new Date().getFullYear()} <span translate="no" className="notranslate">Community Connect</span>. All rights reserved.
           </p>
         </div>
       </footer>

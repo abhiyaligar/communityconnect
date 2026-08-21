@@ -58,7 +58,7 @@ export function ProtectedRoute({
 
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-black tracking-tight text-[#0f172a]">
-              <span translate="no" className="notranslate">Lad Matrimony</span>
+              <span translate="no" className="notranslate">Community Connect</span>
             </h1>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-80">
               Loading...

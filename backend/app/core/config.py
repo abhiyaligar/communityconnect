@@ -14,7 +14,7 @@ import os
 
 class Settings(BaseSettings):
     # Application
-    APP_NAME: str = "Lad Matrimony"
+    APP_NAME: str = "Community Connect"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"

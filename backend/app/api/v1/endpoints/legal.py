@@ -73,7 +73,7 @@ For any complaints, grievances, or inquiries regarding your data or this platfor
 
 **Grievance Officer:**  
 Email: grievance@ladmatrimony.in  
-Address: Lad Matrimony, Bengaluru, Karnataka, India  
+Address: Community Connect, Bengaluru, Karnataka, India  
 Response Time: Within 24 hours of receipt
 
 ## 12. Modifications

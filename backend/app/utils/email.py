@@ -52,31 +52,31 @@ async def _send_email(to_email: str, subject: str, html_body: str, plain_body: s
 
 
 async def send_verification_email(to_email: str, code: str) -> None:
-    subject = "Lad Matrimony - Your Verification Code"
+    subject = "Community Connect - Your Verification Code"
     body = f"Your verification code is: {code}\n\nThis code will expire in 10 minutes."
     await _send_email(to_email, subject, body.replace("\n", "<br>"), body)
 
 
 async def send_reset_password_email(to_email: str, code: str) -> None:
-    subject = "Lad Matrimony - Reset Your Password"
+    subject = "Community Connect - Reset Your Password"
     body = f"You requested to reset your password. Your password reset verification code is: {code}\n\nThis code will expire in 10 minutes."
     await _send_email(to_email, subject, body.replace("\n", "<br>"), body)
 
 
 async def send_account_activation_email(to_email: str, full_name: str) -> None:
-    subject = "Lad Matrimony - Account Activated Successfully"
+    subject = "Community Connect - Account Activated Successfully"
     html = activation_success_email(full_name)
-    plain = f"Hi {full_name}, your Lad Matrimony account has been successfully activated. Complete your profile and get verified to start matching!"
+    plain = f"Hi {full_name}, your Community Connect account has been successfully activated. Complete your profile and get verified to start matching!"
     await _send_email(to_email, subject, html, plain)
 
 
 async def send_verification_status_email(to_email: str, full_name: str, status: str, reason: str | None = None) -> None:
     if status == "approved":
-        subject = "Lad Matrimony - Profile Verified Successfully"
+        subject = "Community Connect - Profile Verified Successfully"
         html = verification_approved_email(full_name)
-        plain = f"Hi {full_name}, your profile has been verified. You now have full access to Lad Matrimony features."
+        plain = f"Hi {full_name}, your profile has been verified. You now have full access to Community Connect features."
     else:
-        subject = "Lad Matrimony - Verification Update"
+        subject = "Community Connect - Verification Update"
         html = verification_rejected_email(full_name, reason)
         plain = f"Hi {full_name}, your profile verification could not be approved at this time.{' Reason: ' + reason if reason else ''}"
     await _send_email(to_email, subject, html, plain)

@@ -132,7 +132,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             </svg>
           </div>
           <span className="font-bold text-lg tracking-tight text-[#0f172a] notranslate" translate="no">
-            Lad Matrimony
+            Community Connect
           </span>
         </NavLink>
       </div>
@@ -295,7 +295,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </svg>
                 </div>
                 <span className="font-bold text-base tracking-tight text-[#0f172a] notranslate" translate="no">
-                  Lad Matrimony
+                  Community Connect
                 </span>
               </NavLink>
 

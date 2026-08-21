@@ -23,14 +23,14 @@ def activation_success_email(full_name: str) -> str:
 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2"/>
 </svg>
 </td></tr></table>
-<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Lad Matrimony</p>
+<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Community Connect</p>
 </td></tr>
 <tr><td style="padding:32px 40px;text-align:center">
 <div style="width:56px;height:56px;border-radius:50%;background-color:#d1fae5;margin:0 auto 20px auto;display:flex;align-items:center;justify-content:center">
 <span style="font-size:28px">&#10003;</span>
 </div>
 <h1 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 8px 0;letter-spacing:-0.3px">Account Activated!</h1>
-<p style="font-size:15px;color:#64748b;line-height:1.6;margin:0 0 24px 0">Hi <strong style="color:#0f172a">{full_name}</strong>, your Lad Matrimony account has been successfully activated. You&#39;re now part of a trusted community connecting families and finding meaningful matches.</p>
+<p style="font-size:15px;color:#64748b;line-height:1.6;margin:0 0 24px 0">Hi <strong style="color:#0f172a">{full_name}</strong>, your Community Connect account has been successfully activated. You&#39;re now part of a trusted community connecting families and finding meaningful matches.</p>
 <table cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;padding:20px;width:100%">
 <tr><td style="text-align:left">
 <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 12px 0">&#10003; What&#39;s next?</p>
@@ -44,7 +44,7 @@ def activation_success_email(full_name: str) -> str:
 <a href="{{login_url}}" style="display:inline-block;background-color:#0f172a;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:12px;text-decoration:none">Go to Dashboard</a>
 </td></tr>
 <tr><td style="background-color:#f8fafc;padding:24px 40px;text-align:center;border-top:1px solid #e2e8f0">
-<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Lad Matrimony &mdash; Your Community, Your Match</p>
+<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Community Connect &mdash; Your Community, Your Match</p>
 <p style="font-size:10px;color:#94a3b8;margin:0">If you didn&#39;t create this account, please ignore this email.</p>
 </td></tr>
 </table>
@@ -75,14 +75,14 @@ def verification_approved_email(full_name: str) -> str:
 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2"/>
 </svg>
 </td></tr></table>
-<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Lad Matrimony</p>
+<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Community Connect</p>
 </td></tr>
 <tr><td style="padding:32px 40px;text-align:center">
 <div style="width:56px;height:56px;border-radius:50%;background-color:#d1fae5;margin:0 auto 20px auto;display:flex;align-items:center;justify-content:center">
 <span style="font-size:28px">&#10003;</span>
 </div>
 <h1 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 8px 0;letter-spacing:-0.3px">Identity Verified!</h1>
-<p style="font-size:15px;color:#64748b;line-height:1.6;margin:0 0 24px 0">Hi <strong style="color:#0f172a">{full_name}</strong>, your profile has been verified by a community admin. You now have full access to all Lad Matrimony features.</p>
+<p style="font-size:15px;color:#64748b;line-height:1.6;margin:0 0 24px 0">Hi <strong style="color:#0f172a">{full_name}</strong>, your profile has been verified by a community admin. You now have full access to all Community Connect features.</p>
 <table cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;padding:20px;width:100%">
 <tr><td style="text-align:left">
 <p style="font-size:13px;font-weight:700;color:#0f172a;margin:0 0 12px 0">&#10003; What you can do now</p>
@@ -96,7 +96,7 @@ def verification_approved_email(full_name: str) -> str:
 <a href="{{dashboard_url}}" style="display:inline-block;background-color:#0f172a;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:12px;text-decoration:none">Start Matching</a>
 </td></tr>
 <tr><td style="background-color:#f8fafc;padding:24px 40px;text-align:center;border-top:1px solid #e2e8f0">
-<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Lad Matrimony &mdash; Your Community, Your Match</p>
+<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Community Connect &mdash; Your Community, Your Match</p>
 <p style="font-size:10px;color:#94a3b8;margin:0">If you have questions, contact your community admin.</p>
 </td></tr>
 </table>
@@ -128,7 +128,7 @@ def verification_rejected_email(full_name: str, reason: str | None = None) -> st
 <path d="M12 8v1.5M6.5 11l2.5 1M17.5 11l-2.5 1M9 16.5l2-2M15 16.5l-2-2"/>
 </svg>
 </td></tr></table>
-<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Lad Matrimony</p>
+<p style="font-size:22px;font-weight:800;color:#0f172a;margin:16px 0 4px 0;letter-spacing:-0.3px">Community Connect</p>
 </td></tr>
 <tr><td style="padding:32px 40px;text-align:center">
 <div style="width:56px;height:56px;border-radius:50%;background-color:#fef2f2;margin:0 auto 20px auto;display:flex;align-items:center;justify-content:center">
@@ -142,7 +142,7 @@ def verification_rejected_email(full_name: str, reason: str | None = None) -> st
 <a href="{{support_url}}" style="display:inline-block;background-color:#0f172a;color:#ffffff;font-size:14px;font-weight:700;padding:12px 32px;border-radius:12px;text-decoration:none">Contact Support</a>
 </td></tr>
 <tr><td style="background-color:#f8fafc;padding:24px 40px;text-align:center;border-top:1px solid #e2e8f0">
-<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Lad Matrimony &mdash; Your Community, Your Match</p>
+<p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Community Connect &mdash; Your Community, Your Match</p>
 <p style="font-size:10px;color:#94a3b8;margin:0">You may update your profile and re-submit for verification.</p>
 </td></tr>
 </table>
